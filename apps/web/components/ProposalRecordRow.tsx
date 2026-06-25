@@ -1,4 +1,5 @@
 import type { Proposal, ProposalStatus } from "@nemesis/db";
+import { ExecuteProposalButton } from "./ExecuteProposalButton";
 
 const STATUS_STYLES: Record<ProposalStatus, string> = {
   pending: "text-nm-fragment-red border-nm-fragment-red",
@@ -53,8 +54,11 @@ export function ProposalRecordRow({ proposal }: ProposalRecordRowProps) {
         </p>
         {proposal.txHash && (
           <span className="font-mono text-[10px] uppercase tracking-widest2 text-nm-resolve">
-            tx {proposal.txHash}
+            tx {proposal.txHash.slice(0, 8)}...{proposal.txHash.slice(-6)}
           </span>
+        )}
+        {proposal.status === "pending" && (
+          <ExecuteProposalButton proposal={proposal} />
         )}
       </div>
     </div>
