@@ -345,10 +345,10 @@ function DeploymentPlanCard({
                 <div className="flex flex-col gap-1">
                   <input
                     id={`param-${param.key}`}
-                    type={param.type === "string" ? "text" : "number"}
+                    type={param.type === "address" ? "text" : "number"}
                     value={pendingParams[param.key] as string | number}
                     onChange={(e) => {
-                      const val = param.type === "string" ? e.target.value : Number(e.target.value);
+                      const val = param.type === "address" ? e.target.value : Number(e.target.value);
                       setPendingParams((prev) => ({ ...prev, [param.key]: val }));
                     }}
                     className="border border-nm-border bg-nm-bg px-2 py-1 text-sm text-nm-fg focus:border-nm-fg"
