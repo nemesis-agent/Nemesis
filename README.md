@@ -59,3 +59,39 @@ Control your agents directly from Telegram:
 - **Bot**: Telegraf
 - **Database**: PostgreSQL (Supabase), node-postgres (`pg`)
 - **Infrastructure**: Railway (Nixpacks)
+
+## Development Roadmap
+
+NEMESIS is being built transparently in phases. This roadmap tracks our progress from initial scaffold to a fully autonomous Quant-Grade execution network.
+
+### Phase 0: Foundation Cleanup ✅ DONE
+- Monorepo architecture established (Web, Bot, DB, Templates).
+- Quant-Grade Database migrated to PostgreSQL (Supabase).
+- Bot and Web monolith deployment operational on Railway.
+- Telegram wallet-linking flow successfully deployed.
+
+### Phase 1: Security & Agent Deployment 🚧 IN PROGRESS
+- **SIWE Authentication**: Wrap all APIs with secure Sign-In With Ethereum (`viem` + `iron-session`).
+- **Secure Deployment**: Wire the `DeployChat` UI directly to the secure database via authenticated sessions.
+- **Ownership Verification**: Ensure only the authenticated wallet can pause, resume, or view their agents.
+
+### Phase 2: Sub-Agent Runner
+- Deploy the first background Node process (Runner) to monitor live conditions.
+- Integrate price feeds (Pyth/Base RPC) for the `dip-buyer` and `limit-order` templates.
+- Automatically dispatch proposals to Telegram when conditions are met.
+
+### Phase 3: Base MCP Integration
+- Implement Agentkit operational wallets for each sub-agent.
+- Build unsigned transactions based on approved Telegram proposals.
+- Deliver execution payloads back to the user's secure wallet for final broadcast.
+
+### Phase 4: Master Agent (LLM Intent Engine)
+- Replace basic keyword matching with a Hermes/Claude Master Agent.
+- Read wallet holdings to provide highly contextual strategy recommendations.
+- Deploy multi-template strategies automatically from a single conversational prompt.
+
+### Phase 5: Scale & Institutional Ops
+- Implement strict SRE monitoring (Sentry, Pino logging).
+- Automated pruning of skipped proposals.
+- Transition from Monolith to microservice containerization if throughput exceeds 1,000 active agents.
+
