@@ -75,12 +75,12 @@ NEMESIS is being built transparently in phases. This roadmap tracks our progress
 - **Secure Deployment**: `DeployChat` now calls real `POST /api/agents` with session auth — agents are written to Supabase live.
 - **Ownership Verification**: Pause, resume, and link-generate routes all require authenticated session + wallet ownership check.
 
-### Phase 2: Sub-Agent Runner 🚧 NEXT
+### Phase 2: Sub-Agent Runner ✅ DONE
 - Deploy the first background Node process (Runner) to monitor live conditions.
 - Integrate price feeds (Pyth/Base RPC) for the `dip-buyer` and `limit-order` templates.
 - Automatically dispatch proposals to Telegram when conditions are met.
 
-### Phase 3: Base MCP Integration
+### Phase 3: Base MCP Integration 🚧 IN PROGRESS
 - Implement Agentkit operational wallets for each sub-agent.
 - Build unsigned transactions based on approved Telegram proposals.
 - Deliver execution payloads back to the user's secure wallet for final broadcast.
