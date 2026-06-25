@@ -24,28 +24,26 @@ To implement AgentKit at a Quant Grade level, the following official packages mu
 ```json
 {
   "dependencies": {
-    "@coinbase/agentkit": "latest",
-    "@coinbase/cbcorp-mcp-server": "latest" // Optional: For direct MCP protocol integration
+    "@coinbase/agentkit": "latest"
   }
 }
 ```
 
-### Wallet Provisioning (Phase 4A)
-According to CDP Docs, AgentKit can bootstrap a new wallet for an agent using the `AgentKit` instance initialization. 
+### The Transaction Split Architecture (Crucial Finding)
+In a second, deeper research pass into AgentKit's modular architecture, a massive architectural win was discovered: AgentKit separates transaction **construction** from transaction **execution**. 
+- **ActionProviders:** Construct the raw, unsigned transaction data (e.g., `to`, `data`, `value`).
+- **WalletProviders:** Take that data, sign it, and broadcast it.
 
-**Proposed Flow in `createAgent`:**
-1. User clicks "Approve & deploy".
-2. `POST /api/agents` invokes CDP API using server-side keys (`CDP_API_KEY_NAME` & `CDP_API_KEY_PRIVATE_KEY`).
-3. AgentKit provisions a new Base Wallet.
-4. The generated `walletAddress` and encrypted `walletSeed` are persisted into the `agents` table in Supabase.
+**Impact on NEMESIS:**
+Because NEMESIS enforces a strict "Approval-First" rule (Rule #2) where the user signs the final transaction, **we do not need to provision or pay for CDP Wallets for the agents.** 
+The agent will act purely as a "Transaction Compiler". It will use `ActionProviders` to generate the unsigned transaction payload, and we will forward that payload to the user's personal wallet via a WalletConnect deep link.
 
 ### Action Providers (Phase 4B)
 AgentKit uses an extensible architecture called **Action Providers**.
-- `walletActionProvider`: For native transfers.
 - `erc20ActionProvider`: For token approvals/swaps.
 - `customActionProvider`: For specific DeFi interactions (e.g., Uniswap routers for the `dip-buyer` template).
 
-When the Runner detects a condition (e.g., ETH price drops 5%), it will instruct the AgentKit instance associated with that agent to formulate the raw transaction data.
+When the Runner detects a condition (e.g., ETH price drops 5%), it will instruct the AgentKit ActionProvider to formulate the raw transaction data, returning it back to the Runner without executing it.
 
 ---
 
