@@ -13,10 +13,12 @@
     "@fontsource/inter": "^5.1.0",
     "@nemesis/db": "*",
     "@nemesis/templates": "*",
+    "@openrouter/ai-sdk-provider": "^2.9.1",
     "@rainbow-me/rainbowkit": "^2.1.6",
     "@react-native-async-storage/async-storage": "^3.1.1",
     "@tanstack/react-query": "^5.51.23",
     "@types/three": "^0.184.1",
+    "ai": "^7.0.2",
     "cmdk": "^1.1.1",
     "ethers": "^5.8.0",
     "iron-session": "^8.0.4",
@@ -29,7 +31,8 @@
     "siwe": "^3.0.0",
     "three": "^0.184.0",
     "viem": "^2.53.1",
-    "wagmi": "^2.12.5"
+    "wagmi": "^2.12.5",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^20.14.15",

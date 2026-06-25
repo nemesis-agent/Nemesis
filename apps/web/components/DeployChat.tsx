@@ -9,7 +9,6 @@ import { FragmentDivider } from "@/components/FragmentDivider";
 import { RiskAcknowledgmentModal } from "@/components/RiskAcknowledgmentModal";
 import { RiskBanner } from "@/components/RiskBanner";
 import { fillApprovalSummary } from "@/lib/format-template";
-import { matchTemplate } from "@/lib/match-template";
 import { useSiweAuth } from "@/lib/use-siwe-auth";
 import { getTemplateById, type AgentTemplate } from "@nemesis/templates";
 
@@ -66,7 +65,7 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected, auth.state]);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmed = input.trim();
     if (!trimmed || stage === "thinking") return;
@@ -76,30 +75,66 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
     setInput("");
     setStage("thinking");
 
-    const template = initialTemplate ?? matchTemplate(trimmed);
+    if (initialTemplate && trimmed.toLowerCase().includes("deploy a")) {
+      // Fast path for initial template selection from gallery
+      finalizePlan(initialTemplate, {}, "Here's what I'd propose:");
+      return;
+    }
 
-    // Simulated reasoning delay — replace with Hermes call in Phase 5.
-    window.setTimeout(() => {
-      const planMessage: ChatMessage = {
-        id: `plan-${Date.now()}`,
+    try {
+      const res = await fetch("/api/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: trimmed }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Master Agent API unavailable.");
+      }
+
+      const { intent } = await res.json();
+      const template = getTemplateById(intent.templateId);
+
+      if (!template) {
+        throw new Error("Master Agent suggested an unknown template.");
+      }
+
+      finalizePlan(template, intent.parameters || {}, intent.reasoning);
+    } catch (err: any) {
+      const errorMessage: ChatMessage = {
+        id: `error-${Date.now()}`,
         role: "agent",
-        content: `Here's what I'd propose:`,
-        plan: template,
+        content: `Failed to analyze intent: ${err.message}`,
       };
-      setMessages((prev) => [...prev, planMessage]);
-      setPendingPlan(template);
-      
-      // Initialize pending parameters with their defaults
-      const defaults: Record<string, string | number | boolean> = {};
-      if (template.parameters) {
-        for (const param of template.parameters) {
+      setMessages((prev) => [...prev, errorMessage]);
+      setStage("idle");
+    }
+  }
+
+  function finalizePlan(template: AgentTemplate, extractedParams: Record<string, any>, reasoning: string) {
+    const planMessage: ChatMessage = {
+      id: `plan-${Date.now()}`,
+      role: "agent",
+      content: reasoning || "Here's what I'd propose:",
+      plan: template,
+    };
+    setMessages((prev) => [...prev, planMessage]);
+    setPendingPlan(template);
+    
+    // Initialize pending parameters with defaults, overridden by LLM extraction
+    const defaults: Record<string, string | number | boolean> = {};
+    if (template.parameters) {
+      for (const param of template.parameters) {
+        // If LLM extracted the param, use it. Otherwise fallback to default.
+        if (extractedParams[param.key] !== undefined) {
+          defaults[param.key] = extractedParams[param.key];
+        } else {
           defaults[param.key] = param.default;
         }
       }
-      setPendingParams(defaults);
-      
-      setStage("plan");
-    }, 900);
+    }
+    setPendingParams(defaults);
+    setStage("plan");
   }
 
   function handleApproveClick() {
