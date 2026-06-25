@@ -33,6 +33,10 @@ To secure the platform using Sign-In With Ethereum (SIWE) and wire the conversat
    - Both routes now strictly verify that the authenticated `session.address` matches the `agent.walletAddress` retrieved from the database (403 Forbidden otherwise).
    - `POST /api/link/generate` now reads the wallet address from the authenticated session, preventing actors from linking chats to wallets they don't own.
 
+5. **Template Parameter Injection (Late Phase 1 Catch)**
+   - `DeployChat.tsx` now dynamically renders input forms (sliders, checkboxes, text fields) directly mapping to the selected `AgentTemplate.parameters`.
+   - The user-configured `pendingParams` are passed in the POST body to `/api/agents` and securely stored as JSON in Supabase, making the Runner fully dynamic.
+
 ---
 
 ## Phase 2: Sub-Agent Runner
