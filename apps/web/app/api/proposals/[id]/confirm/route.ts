@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { createPublicClient, http } from "viem";
 import { base } from "viem/chains";
 
-import { requireAuth } from "@/lib/auth";
+import { rejectCrossOrigin, requireAuth } from "@/lib/auth";
 import { approveProposal, getProposal, getAgent } from "@nemesis/db";
 
 const publicClient = createPublicClient({
@@ -15,6 +15,9 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  const originError = rejectCrossOrigin(request);
+  if (originError) return originError;
+
   const auth = await requireAuth();
   if (auth.error) return auth.error;
 
@@ -42,7 +45,7 @@ export async function POST(
       return NextResponse.json({ error: "Proposal not found." }, { status: 404 });
     }
 
-    if (proposal.status !== "pending") {
+    if (proposal.status === "skipped" || (proposal.status === "approved" && proposal.txHash)) {
       return NextResponse.json({ error: `Proposal already processed (status: ${proposal.status}).` }, { status: 400 });
     }
 
@@ -61,9 +64,35 @@ export async function POST(
       return NextResponse.json({ error: "Transaction reverted on-chain." }, { status: 400 });
     }
 
-    // Anti-Spoofing: Ensure the signer of the tx matches the SIWE session
-    if (receipt.from.toLowerCase() !== auth.address.toLowerCase()) {
+    const tx = await publicClient.getTransaction({ hash: txHash as `0x${string}` });
+
+    // Anti-spoofing: ensure signer and transaction payload match this proposal.
+    if (tx.from.toLowerCase() !== auth.address.toLowerCase()) {
       return NextResponse.json({ error: "Transaction signer does not match authenticated wallet." }, { status: 403 });
+    }
+
+    if (!proposal.unsignedTxPayload) {
+      return NextResponse.json({ error: "Proposal has no executable transaction payload." }, { status: 400 });
+    }
+
+    let expectedPayload: { to?: string; value?: string; data?: string; chainId?: number };
+    try {
+      expectedPayload = JSON.parse(proposal.unsignedTxPayload);
+    } catch {
+      return NextResponse.json({ error: "Stored transaction payload is invalid." }, { status: 500 });
+    }
+
+    if (expectedPayload.chainId !== 8453) {
+      return NextResponse.json({ error: "Unexpected transaction chain." }, { status: 400 });
+    }
+
+    const expectedTo = expectedPayload.to?.toLowerCase();
+    const actualTo = tx.to?.toLowerCase();
+    const expectedData = expectedPayload.data ?? "0x";
+    const expectedValue = BigInt(expectedPayload.value ?? "0");
+
+    if (!expectedTo || expectedTo !== actualTo || expectedData.toLowerCase() !== tx.input.toLowerCase() || expectedValue !== tx.value) {
+      return NextResponse.json({ error: "Transaction does not match the approved proposal payload." }, { status: 400 });
     }
 
     // 3. Update Database

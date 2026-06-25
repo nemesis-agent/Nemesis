@@ -13,7 +13,7 @@ interface AgentStatusToggleProps {
 
 /**
  * Calls the real pause/resume Route Handlers (apps/web/app/api/agents/[id]/...)
- * which mutate the SQLite database, then refreshes the page so the
+ * which mutate the Postgres database, then refreshes the page so the
  * Server Component above re-reads the new state. This is a genuinely
  * working mutation — not a UI-only placeholder — see CONTEXT.md, "What
  * changed in the database pass".

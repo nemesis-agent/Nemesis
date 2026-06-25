@@ -2,9 +2,12 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { getAgent, setAgentStatus } from "@nemesis/db";
-import { requireAuth } from "@/lib/auth";
+import { rejectCrossOrigin, requireAuth } from "@/lib/auth";
 
-export async function POST(_request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params }: { params: { id: string } }) {
+  const originError = rejectCrossOrigin(request);
+  if (originError) return originError;
+
   // 1. Auth check — must be signed in.
   const auth = await requireAuth();
   if (auth.error) return auth.error;

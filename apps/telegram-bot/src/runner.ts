@@ -1,5 +1,5 @@
 import type { Telegraf } from "telegraf";
-import { listAgents, createProposal, getTelegramChatIdForWallet, pruneOldProposals } from "@nemesis/db";
+import { listAgents, createProposal, getTelegramChatIdForWallet, listProposalsForAgent, pruneOldProposals } from "@nemesis/db";
 import { getLivePrice } from "./lib/price-feed.js";
 import { sendProposal } from "./handlers/approval.js";
 import { logger } from "./lib/logger.js";
@@ -59,11 +59,11 @@ async function runCycle(bot: Telegraf) {
     // For Phase 2, we hardcode the logic for our top 2 high-volume templates.
     let conditionMet = false;
     let actionSummary = "";
-    let unsignedTxPayload = "";
+    let unsignedTxPayload: string | undefined;
 
     if (agent.templateId === "dip-buyer") {
-      const targetDrop = Number(agent.parameters["targetDrop"] || 5);
-      const purchaseAmount = Number(agent.parameters["purchaseAmount"] || 0.1);
+      const targetDrop = Number(agent.parameters["dipPercent"] || 5);
+      const purchaseAmount = Number(agent.parameters["buyAmount"] || 50);
       
       // Simplistic check for demo — in reality we'd compare against a moving average or yesterday's close
       const currentPrice = prices.ETH_USD;
@@ -73,34 +73,20 @@ async function runCycle(bot: Telegraf) {
         conditionMet = true;
         actionSummary = `ETH dropped below ${targetDrop}% from baseline. Current price: $${currentPrice.toFixed(2)}. Ready to buy ${purchaseAmount} ETH.`;
         
-        // Construct stateless AgentKit / Base payload for Uniswap Swap
-        unsignedTxPayload = JSON.stringify({
-          network: "base-mainnet",
-          to: "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD", // Uniswap V3 Router
-          value: (purchaseAmount * 1e18).toString(),
-          data: "0x...", // In a full implementation, this is encoded via actionProvider
-          chainId: 8453
-        });
+        // Execution payload intentionally omitted until a real Base MCP/AgentKit encoder is wired.
       }
     } 
     
     if (agent.templateId === "limit-order") {
-      const limitPrice = Number(agent.parameters["limitPrice"] || 3000);
-      const sellAmount = Number(agent.parameters["sellAmount"] || 1);
+      const limitPrice = Number(agent.parameters["targetPrice"] || 3000);
+      const sellAmount = Number(agent.parameters["amount"] || 500);
       
       const currentPrice = prices.ETH_USD;
       if (currentPrice && currentPrice >= limitPrice) {
         conditionMet = true;
         actionSummary = `ETH reached limit price of $${limitPrice}. Current price: $${currentPrice.toFixed(2)}. Ready to sell ${sellAmount} ETH.`;
         
-        // Construct stateless AgentKit / Base payload for ERC20 Transfer/Swap
-        unsignedTxPayload = JSON.stringify({
-          network: "base-mainnet",
-          to: "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD",
-          value: "0",
-          data: "0x...", // In a full implementation, this is encoded via actionProvider
-          chainId: 8453
-        });
+        // Execution payload intentionally omitted until a real Base MCP/AgentKit encoder is wired.
       }
     }
 
@@ -129,9 +115,6 @@ async function runCycle(bot: Telegraf) {
       await sendProposal(bot, chatId, proposal, agent.name);
       logger.info({ msg: "proposal dispatched to Telegram", proposalId: proposal.id });
       
-      // Prevent spamming — in production we'd pause the agent or add a cooldown here.
-      // For this phase, we rely on the fact that createProposal succeeds, but it will
-      // keep proposing next cycle unless we pause it. (Phase 5 fix)
     }
   }
 }

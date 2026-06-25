@@ -1,19 +1,24 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { AgentCard } from "@/components/AgentCard";
 import { Button } from "@/components/Button";
 import { ConnectTelegramCard } from "@/components/ConnectTelegramCard";
 import { FragmentDivider } from "@/components/FragmentDivider";
 import { ScrollReveal } from "@/components/ScrollReveal";
-import { listAgents } from "@nemesis/db";
+import { listAgentsForWallet } from "@nemesis/db";
+import { getSession } from "@/lib/auth";
 
-// Reads live from SQLite on every request — agents can be paused/resumed
+// Reads live from Postgres on every request — agents can be paused/resumed
 // and new proposals can land at any time, so this page must never be
 // statically cached. See CONTEXT.md, "What changed in the database pass".
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const agents = await listAgents();
+  const session = await getSession();
+  if (!session.address) redirect("/");
+
+  const agents = await listAgentsForWallet(session.address);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-16">
@@ -22,7 +27,7 @@ export default async function DashboardPage() {
           <h1 className="font-mono text-2xl font-bold uppercase tracking-widest2 text-nm-fg">agents</h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-nm-muted">
             Agents deployed to your wallet. Proposals are sent to Telegram and listed here —
-            nothing executes without your approval.
+            nothing moves without your approval.
           </p>
         </div>
         <Button href="/agents/new" variant="primary" magnetic>
@@ -55,7 +60,7 @@ export default async function DashboardPage() {
                   </div>
                   <div>
                     <h3 className="font-mono text-xs uppercase text-nm-fg">Connect Wallet</h3>
-                    <p className="mt-1 text-sm text-nm-muted">Your wallet is connected and signed via SIWE. You're ready for step 2.</p>
+                    <p className="mt-1 text-sm text-nm-muted">Your wallet is connected and signed via SIWE. You&apos;re ready for step 2.</p>
                   </div>
                 </div>
 

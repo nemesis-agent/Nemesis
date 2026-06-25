@@ -27,24 +27,24 @@ const KNOWLEDGE_BASE = [
   },
   {
     keywords: ["safe", "funds", "wallet", "custody", "steal", "hack", "private"],
-    reply: "Your funds are absolutely secure. We NEVER hold your keys or custody your assets. Our architecture is strictly 'approval-first'—agents can only propose transactions. Nothing executes without your explicit on-chain signature.",
+    reply: "NEMESIS never holds your keys or custodies your assets. The architecture is approval-first: agents can propose transactions, but your wallet must explicitly approve before anything moves.",
   },
   {
     keywords: ["master", "agent", "sub", "sub-agent", "template", "how"],
-    reply: "I am the Master Agent. When you give me an intent, I interpret it and select specific 'templates' (like a Dip Buyer or Portfolio Rebalancer). I then deploy these as sub-agents. They monitor conditions 24/7 and send you proposals via Telegram when their conditions are met.",
+    reply: "I am the Master Agent. When you give me an intent, I interpret it and select specific templates, like Dip Buyer or Portfolio Rebalancer. I then deploy these as sub-agents. They monitor conditions and send you proposals via Telegram when their conditions are met.",
   },
   {
     keywords: ["hermes", "nous", "llm", "ai", "model"],
-    reply: "My reasoning engine is built on Hermes by NousResearch. I use this advanced LLM to interpret your plain-English intents and map them to precise, deterministic smart contract executions via Base MCP.",
+    reply: "My reasoning layer is designed around Hermes-style agents. I interpret plain-language intent and map it to deterministic NEMESIS templates before any proposal reaches your wallet.",
   },
   {
     keywords: ["base", "mcp", "chain", "network", "coinbase"],
-    reply: "We are built natively on Base. We utilize the Base MCP (Model Context Protocol) to seamlessly bridge advanced AI reasoning with secure, low-latency on-chain execution.",
+    reply: "NEMESIS is built for Base. Base MCP is the intended proposal and transaction-building layer, with final approval staying in your wallet.",
   },
 ];
 
 const FALLBACK_REPLIES = [
-  "I am designed to execute your will on-chain. While I process that, what else would you like to know about our architecture?",
+  "I am designed to turn intent into approval-first proposals. What else would you like to know about the architecture?",
   "An interesting query. NEMESIS fundamentally changes how you interact with DeFi by abstracting the complexity into plain-language intents.",
   "I focus primarily on orchestrating market strategies. If you want to see me in action, you can deploy a live agent from the dashboard.",
 ];
@@ -134,14 +134,14 @@ export function ChatWithNemesis() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3 p-6 sm:flex-row bg-nm-surface">
         <label htmlFor={inputId} className="sr-only">
-          Ask Nemesis
+          Ask NEMESIS
         </label>
         <input
           id={inputId}
           type="text"
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          placeholder="e.g. What is Nemesis? Are my funds safe?"
+          placeholder="e.g. What is NEMESIS? Are my funds safe?"
           className="flex-1 border border-nm-border bg-nm-bg px-4 py-3 text-sm text-nm-fg placeholder:text-nm-muted focus:border-nm-fg focus:outline-none"
         />
         <Button type="submit" variant="primary" magnetic disabled={stage === "thinking" || !input.trim()}>

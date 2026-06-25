@@ -12,12 +12,21 @@ import { base, baseSepolia } from "wagmi/chains";
  * NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID. The placeholder below is enough
  * for local development but should be replaced before deploying.
  */
+const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+if (process.env.NODE_ENV === "production") {
+  if (!walletConnectProjectId || walletConnectProjectId === "00000000000000000000000000000000") {
+    throw new Error("NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID must be set to the NEMESIS WalletConnect project ID in production.");
+  }
+}
+
 export const wagmiConfig = getDefaultConfig({
   appName: "NEMESIS",
-  appDescription: "Autonomous Agents on Base. Chaos in, Order out.",
-  appUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-  appIcon: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/apple-icon.png`,
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "00000000000000000000000000000000",
+  appDescription: "Autonomous agents on Base. Chaos in, order out.",
+  appUrl: siteUrl,
+  appIcon: `${siteUrl}/assets/nemesis-icon.png`,
+  projectId: walletConnectProjectId ?? "00000000000000000000000000000000",
   chains: [base, baseSepolia],
   ssr: true,
 });

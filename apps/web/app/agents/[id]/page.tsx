@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { AgentStatusToggle } from "@/components/AgentStatusToggle";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
@@ -8,23 +8,24 @@ import { FragmentDivider } from "@/components/FragmentDivider";
 import { ProposalRecordRow } from "@/components/ProposalRecordRow";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { getAgent, listProposalsForAgent } from "@nemesis/db";
+import { getSession } from "@/lib/auth";
 import { getTemplateById } from "@nemesis/templates";
 
 interface AgentDetailPageProps {
   params: { id: string };
 }
 
-// Reads live from SQLite — pause/resume mutate this row, and a scheduler
+// Reads live from Postgres — pause/resume mutate this row, and a scheduler
 // can add new proposals at any time, so this can never be statically
 // cached. See CONTEXT.md, "What changed in the database pass".
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: AgentDetailPageProps) {
-  const agent = await getAgent(params.id);
+export async function generateMetadata() {
   return {
-    title: agent ? `${agent.name} — NEMESIS` : "Agent not found — NEMESIS",
+    title: "agent - NEMESIS",
   };
 }
+
 
 const STATUS_STYLES = {
   active: "text-nm-resolve border-nm-resolve",
@@ -39,8 +40,12 @@ const STATUS_LABELS = {
 } as const;
 
 export default async function AgentDetailPage({ params }: AgentDetailPageProps) {
+  const session = await getSession();
+  if (!session.address) redirect("/");
+
   const agent = await getAgent(params.id);
   if (!agent) notFound();
+  if (agent.walletAddress.toLowerCase() !== session.address.toLowerCase()) notFound();
 
   const template = getTemplateById(agent.templateId);
   const proposals = await listProposalsForAgent(agent.id);

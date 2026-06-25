@@ -6,11 +6,12 @@ import {
   createProposal,
   getAgent,
   getProposal,
-  listAgents,
+  getWalletForTelegramChatId,
+  listAgentsForWallet,
   skipProposal,
   type Proposal,
 } from "@nemesis/db";
-import { formatProposalMessage } from "../lib/format.js";
+import { escapeHtml, formatProposalMessage } from "../lib/format.js";
 
 /**
  * Sends a proposal to a chat with Approve / Skip buttons. Call this from
@@ -40,11 +41,17 @@ export async function sendProposal(
  * running Hermes instance.
  */
 export async function demoCommand(ctx: Context): Promise<void> {
-  const agents = await listAgents();
+  const wallet = await getWalletForTelegramChatId(String(ctx.chat?.id ?? ""));
+  if (!wallet) {
+    await ctx.reply("Link this chat from the dashboard first with /link <code>.");
+    return;
+  }
+
+  const agents = await listAgentsForWallet(wallet);
   const agent = agents[0];
 
   if (!agent) {
-    await ctx.reply("No agents in the database yet. Run the seed script first.");
+    await ctx.reply("No agents in your wallet yet. Deploy one from the dashboard first.");
     return;
   }
 
@@ -92,6 +99,19 @@ export function registerApprovalHandlers(
       return;
     }
 
+    if (proposal.status !== "pending") {
+      await ctx.answerCbQuery(`Already ${proposal.status}`);
+      await ctx.editMessageReplyMarkup(undefined).catch(() => undefined);
+      return;
+    }
+
+    const wallet = await getWalletForTelegramChatId(String(ctx.chat?.id ?? ""));
+    const agent = await getAgent(proposal.agentId);
+    if (!wallet || !agent || agent.walletAddress.toLowerCase() !== wallet.toLowerCase()) {
+      await ctx.answerCbQuery("Not authorized");
+      return;
+    }
+
     // Phase 6: Market Expiry Guard (24 hours)
     const proposalAgeMs = Date.now() - new Date(proposal.createdAt).getTime();
     if (proposalAgeMs > 24 * 60 * 60 * 1000) {
@@ -109,16 +129,15 @@ export function registerApprovalHandlers(
       await options.onApprove(updated, ctx);
     }
 
-    const agent = await getAgent(proposal.agentId);
     await ctx.editMessageReplyMarkup(undefined);
     await ctx.reply(
       [
         `<code>&gt; approved</code>`,
-        agent ? `agent: <b>${agent.name}</b>` : "",
+        agent ? `agent: <b>${escapeHtml(agent.name)}</b>` : "",
         `proposal: <code>${proposalId}</code>`,
         ``,
         `<b>Transaction Ready for Signature:</b>`,
-        updated?.unsignedTxPayload ? `<pre>${updated.unsignedTxPayload}</pre>` : `<i>No payload generated</i>`,
+        updated?.unsignedTxPayload ? `<pre>${escapeHtml(updated.unsignedTxPayload)}</pre>` : `<i>No payload generated</i>`,
         ``,
         `<i>[WalletConnect Deep Link generation handled via Phase 4 / Web App]</i>`
       ]
@@ -135,6 +154,19 @@ export function registerApprovalHandlers(
     const proposal = await getProposal(proposalId);
     if (!proposal) {
       await ctx.answerCbQuery("Proposal not found");
+      return;
+    }
+
+    if (proposal.status !== "pending") {
+      await ctx.answerCbQuery(`Already ${proposal.status}`);
+      await ctx.editMessageReplyMarkup(undefined).catch(() => undefined);
+      return;
+    }
+
+    const wallet = await getWalletForTelegramChatId(String(ctx.chat?.id ?? ""));
+    const agent = await getAgent(proposal.agentId);
+    if (!wallet || !agent || agent.walletAddress.toLowerCase() !== wallet.toLowerCase()) {
+      await ctx.answerCbQuery("Not authorized");
       return;
     }
 

@@ -59,14 +59,20 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
     if (!proposal.unsignedTxPayload) return;
     try {
       setVerificationError(null);
-      const payload = JSON.parse(proposal.unsignedTxPayload);
+      const payload = JSON.parse(proposal.unsignedTxPayload) as { to?: string; data?: string; value?: string; chainId?: number };
+      if (payload.chainId !== 8453 || !payload.to || !/^0x[a-fA-F0-9]{40}$/.test(payload.to)) {
+        throw new Error("Invalid transaction payload");
+      }
+      if (payload.data && !/^0x[a-fA-F0-9]*$/.test(payload.data)) {
+        throw new Error("Invalid transaction calldata");
+      }
       sendTransaction({
-        to: payload.to,
-        data: payload.data,
+        to: payload.to as `0x${string}`,
+        data: (payload.data ?? "0x") as `0x${string}`,
         value: payload.value ? BigInt(payload.value) : undefined,
       });
-    } catch (err: any) {
-      setVerificationError("Failed to parse transaction payload");
+    } catch (err) {
+      setVerificationError(err instanceof Error ? err.message : "Failed to parse transaction payload");
     }
   };
 
@@ -85,7 +91,7 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
     ? "Broadcasting..."
     : isVerifying
     ? "Verifying..."
-    : "Sign & Execute";
+    : "Sign in wallet";
 
   return (
     <div className="flex flex-col items-end gap-1">

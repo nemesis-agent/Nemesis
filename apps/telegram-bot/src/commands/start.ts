@@ -6,7 +6,7 @@ const WELCOME_UNLINKED = [
   "<code>[ NEMESIS ]</code>",
   "<b>the market's reckoning</b>",
   "",
-  "I deliver agent proposals here. Approve or skip each one — nothing executes without you.",
+  "I deliver agent proposals here. Approve or skip each one — nothing moves without your approval.",
   "",
   "<b>First, link your wallet:</b>",
   "1. Open the NEMESIS dashboard",

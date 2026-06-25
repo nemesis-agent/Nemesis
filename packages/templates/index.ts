@@ -4,7 +4,7 @@ import type { AgentTemplate } from "./types";
  * The NEMESIS template library.
  *
  * Every template follows the same shape: one condition, one proposed action,
- * executed through Base MCP, always pending user approval. Templates are
+ * proposed through Base MCP, always pending user approval. Templates are
  * intentionally scoped to single-condition logic — see ARCHITECTURE.md for
  * why compound strategies (looping, delta-neutral, perps) were cut from v1.
  */
@@ -97,7 +97,7 @@ export const TEMPLATES: AgentTemplate[] = [
       },
     ],
     approvalSummary:
-      "This agent watches for new pools on Aerodrome and Uniswap. When a new pool matching {tokenWhitelist} launches with at least {minInitialLiquidity} USDC liquidity, it proposes a {allocationPerPool} USDC swap into that pool. You approve each entry before it executes.",
+      "This agent watches for new pools on Aerodrome and Uniswap. When a new pool matching {tokenWhitelist} launches with at least {minInitialLiquidity} USDC liquidity, it proposes a {allocationPerPool} USDC swap into that pool. You approve each entry before anything moves.",
     riskNote:
       "Brand-new pools have no price history — the price you enter at can be wildly different from where it settles seconds later, and liquidity can be pulled entirely. Initial liquidity above your threshold does not mean the pool is safe, only that it passed one filter.",
   },

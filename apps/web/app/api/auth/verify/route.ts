@@ -1,7 +1,7 @@
 import { SiweMessage } from "siwe";
 import { NextResponse } from "next/server";
 
-import { getSession } from "@/lib/auth";
+import { expectedRequestOrigin, getSession, rejectCrossOrigin } from "@/lib/auth";
 
 /**
  * POST /api/auth/verify
@@ -13,6 +13,9 @@ import { getSession } from "@/lib/auth";
  * Body: { message: string; signature: string }
  */
 export async function POST(request: Request) {
+  const originError = rejectCrossOrigin(request);
+  if (originError) return originError;
+
   const session = await getSession();
 
   let body: { message?: string; signature?: string } | null = null;
@@ -38,14 +41,16 @@ export async function POST(request: Request) {
     );
   }
 
-  // Parse and verify the SIWE message, including nonce matching.
+  // Parse and verify the SIWE message, including nonce/domain matching.
   const siweMessage = new SiweMessage(message);
+  const expected = expectedRequestOrigin(request);
   const { data: fields, error } = await siweMessage.verify({
     signature,
     nonce: session.nonce,
+    domain: expected.domain,
   });
 
-  if (error || !fields.address) {
+  if (error || !fields.address || fields.uri !== expected.origin || fields.chainId !== 8453) {
     // Destroy nonce regardless to prevent brute-forcing.
     session.nonce = undefined;
     await session.save();

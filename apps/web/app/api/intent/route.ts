@@ -13,8 +13,11 @@ const publicClient = createPublicClient({
   transport: http(),
 });
 
+const openrouterApiKey = process.env.OPENROUTER_API_KEY;
+const openrouterModel = process.env.OPENROUTER_MODEL ?? "xiaomi/mimo-v2.5";
+
 const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY || "sk-dummy-key-for-local-dev",
+  apiKey: openrouterApiKey || "missing-openrouter-api-key",
 });
 
 export async function POST(request: Request) {
@@ -28,9 +31,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
+  if (!openrouterApiKey) {
+    return NextResponse.json({ error: "Master Agent is not configured." }, { status: 503 });
+  }
+
   const { messages } = body ?? {};
-  if (!messages || !Array.isArray(messages) || messages.length === 0) {
-    return NextResponse.json({ error: "Messages array is required." }, { status: 400 });
+  if (!messages || !Array.isArray(messages) || messages.length === 0 || messages.length > 20) {
+    return NextResponse.json({ error: "Messages array is required and must contain 1-20 messages." }, { status: 400 });
+  }
+
+  const safeMessages = messages.map((message) => {
+    if (
+      !message ||
+      (message.role !== "user" && message.role !== "agent" && message.role !== "assistant") ||
+      typeof message.content !== "string" ||
+      message.content.length > 2_000
+    ) {
+      return null;
+    }
+
+    return {
+      role: message.role === "agent" ? "assistant" : message.role,
+      content: message.content,
+    } as const;
+  });
+
+  if (safeMessages.some((message) => message === null)) {
+    return NextResponse.json({ error: "Invalid message format." }, { status: 400 });
   }
 
   try {
@@ -61,10 +88,10 @@ Task: Analyze the conversation history. Select the most appropriate template(s) 
 
     // 4. Master Agent Inference (Structured JSON)
     const { object } = await generateObject({
-      model: openrouter("anthropic/claude-3.5-sonnet"), // Using Claude 3.5 Sonnet via OpenRouter for high precision JSON
+      model: openrouter(openrouterModel),
       schema: intentSchema,
       system: systemPrompt,
-      messages: messages,
+      messages: safeMessages as Array<{ role: "user" | "assistant"; content: string }>,
     });
 
     return NextResponse.json({ intent: object }, { status: 200 });

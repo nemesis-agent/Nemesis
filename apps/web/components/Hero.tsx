@@ -65,7 +65,7 @@ export function Hero() {
             style={{ animationDelay: "220ms" }}
           >
             Deploy autonomous agents that watch the market and propose action on your behalf.
-            Built on Hermes, executed through Base MCP. Every transaction waits for your
+            Built on Hermes, proposed through Base MCP. Every transaction waits for your
             approval — nothing moves without you.
           </p>
 

@@ -15,7 +15,7 @@ const STEPS = [
   {
     label: "03",
     title: "Approve every action",
-    body: "Deployed agents monitor their conditions and propose transactions through Base MCP. Proposals arrive on Telegram or the dashboard. Nothing executes until you approve it.",
+    body: "Deployed agents monitor their conditions and propose transactions through Base MCP. Proposals arrive on Telegram or the dashboard. Nothing moves until your wallet approves it.",
   },
 ];
 

@@ -86,13 +86,16 @@ export async function createProposal(input: CreateProposalInput): Promise<Propos
 }
 
 export async function approveProposal(id: string, txHash?: string): Promise<Proposal | undefined> {
-  await pool.query("UPDATE proposals SET status = 'approved', tx_hash = $1 WHERE id = $2", [txHash ?? null, id]);
-  return getProposal(id);
+  const query = txHash
+    ? "UPDATE proposals SET status = 'approved', tx_hash = $1 WHERE id = $2 AND status IN ('pending', 'approved') AND tx_hash IS NULL"
+    : "UPDATE proposals SET status = 'approved', tx_hash = $1 WHERE id = $2 AND status = 'pending'";
+  const { rowCount } = await pool.query(query, [txHash ?? null, id]);
+  return rowCount ? getProposal(id) : undefined;
 }
 
 export async function skipProposal(id: string): Promise<Proposal | undefined> {
-  await pool.query("UPDATE proposals SET status = 'skipped' WHERE id = $1", [id]);
-  return getProposal(id);
+  const { rowCount } = await pool.query("UPDATE proposals SET status = 'skipped' WHERE id = $1 AND status = 'pending'", [id]);
+  return rowCount ? getProposal(id) : undefined;
 }
 
 export async function pruneOldProposals(daysOld: number = 7): Promise<number> {

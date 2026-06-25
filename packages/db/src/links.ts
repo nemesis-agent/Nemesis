@@ -1,3 +1,5 @@
+import { randomInt } from "node:crypto";
+
 import { pool } from "./client.js";
 
 const LINK_CODE_TTL_MINUTES = 10;
@@ -6,7 +8,7 @@ const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I — avoi
 function generateCode(length = 6): string {
   let code = "";
   for (let i = 0; i < length; i++) {
-    code += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
+    code += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)];
   }
   return code;
 }
@@ -37,18 +39,47 @@ interface LinkCodeRow {
 }
 
 export async function consumeLinkCode(code: string, telegramChatId: string): Promise<ConsumeLinkResult> {
-  const { rows } = await pool.query("SELECT * FROM link_codes WHERE code = $1", [code]);
-  const row = rows[0] as LinkCodeRow | undefined;
+  const existing = await pool.query("SELECT * FROM link_codes WHERE code = $1", [code]);
+  const row = existing.rows[0] as LinkCodeRow | undefined;
 
   if (!row) return { ok: false, reason: "not-found" };
   if (row.used_at) return { ok: false, reason: "already-used" };
   if (new Date(row.expires_at).getTime() < Date.now()) return { ok: false, reason: "expired" };
 
-  await pool.query("UPDATE link_codes SET used_at = CURRENT_TIMESTAMP WHERE code = $1", [code]);
-  await pool.query("UPDATE users SET telegram_chat_id = NULL WHERE telegram_chat_id = $1 AND wallet_address != $2", [telegramChatId, row.wallet_address]);
-  await pool.query("UPDATE users SET telegram_chat_id = $1 WHERE wallet_address = $2", [telegramChatId, row.wallet_address]);
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const consumed = await client.query(
+      `UPDATE link_codes
+       SET used_at = CURRENT_TIMESTAMP
+       WHERE code = $1 AND used_at IS NULL AND expires_at > CURRENT_TIMESTAMP
+       RETURNING wallet_address`,
+      [code],
+    );
 
-  return { ok: true, walletAddress: row.wallet_address };
+    const consumedRow = consumed.rows[0] as { wallet_address: string } | undefined;
+    if (!consumedRow) {
+      await client.query("ROLLBACK");
+      return { ok: false, reason: "already-used" };
+    }
+
+    await client.query("UPDATE users SET telegram_chat_id = NULL WHERE telegram_chat_id = $1 AND wallet_address != $2", [
+      telegramChatId,
+      consumedRow.wallet_address,
+    ]);
+    await client.query("UPDATE users SET telegram_chat_id = $1 WHERE wallet_address = $2", [
+      telegramChatId,
+      consumedRow.wallet_address,
+    ]);
+    await client.query("COMMIT");
+
+    return { ok: true, walletAddress: consumedRow.wallet_address };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function getTelegramChatIdForWallet(walletAddress: string): Promise<string | undefined> {

@@ -1,3 +1,7 @@
+# Phase 5 Research - Historical
+
+This note is historical. The keyword matcher has already been removed; current intent handling lives in `apps/web/app/api/intent/route.ts` and `apps/web/lib/intent-schema.ts`.
+
 # Phase 5: Master Agent (LLM Intent Layer) Research & Audit
 
 **Date:** 26 June 2026

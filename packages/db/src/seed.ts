@@ -12,31 +12,30 @@ async function main() {
     templateId: "auto-compound",
     name: "AERO Auto-Compounder",
     parameters: {
-      pool: "0x...",
-      frequency: "daily",
-      minYieldUsd: 50,
+      minClaimAmount: 5,
+      source: "aerodrome-lp-fees",
     },
   });
 
   const dipBuyer = await createAgent({
     walletAddress: MOCK_WALLET,
     templateId: "dip-buyer",
-    name: "ETH Dip Sniper",
+    name: "ETH Dip Buyer",
     parameters: {
-      token: "ETH",
-      dropPercentage: 5,
-      amountUsd: 500,
+      dipPercent: 5,
+      buyAmount: 50,
+      cooldownHours: 12,
     },
   });
 
-  const newListing = await createAgent({
+  const poolSniper = await createAgent({
     walletAddress: MOCK_WALLET,
-    templateId: "new-listing",
-    name: "Aerodrome New Pools",
+    templateId: "pool-sniper",
+    name: "Aerodrome Pool Sniper",
     parameters: {
-      dex: "Aerodrome",
-      minLiquidityUsd: 100000,
-      amountUsd: 100,
+      minInitialLiquidity: 100000,
+      allocationPerPool: 100,
+      tokenWhitelist: "eth-pairs-only",
     },
   });
 
@@ -54,8 +53,8 @@ async function main() {
   });
   await approveProposal(prop1.id, "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef");
 
-  const prop2 = await createProposal({
-    agentId: newListing.id,
+  await createProposal({
+    agentId: poolSniper.id,
     title: "Buy newly listed DEGEN",
     details: [
       { label: "Token", value: "DEGEN" },
