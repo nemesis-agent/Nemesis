@@ -17,9 +17,16 @@
     "predev:bot": "npm run build:db",
     "prebuild:bot": "npm run build:db",
     "dev:bot": "npm run dev --workspace=@nemesis/telegram-bot",
-    "build:bot": "npm run build --workspace=@nemesis/telegram-bot"
+    "build:bot": "npm run build --workspace=@nemesis/telegram-bot",
+    "start:web": "npm run start --workspace=@nemesis/web",
+    "start:bot": "npm run start --workspace=@nemesis/telegram-bot",
+    "start": "concurrently \"npm run start:web\" \"npm run start:bot\"",
+    "build": "npm run build:web && npm run build:bot"
   },
   "engines": {
     "node": ">=22.5.0"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3"
   }
 }
