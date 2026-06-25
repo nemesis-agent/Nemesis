@@ -14,6 +14,9 @@ import { base, baseSepolia } from "wagmi/chains";
  */
 export const wagmiConfig = getDefaultConfig({
   appName: "NEMESIS",
+  appDescription: "Autonomous Agents on Base. Chaos in, Order out.",
+  appUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  appIcon: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/apple-icon.png`,
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "00000000000000000000000000000000",
   chains: [base, baseSepolia],
   ssr: true,
