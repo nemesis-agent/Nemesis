@@ -11,12 +11,12 @@ import { getAgent, setAgentStatus } from "@nemesis/db";
  * deployment" for what that wiring looks like.
  */
 export async function POST(_request: Request, { params }: { params: { id: string } }) {
-  const existing = getAgent(params.id);
+  const existing = await getAgent(params.id);
   if (!existing) {
     return NextResponse.json({ error: "Agent not found" }, { status: 404 });
   }
 
-  const updated = setAgentStatus(params.id, "paused");
+  const updated = await setAgentStatus(params.id, "paused");
 
   revalidatePath(`/agents/${params.id}`);
   revalidatePath("/dashboard");

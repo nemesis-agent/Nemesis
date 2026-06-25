@@ -41,7 +41,7 @@ const WELCOME_LINKED = (short: string) => [
 
 export async function startCommand(ctx: Context): Promise<void> {
   const chatId = String(ctx.chat?.id ?? "");
-  const wallet = getWalletForTelegramChatId(chatId);
+  const wallet = await getWalletForTelegramChatId(chatId);
 
   if (wallet) {
     const short = `${wallet.slice(0, 6)}...${wallet.slice(-4)}`;

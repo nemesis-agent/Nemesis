@@ -13,6 +13,6 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const wallet = searchParams.get("wallet");
 
-  const agents = wallet ? listAgentsForWallet(wallet) : listAgents();
+  const agents = wallet ? await listAgentsForWallet(wallet) : await listAgents();
   return NextResponse.json({ agents });
 }

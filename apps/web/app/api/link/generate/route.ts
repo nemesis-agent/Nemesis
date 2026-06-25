@@ -17,6 +17,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "walletAddress is required" }, { status: 400 });
   }
 
-  const { code, expiresAt } = generateLinkCode(walletAddress);
+  const { code, expiresAt } = await generateLinkCode(walletAddress);
   return NextResponse.json({ code, expiresAt });
 }

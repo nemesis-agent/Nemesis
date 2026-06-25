@@ -28,7 +28,7 @@ export async function linkCommand(ctx: Context): Promise<void> {
     return;
   }
 
-  const result = consumeLinkCode(code.toUpperCase(), chatId);
+  const result = await consumeLinkCode(code.toUpperCase(), chatId);
 
   if (!result.ok) {
     const messages: Record<string, string> = {
@@ -61,7 +61,7 @@ export async function unlinkCommand(ctx: Context): Promise<void> {
   // reverse lookup. getTelegramChatIdForWallet needs the wallet — so we
   // need getWalletForTelegramChatId which is exported from @nemesis/db.
   const { getWalletForTelegramChatId, db } = await import("@nemesis/db");
-  const wallet = getWalletForTelegramChatId(chatId);
+  const wallet = await getWalletForTelegramChatId(chatId);
 
   if (!wallet) {
     await ctx.reply("This chat is not linked to any wallet.");

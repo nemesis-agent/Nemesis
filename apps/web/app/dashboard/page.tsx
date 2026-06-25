@@ -12,8 +12,8 @@ import { listAgents } from "@nemesis/db";
 // statically cached. See CONTEXT.md, "What changed in the database pass".
 export const dynamic = "force-dynamic";
 
-export default function DashboardPage() {
-  const agents = listAgents();
+export default async function DashboardPage() {
+  const agents = await listAgents();
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-16">

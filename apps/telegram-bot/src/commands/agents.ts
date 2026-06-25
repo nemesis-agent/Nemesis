@@ -9,8 +9,8 @@ export async function agentsCommand(ctx: Context): Promise<void> {
   // Look up the wallet linked to this chat — if found, show only that
   // wallet's agents; otherwise, fall back to all agents (only while
   // the linking flow is not yet enforced in production).
-  const wallet = getWalletForTelegramChatId(chatId);
-  const agents = wallet ? listAgentsForWallet(wallet) : listAgents();
+  const wallet = await getWalletForTelegramChatId(chatId);
+  const agents = wallet ? await listAgentsForWallet(wallet) : await listAgents();
 
   if (agents.length === 0) {
     await ctx.reply(

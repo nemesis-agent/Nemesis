@@ -19,8 +19,8 @@ interface AgentDetailPageProps {
 // cached. See CONTEXT.md, "What changed in the database pass".
 export const dynamic = "force-dynamic";
 
-export function generateMetadata({ params }: AgentDetailPageProps) {
-  const agent = getAgent(params.id);
+export async function generateMetadata({ params }: AgentDetailPageProps) {
+  const agent = await getAgent(params.id);
   return {
     title: agent ? `${agent.name} — NEMESIS` : "Agent not found — NEMESIS",
   };
@@ -38,12 +38,12 @@ const STATUS_LABELS = {
   "awaiting-approval": "awaiting approval",
 } as const;
 
-export default function AgentDetailPage({ params }: AgentDetailPageProps) {
-  const agent = getAgent(params.id);
+export default async function AgentDetailPage({ params }: AgentDetailPageProps) {
+  const agent = await getAgent(params.id);
   if (!agent) notFound();
 
   const template = getTemplateById(agent.templateId);
-  const proposals = listProposalsForAgent(agent.id);
+  const proposals = await listProposalsForAgent(agent.id);
 
   const approvedCount = proposals.filter((p) => p.status === "approved").length;
   const pendingCount = proposals.filter((p) => p.status === "pending").length;

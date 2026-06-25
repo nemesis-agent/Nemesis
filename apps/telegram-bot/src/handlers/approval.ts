@@ -15,7 +15,7 @@ import { formatProposalMessage } from "../lib/format.js";
 /**
  * Sends a proposal to a chat with Approve / Skip buttons. Call this from
  * your agent runtime when a sub-agent's condition is met, passing the
- * Telegram chat ID retrieved via getTelegramChatIdForWallet(). See
+ * Telegram chat ID retrieved via await getTelegramChatIdForWallet(). See
  * ARCHITECTURE.md, "Sub-agents — propose via Base MCP".
  */
 export async function sendProposal(
@@ -40,7 +40,7 @@ export async function sendProposal(
  * running Hermes instance.
  */
 export async function demoCommand(ctx: Context): Promise<void> {
-  const agents = listAgents();
+  const agents = await listAgents();
   const agent = agents[0];
 
   if (!agent) {
@@ -86,20 +86,20 @@ export function registerApprovalHandlers(
     const proposalId = ctx.match[1];
     if (!proposalId) return;
 
-    const proposal = getProposal(proposalId);
+    const proposal = await getProposal(proposalId);
     if (!proposal) {
       await ctx.answerCbQuery("Proposal not found");
       return;
     }
 
-    const updated = approveProposal(proposalId);
+    const updated = await approveProposal(proposalId);
     await ctx.answerCbQuery("approved");
 
     if (updated && options.onApprove) {
       await options.onApprove(updated, ctx);
     }
 
-    const agent = getAgent(proposal.agentId);
+    const agent = await getAgent(proposal.agentId);
     await ctx.editMessageReplyMarkup(undefined);
     await ctx.reply(
       [
@@ -118,13 +118,13 @@ export function registerApprovalHandlers(
     const proposalId = ctx.match[1];
     if (!proposalId) return;
 
-    const proposal = getProposal(proposalId);
+    const proposal = await getProposal(proposalId);
     if (!proposal) {
       await ctx.answerCbQuery("Proposal not found");
       return;
     }
 
-    const updated = skipProposal(proposalId);
+    const updated = await skipProposal(proposalId);
     await ctx.answerCbQuery("skipped");
 
     if (updated && options.onSkip) {

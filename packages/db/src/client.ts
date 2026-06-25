@@ -1,40 +1,31 @@
-import { DatabaseSync } from "node:sqlite";
-import { existsSync, mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { Pool } from "pg";
 
-/**
- * Resolves to the same file regardless of which app opens it, as long as
- * each app is run from its own directory via the npm workspace scripts
- * (apps/web, apps/telegram-bot — both exactly two levels below the repo
- * root). Override with NEMESIS_DB_PATH for production deployments where
- * the two apps run from different working directories or you want the
- * database on a specific persistent volume.
- */
-const DEFAULT_DB_PATH = resolve(process.cwd(), "../../data/nemesis.db");
-const DB_PATH = process.env.NEMESIS_DB_PATH ?? DEFAULT_DB_PATH;
+const DATABASE_URL = process.env.DATABASE_URL;
 
-mkdirSync(dirname(DB_PATH), { recursive: true });
+if (!DATABASE_URL) {
+  console.warn("NEMESIS: DATABASE_URL is not set. The Supabase Postgres migration requires this variable.");
+}
 
-const isNewDatabase = !existsSync(DB_PATH);
-
-export const db = new DatabaseSync(DB_PATH);
-
-// SQLite enforces foreign keys only when explicitly turned on per connection.
-db.exec("PRAGMA foreign_keys = ON;");
+export const pool = new Pool({
+  connectionString: DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS users (
   wallet_address    TEXT PRIMARY KEY,
   telegram_chat_id  TEXT UNIQUE,
-  created_at        TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS link_codes (
   code              TEXT PRIMARY KEY,
   wallet_address    TEXT NOT NULL,
-  expires_at        TEXT NOT NULL,
-  used_at           TEXT,
-  created_at        TEXT NOT NULL DEFAULT (datetime('now'))
+  expires_at        TIMESTAMP WITH TIME ZONE NOT NULL,
+  used_at           TIMESTAMP WITH TIME ZONE,
+  created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS agents (
@@ -44,9 +35,9 @@ CREATE TABLE IF NOT EXISTS agents (
   name              TEXT NOT NULL,
   status            TEXT NOT NULL CHECK (status IN ('active', 'paused', 'awaiting-approval')),
   parameters        TEXT NOT NULL DEFAULT '{}',
-  last_checked_at   TEXT,
+  last_checked_at   TIMESTAMP WITH TIME ZONE,
   last_event        TEXT,
-  created_at        TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS proposals (
@@ -58,7 +49,7 @@ CREATE TABLE IF NOT EXISTS proposals (
   estimated_gas_usd   TEXT NOT NULL,
   status              TEXT NOT NULL CHECK (status IN ('pending', 'approved', 'skipped')),
   tx_hash             TEXT,
-  created_at          TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_agents_wallet ON agents(wallet_address);
@@ -66,6 +57,10 @@ CREATE INDEX IF NOT EXISTS idx_proposals_agent ON proposals(agent_id);
 CREATE INDEX IF NOT EXISTS idx_link_codes_wallet ON link_codes(wallet_address);
 `;
 
-db.exec(SCHEMA);
+// Initialize schema on import
+if (DATABASE_URL) {
+  pool.query(SCHEMA).catch(err => {
+    console.error("Failed to initialize database schema:", err);
+  });
+}
 
-export { DB_PATH, isNewDatabase };
