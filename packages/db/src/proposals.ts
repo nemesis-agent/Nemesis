@@ -18,6 +18,7 @@ export interface Proposal {
   estimatedGasUsd: string;
   status: ProposalStatus;
   txHash: string | null;
+  unsignedTxPayload: string | null;
   createdAt: string;
 }
 
@@ -30,6 +31,7 @@ interface ProposalRow {
   estimated_gas_usd: string;
   status: ProposalStatus;
   tx_hash: string | null;
+  unsigned_tx_payload: string | null;
   created_at: Date;
 }
 
@@ -43,6 +45,7 @@ function rowToProposal(row: ProposalRow): Proposal {
     estimatedGasUsd: row.estimated_gas_usd,
     status: row.status,
     txHash: row.tx_hash,
+    unsignedTxPayload: row.unsigned_tx_payload,
     createdAt: row.created_at.toISOString(),
   };
 }
@@ -64,14 +67,15 @@ export interface CreateProposalInput {
   details: ProposalDetail[];
   proposedAction: string;
   estimatedGasUsd: string;
+  unsignedTxPayload?: string;
 }
 
 export async function createProposal(input: CreateProposalInput): Promise<Proposal> {
   const id = `prop_${randomUUID().slice(0, 8)}`;
   await pool.query(
-    `INSERT INTO proposals (id, agent_id, title, details, proposed_action, estimated_gas_usd, status)
-     VALUES ($1, $2, $3, $4, $5, $6, 'pending')`,
-    [id, input.agentId, input.title, JSON.stringify(input.details), input.proposedAction, input.estimatedGasUsd]
+    `INSERT INTO proposals (id, agent_id, title, details, proposed_action, estimated_gas_usd, unsigned_tx_payload, status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')`,
+    [id, input.agentId, input.title, JSON.stringify(input.details), input.proposedAction, input.estimatedGasUsd, input.unsignedTxPayload ?? null]
   );
 
   const created = await getProposal(id);

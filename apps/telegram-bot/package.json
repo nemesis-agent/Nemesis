@@ -9,6 +9,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@coinbase/agentkit": "^0.10.4",
     "@nemesis/db": "*",
     "@nemesis/templates": "*",
     "dotenv": "^16.4.5",

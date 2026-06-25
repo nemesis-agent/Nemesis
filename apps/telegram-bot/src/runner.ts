@@ -47,6 +47,7 @@ async function runCycle(bot: Telegraf) {
     // For Phase 2, we hardcode the logic for our top 2 high-volume templates.
     let conditionMet = false;
     let actionSummary = "";
+    let unsignedTxPayload = "";
 
     if (agent.templateId === "dip-buyer") {
       const targetDrop = Number(agent.parameters["targetDrop"] || 5);
@@ -59,6 +60,15 @@ async function runCycle(bot: Telegraf) {
       if (currentPrice && currentPrice <= baselinePrice * (1 - targetDrop / 100)) {
         conditionMet = true;
         actionSummary = `ETH dropped below ${targetDrop}% from baseline. Current price: $${currentPrice.toFixed(2)}. Ready to buy ${purchaseAmount} ETH.`;
+        
+        // Construct stateless AgentKit / Base payload for Uniswap Swap
+        unsignedTxPayload = JSON.stringify({
+          network: "base-mainnet",
+          to: "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD", // Uniswap V3 Router
+          value: (purchaseAmount * 1e18).toString(),
+          data: "0x...", // In a full implementation, this is encoded via actionProvider
+          chainId: 8453
+        });
       }
     } 
     
@@ -70,6 +80,15 @@ async function runCycle(bot: Telegraf) {
       if (currentPrice && currentPrice >= limitPrice) {
         conditionMet = true;
         actionSummary = `ETH reached limit price of $${limitPrice}. Current price: $${currentPrice.toFixed(2)}. Ready to sell ${sellAmount} ETH.`;
+        
+        // Construct stateless AgentKit / Base payload for ERC20 Transfer/Swap
+        unsignedTxPayload = JSON.stringify({
+          network: "base-mainnet",
+          to: "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD",
+          value: "0",
+          data: "0x...", // In a full implementation, this is encoded via actionProvider
+          chainId: 8453
+        });
       }
     }
 
@@ -87,6 +106,7 @@ async function runCycle(bot: Telegraf) {
         title: "Action Proposed",
         proposedAction: actionSummary,
         estimatedGasUsd: "$0.10",
+        unsignedTxPayload,
         details: [
           { label: "Trigger", value: "Price target reached" },
           { label: "Current Price", value: `$${prices.ETH_USD?.toFixed(2)}` },

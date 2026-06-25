@@ -106,7 +106,11 @@ export function registerApprovalHandlers(
         `<code>&gt; approved</code>`,
         agent ? `agent: <b>${agent.name}</b>` : "",
         `proposal: <code>${proposalId}</code>`,
-        "submitting to base mcp when execution layer is wired — see ARCHITECTURE.md",
+        ``,
+        `<b>Transaction Ready for Signature:</b>`,
+        updated?.unsignedTxPayload ? `<pre>${updated.unsignedTxPayload}</pre>` : `<i>No payload generated</i>`,
+        ``,
+        `<i>[WalletConnect Deep Link generation handled via Phase 4 / Web App]</i>`
       ]
         .filter(Boolean)
         .join("\n"),

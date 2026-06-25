@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS proposals (
   estimated_gas_usd   TEXT NOT NULL,
   status              TEXT NOT NULL CHECK (status IN ('pending', 'approved', 'skipped')),
   tx_hash             TEXT,
+  unsigned_tx_payload TEXT,
   created_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -59,8 +60,23 @@ CREATE INDEX IF NOT EXISTS idx_link_codes_wallet ON link_codes(wallet_address);
 
 // Initialize schema on import
 if (DATABASE_URL) {
-  pool.query(SCHEMA).catch(err => {
-    console.error("Failed to initialize database schema:", err);
-  });
+  pool.query(SCHEMA)
+    .then(() => {
+      // Run migration for Phase 3: Add unsigned_tx_payload
+      return pool.query(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name='proposals' AND column_name='unsigned_tx_payload'
+          ) THEN
+            ALTER TABLE proposals ADD COLUMN unsigned_tx_payload TEXT;
+          END IF;
+        END $$;
+      `);
+    })
+    .catch(err => {
+      console.error("Failed to initialize database schema or run migrations:", err);
+    });
 }
 
