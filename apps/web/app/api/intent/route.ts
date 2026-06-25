@@ -21,16 +21,16 @@ export async function POST(request: Request) {
   const auth = await requireAuth();
   if (auth.error) return auth.error;
 
-  let body: { prompt?: string } | null = null;
+  let body: { messages?: any[] } | null = null;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const { prompt } = body ?? {};
-  if (!prompt || typeof prompt !== "string") {
-    return NextResponse.json({ error: "Prompt is required." }, { status: 400 });
+  const { messages } = body ?? {};
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    return NextResponse.json({ error: "Messages array is required." }, { status: 400 });
   }
 
   try {
@@ -47,12 +47,9 @@ export async function POST(request: Request) {
       parameters: t.parameters.map((p) => `${p.key} (${p.type}): ${p.description}`),
     }));
 
-    // 3. Master Agent Inference (Structured JSON)
-    const { object } = await generateObject({
-      model: openrouter("anthropic/claude-3.5-sonnet"), // Using Claude 3.5 Sonnet via OpenRouter for high precision JSON
-      schema: intentSchema,
-      prompt: `You are the NEMESIS Master Agent, a Quant-Grade crypto trading assistant on the Base network.
-The user wants to deploy a new automated strategy.
+    // 3. System Prompt setup
+    const systemPrompt = `You are the NEMESIS Master Agent, a Quant-Grade crypto trading assistant on the Base network.
+The user wants to deploy new automated strategies or modify existing pending ones.
 
 USER'S ADDRESS: ${auth.address}
 USER'S ETH BALANCE: ${ethBalance} ETH
@@ -60,10 +57,14 @@ USER'S ETH BALANCE: ${ethBalance} ETH
 AVAILABLE TEMPLATES:
 ${JSON.stringify(templatesContext, null, 2)}
 
-USER'S PROMPT:
-"${prompt}"
+Task: Analyze the conversation history. Select the most appropriate template(s) and extract the parameters the user specified. You can propose multiple templates if the user asks for a combined strategy. If they didn't specify a parameter, try to infer a safe default or omit it.`;
 
-Task: Select the most appropriate template and extract the parameters the user specified. If they didn't specify a parameter, try to infer a safe default or omit it so the UI uses its default.`,
+    // 4. Master Agent Inference (Structured JSON)
+    const { object } = await generateObject({
+      model: openrouter("anthropic/claude-3.5-sonnet"), // Using Claude 3.5 Sonnet via OpenRouter for high precision JSON
+      schema: intentSchema,
+      system: systemPrompt,
+      messages: messages,
     });
 
     return NextResponse.json({ intent: object }, { status: 200 });

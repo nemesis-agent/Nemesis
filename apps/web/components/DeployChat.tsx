@@ -14,11 +14,17 @@ import { getTemplateById, type AgentTemplate } from "@nemesis/templates";
 
 type MessageRole = "agent" | "user";
 
+interface PendingPlan {
+  id: string; // unique instance id
+  template: AgentTemplate;
+  params: Record<string, any>;
+}
+
 interface ChatMessage {
   id: string;
   role: MessageRole;
   content: string;
-  plan?: AgentTemplate;
+  plans?: PendingPlan[];
 }
 
 const INTRO_MESSAGE: ChatMessage = {
@@ -45,10 +51,9 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
   const [input, setInput] = useState(
     initialTemplate ? `Deploy a ${initialTemplate.name.toLowerCase()} for me.` : "",
   );
-  const [stage, setStage] = useState<"idle" | "thinking" | "plan" | "deploying" | "deployed">("idle");
-  const [pendingPlan, setPendingPlan] = useState<AgentTemplate | null>(null);
-  const [pendingParams, setPendingParams] = useState<Record<string, string | number | boolean>>({});
-  const [riskModalOpen, setRiskModalOpen] = useState(false);
+  const [stage, setStage] = useState<"idle" | "thinking" | "plan" | "deploying">("idle");
+  const [pendingPlans, setPendingPlans] = useState<PendingPlan[]>([]);
+  const [riskModalPlan, setRiskModalPlan] = useState<PendingPlan | null>(null);
 
   // Auto sign-in when wallet connects and session is unauthenticated.
   useEffect(() => {
@@ -71,21 +76,23 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
     if (!trimmed || stage === "thinking") return;
 
     const userMessage: ChatMessage = { id: `user-${Date.now()}`, role: "user", content: trimmed };
-    setMessages((prev) => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInput("");
     setStage("thinking");
 
     if (initialTemplate && trimmed.toLowerCase().includes("deploy a")) {
-      // Fast path for initial template selection from gallery
-      finalizePlan(initialTemplate, {}, "Here's what I'd propose:");
+      finalizePlan([{ templateId: initialTemplate.id, parameters: {} }], "Here's what I'd propose:");
       return;
     }
 
     try {
+      const apiMessages = newMessages.map((m) => ({ role: m.role, content: m.content }));
+      
       const res = await fetch("/api/intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: trimmed }),
+        body: JSON.stringify({ messages: apiMessages }),
       });
 
       if (!res.ok) {
@@ -93,13 +100,7 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
       }
 
       const { intent } = await res.json();
-      const template = getTemplateById(intent.templateId);
-
-      if (!template) {
-        throw new Error("Master Agent suggested an unknown template.");
-      }
-
-      finalizePlan(template, intent.parameters || {}, intent.reasoning);
+      finalizePlan(intent.plans || [], intent.reasoning);
     } catch (err: any) {
       const errorMessage: ChatMessage = {
         id: `error-${Date.now()}`,
@@ -111,56 +112,60 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
     }
   }
 
-  function finalizePlan(template: AgentTemplate, extractedParams: Record<string, any>, reasoning: string) {
+  function finalizePlan(extractedPlans: Array<{ templateId: string; parameters: Record<string, any> }>, reasoning: string) {
+    const plans: PendingPlan[] = [];
+    
+    for (const extracted of extractedPlans) {
+      const template = getTemplateById(extracted.templateId);
+      if (template) {
+        const defaults: Record<string, any> = {};
+        if (template.parameters) {
+          for (const param of template.parameters) {
+            defaults[param.key] = extracted.parameters[param.key] !== undefined ? extracted.parameters[param.key] : param.default;
+          }
+        }
+        plans.push({ id: `${template.id}-${Date.now()}-${Math.random()}`, template, params: defaults });
+      }
+    }
+
+    if (plans.length === 0) {
+      setMessages((prev) => [...prev, { id: `err-${Date.now()}`, role: "agent", content: "I couldn't find a matching strategy for that." }]);
+      setStage("idle");
+      return;
+    }
+
     const planMessage: ChatMessage = {
       id: `plan-${Date.now()}`,
       role: "agent",
       content: reasoning || "Here's what I'd propose:",
-      plan: template,
+      plans: plans,
     };
-    setMessages((prev) => [...prev, planMessage]);
-    setPendingPlan(template);
     
-    // Initialize pending parameters with defaults, overridden by LLM extraction
-    const defaults: Record<string, string | number | boolean> = {};
-    if (template.parameters) {
-      for (const param of template.parameters) {
-        // If LLM extracted the param, use it. Otherwise fallback to default.
-        if (extractedParams[param.key] !== undefined) {
-          defaults[param.key] = extractedParams[param.key];
-        } else {
-          defaults[param.key] = param.default;
-        }
-      }
-    }
-    setPendingParams(defaults);
+    setMessages((prev) => [...prev, planMessage]);
+    setPendingPlans(plans);
     setStage("plan");
   }
 
-  function handleApproveClick() {
-    if (!pendingPlan) return;
-    if (pendingPlan.risk === "high" || pendingPlan.risk === "degen") {
-      setRiskModalOpen(true);
+  function handleApproveClick(plan: PendingPlan) {
+    if (plan.template.risk === "high" || plan.template.risk === "degen") {
+      setRiskModalPlan(plan);
       return;
     }
-    handleApprove();
+    handleApprove(plan);
   }
 
-  async function handleApprove() {
-    if (!pendingPlan) return;
-
+  async function handleApprove(plan: PendingPlan) {
     setStage("deploying");
 
     try {
       const res = await fetch("/api/agents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ templateId: pendingPlan.id, parameters: pendingParams }),
+        body: JSON.stringify({ templateId: plan.template.id, parameters: plan.params }),
       });
 
       if (!res.ok) {
-        const err = (await res.json()) as { error?: string };
-        throw new Error(err.error ?? `Deploy failed (${res.status})`);
+        throw new Error(`Deploy failed (${res.status})`);
       }
 
       const data = (await res.json()) as { agent: { id: string; name: string } };
@@ -168,43 +173,41 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
       const confirmMessage: ChatMessage = {
         id: `deployed-${Date.now()}`,
         role: "agent",
-        content: `Deployed. "${data.agent.name}" is now live and will appear on your dashboard. Proposals will be sent to your connected Telegram — you approve each one before it executes.`,
+        content: `Deployed. "${data.agent.name}" is now live and will appear on your dashboard. Proposals will be sent to your connected Telegram.`,
       };
       setMessages((prev) => [...prev, confirmMessage]);
-      setPendingPlan(null);
-      setPendingParams({});
-      setStage("deployed");
+      
+      setPendingPlans((prev) => {
+        const remaining = prev.filter((p) => p.id !== plan.id);
+        if (remaining.length === 0) setStage("idle");
+        return remaining;
+      });
 
-      // Redirect to the new agent's page after a short delay.
+      // Redirect if this was the only or last plan
       window.setTimeout(() => {
         router.push(`/agents/${data.agent.id}`);
         router.refresh();
       }, 1800);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Deployment failed.";
-      const errorMessage: ChatMessage = {
-        id: `error-${Date.now()}`,
-        role: "agent",
-        content: `Error: ${message} Please try again.`,
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-      setPendingPlan(null);
-      setPendingParams({});
+      setMessages((prev) => [...prev, { id: `error-${Date.now()}`, role: "agent", content: `Error: ${message}` }]);
       setStage("idle");
     }
   }
 
-  function handleDecline() {
-    if (!pendingPlan) return;
+  function handleDecline(planId: string) {
     const declineMessage: ChatMessage = {
       id: `declined-${Date.now()}`,
       role: "agent",
-      content: "Got it — nothing was deployed. Tell me what you'd like to change and I'll propose a new plan.",
+      content: "Got it — I've discarded that plan.",
     };
     setMessages((prev) => [...prev, declineMessage]);
-    setPendingPlan(null);
-    setPendingParams({});
-    setStage("idle");
+    
+    setPendingPlans((prev) => {
+      const remaining = prev.filter((p) => p.id !== planId);
+      if (remaining.length === 0) setStage("idle");
+      return remaining;
+    });
   }
 
   const isAuthenticated = auth.state === "authenticated";
@@ -243,16 +246,19 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
               {message.content}
             </p>
 
-            {message.plan && (
+            {message.plans && message.plans.map((plan) => (
               <DeploymentPlanCard
-                template={message.plan}
-                showActions={stage === "plan" && pendingPlan?.id === message.plan.id}
-                onApprove={handleApproveClick}
-                onDecline={handleDecline}
-                pendingParams={stage === "plan" && pendingPlan?.id === message.plan.id ? pendingParams : {}}
-                setPendingParams={setPendingParams}
+                key={plan.id}
+                template={plan.template}
+                showActions={stage === "plan" && pendingPlans.some(p => p.id === plan.id)}
+                onApprove={() => handleApproveClick(plan)}
+                onDecline={() => handleDecline(plan.id)}
+                pendingParams={pendingPlans.find(p => p.id === plan.id)?.params}
+                onChangeParam={(key, val) => {
+                  setPendingPlans(prev => prev.map(p => p.id === plan.id ? { ...p, params: { ...p.params, [key]: val } } : p));
+                }}
               />
-            )}
+            ))}
           </div>
         ))}
 
@@ -302,14 +308,14 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
         </Button>
       </form>
 
-      {riskModalOpen && pendingPlan && (
+      {riskModalPlan && (
         <RiskAcknowledgmentModal
-          template={pendingPlan}
+          template={riskModalPlan.template}
           onConfirm={() => {
-            setRiskModalOpen(false);
-            handleApprove();
+            handleApprove(riskModalPlan);
+            setRiskModalPlan(null);
           }}
-          onCancel={() => setRiskModalOpen(false)}
+          onCancel={() => setRiskModalPlan(null)}
         />
       )}
     </div>
@@ -322,7 +328,7 @@ interface DeploymentPlanCardProps {
   onApprove: () => void;
   onDecline: () => void;
   pendingParams?: Record<string, string | number | boolean>;
-  setPendingParams?: React.Dispatch<React.SetStateAction<Record<string, string | number | boolean>>>;
+  onChangeParam?: (key: string, value: string | number | boolean) => void;
 }
 
 function DeploymentPlanCard({
@@ -331,7 +337,7 @@ function DeploymentPlanCard({
   onApprove,
   onDecline,
   pendingParams,
-  setPendingParams,
+  onChangeParam,
 }: DeploymentPlanCardProps) {
   return (
     <div className="mt-3 border border-nm-border bg-nm-surface p-4">
@@ -355,7 +361,7 @@ function DeploymentPlanCard({
         </div>
       )}
 
-      {showActions && template.parameters && template.parameters.length > 0 && pendingParams && setPendingParams && (
+      {showActions && template.parameters && template.parameters.length > 0 && pendingParams && onChangeParam && (
         <div className="mt-4 flex flex-col gap-3 border-t border-nm-border pt-4">
           <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fg">Parameters</p>
           {template.parameters.map((param) => (
@@ -369,9 +375,7 @@ function DeploymentPlanCard({
                     id={`param-${param.key}`}
                     type="checkbox"
                     checked={Boolean(pendingParams[param.key])}
-                    onChange={(e) =>
-                      setPendingParams((prev) => ({ ...prev, [param.key]: e.target.checked }))
-                    }
+                    onChange={(e) => onChangeParam(param.key, e.target.checked)}
                     className="h-4 w-4 rounded border-nm-border bg-nm-bg text-nm-fg focus:ring-nm-fg"
                   />
                   <span className="text-xs text-nm-fg">{param.description}</span>
@@ -384,7 +388,7 @@ function DeploymentPlanCard({
                     value={pendingParams[param.key] as string | number}
                     onChange={(e) => {
                       const val = param.type === "address" ? e.target.value : Number(e.target.value);
-                      setPendingParams((prev) => ({ ...prev, [param.key]: val }));
+                      onChangeParam(param.key, val);
                     }}
                     className="border border-nm-border bg-nm-bg px-2 py-1 text-sm text-nm-fg focus:border-nm-fg"
                   />
