@@ -1,0 +1,25 @@
+{
+  "name": "nemesis",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NEMESIS — deploy autonomous agents on Base. Built on Hermes, executed through Base MCP.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build:db": "npm run build --workspace=@nemesis/db",
+    "seed:db": "npm run seed --workspace=@nemesis/db",
+    "predev:web": "npm run build:db",
+    "prebuild:web": "npm run build:db",
+    "dev:web": "npm run dev --workspace=@nemesis/web",
+    "build:web": "npm run build --workspace=@nemesis/web",
+    "predev:bot": "npm run build:db",
+    "prebuild:bot": "npm run build:db",
+    "dev:bot": "npm run dev --workspace=@nemesis/telegram-bot",
+    "build:bot": "npm run build --workspace=@nemesis/telegram-bot"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}

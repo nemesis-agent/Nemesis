@@ -1,0 +1,225 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+import { AgentStatusToggle } from "@/components/AgentStatusToggle";
+import { AnimatedCounter } from "@/components/AnimatedCounter";
+import { Button } from "@/components/Button";
+import { FragmentDivider } from "@/components/FragmentDivider";
+import { ProposalRecordRow } from "@/components/ProposalRecordRow";
+import { ScrollReveal } from "@/components/ScrollReveal";
+import { getAgent, listProposalsForAgent } from "@nemesis/db";
+import { getTemplateById } from "@nemesis/templates";
+
+interface AgentDetailPageProps {
+  params: { id: string };
+}
+
+// Reads live from SQLite — pause/resume mutate this row, and a scheduler
+// can add new proposals at any time, so this can never be statically
+// cached. See CONTEXT.md, "What changed in the database pass".
+export const dynamic = "force-dynamic";
+
+export function generateMetadata({ params }: AgentDetailPageProps) {
+  const agent = getAgent(params.id);
+  return {
+    title: agent ? `${agent.name} — NEMESIS` : "Agent not found — NEMESIS",
+  };
+}
+
+const STATUS_STYLES = {
+  active: "text-nm-resolve border-nm-resolve",
+  paused: "text-nm-muted border-nm-border",
+  "awaiting-approval": "text-nm-fragment-red border-nm-fragment-red",
+} as const;
+
+const STATUS_LABELS = {
+  active: "active",
+  paused: "paused",
+  "awaiting-approval": "awaiting approval",
+} as const;
+
+export default function AgentDetailPage({ params }: AgentDetailPageProps) {
+  const agent = getAgent(params.id);
+  if (!agent) notFound();
+
+  const template = getTemplateById(agent.templateId);
+  const proposals = listProposalsForAgent(agent.id);
+
+  const approvedCount = proposals.filter((p) => p.status === "approved").length;
+  const pendingCount = proposals.filter((p) => p.status === "pending").length;
+
+  return (
+    <div className="mx-auto max-w-3xl px-6 py-16">
+      {/* Back */}
+      <Link
+        href="/dashboard"
+        className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted"
+      >
+        ← agents
+      </Link>
+
+      {/* Header */}
+      <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-mono text-2xl font-bold uppercase tracking-widest2 text-nm-fg">
+            {agent.name}
+          </h1>
+          <p className="mt-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+            {agent.id} · {agent.walletAddress.slice(0, 6)}...{agent.walletAddress.slice(-4)}
+          </p>
+        </div>
+        <span
+          className={`shrink-0 border px-2 py-0.5 font-mono text-xs uppercase tracking-widest2 ${STATUS_STYLES[agent.status]}`}
+        >
+          {STATUS_LABELS[agent.status]}
+        </span>
+      </div>
+
+      <div className="mt-6">
+        <FragmentDivider />
+      </div>
+
+      {/* Stats */}
+      <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-4">
+        {[
+          { label: "proposals", value: proposals.length },
+          { label: "approved", value: approvedCount },
+          { label: "pending", value: pendingCount },
+        ].map((stat, index) => (
+          <ScrollReveal key={stat.label} delayMs={index * 60}>
+            <div className="border border-nm-border p-3 sm:p-4">
+              <p className="font-mono text-2xl font-bold text-nm-fg">
+                <AnimatedCounter value={stat.value} />
+              </p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+                {stat.label}
+              </p>
+            </div>
+          </ScrollReveal>
+        ))}
+      </div>
+
+      {/* Template info */}
+      {template && (
+        <section className="mt-10">
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">
+              template
+            </h2>
+            <Link
+              href={`/templates/${template.id}`}
+              className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red"
+            >
+              view full spec →
+            </Link>
+          </div>
+
+          <div className="mt-3 border border-nm-border p-5">
+            <p className="font-mono text-sm font-bold uppercase tracking-widest2 text-nm-fg">
+              {template.name}
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-nm-muted">{template.summary}</p>
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+                  condition
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-nm-fg">{template.condition}</p>
+              </div>
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+                  action
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-nm-fg">{template.action}</p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {template.protocols.map((protocol) => (
+                <span
+                  key={protocol}
+                  className="border border-nm-border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted"
+                >
+                  {protocol}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Parameters */}
+      {template && template.parameters.length > 0 && (
+        <section className="mt-8">
+          <h2 className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">
+            parameters
+          </h2>
+          <div className="mt-3 divide-y divide-nm-border border border-nm-border">
+            {template.parameters.map((param) => {
+              const value = agent.parameters[param.key] ?? param.default;
+              return (
+                <div
+                  key={param.key}
+                  className="flex items-center justify-between gap-4 p-4"
+                >
+                  <span className="text-sm text-nm-muted">{param.label}</span>
+                  <span className="shrink-0 font-mono text-xs text-nm-fg">
+                    {String(value)}
+                    {param.unit ? ` ${param.unit}` : ""}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Last event */}
+      <section className="mt-8">
+        <h2 className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">
+          last event
+        </h2>
+        <div className="mt-3 border border-nm-border p-4">
+          <p className="text-sm leading-relaxed text-nm-fg">{agent.lastEvent ?? "Not checked yet"}</p>
+          <p className="mt-2 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+            {agent.lastCheckedAt ?? "never"}
+          </p>
+        </div>
+      </section>
+
+      {/* Proposal history */}
+      <section className="mt-8">
+        <h2 className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">
+          proposal history
+        </h2>
+        {proposals.length === 0 ? (
+          <div className="mt-3 border border-nm-border p-6 text-center">
+            <p className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">
+              no proposals yet
+            </p>
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-col gap-3">
+            {proposals.map((proposal, index) => (
+              <ScrollReveal key={proposal.id} delayMs={index * 50}>
+                <ProposalRecordRow proposal={proposal} />
+              </ScrollReveal>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Actions */}
+      <section className="mt-10">
+        <FragmentDivider />
+        <div className="mt-6 flex flex-wrap gap-3">
+          <AgentStatusToggle agentId={agent.id} status={agent.status} />
+          <Button href="/dashboard" variant="secondary" magnetic>
+            back to dashboard
+          </Button>
+        </div>
+      </section>
+    </div>
+  );
+}

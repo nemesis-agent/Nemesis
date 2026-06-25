@@ -1,0 +1,30 @@
+# Internal planning docs — not for public consumption
+# These contain security gap details, internal roadmap, and placeholder notes
+AGENTS.md
+CONTEXT.md
+ARCHITECTURE.md
+
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+dist/
+out/
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# Database — never commit the SQLite file or any data directory
+data/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+.vscode/
+*.tsbuildinfo
