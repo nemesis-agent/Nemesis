@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount } from "wagmi";
-
 import { Button } from "@/components/Button";
 import { FragmentDivider } from "@/components/FragmentDivider";
+import { useSiweAuth } from "@/lib/use-siwe-auth";
 
 type LinkState =
   | { stage: "idle" }
@@ -13,25 +12,24 @@ type LinkState =
   | { stage: "error"; message: string };
 
 /**
- * Generates a one-time linking code for the connected wallet via
- * POST /api/link/generate, then shows it with instructions to send it to
- * the bot. This is the real, working half of the wallet↔Telegram linking
- * flow — see packages/db/src/links.ts and
- * apps/telegram-bot/src/commands/link.ts for the other half.
+ * Generates a one-time linking code for the connected + authenticated wallet.
+ * Now secured via SIWE session — the server reads the wallet from the cookie
+ * rather than trusting a body parameter (Phase 1 security fix).
  */
 export function ConnectTelegramCard() {
-  const { address, isConnected } = useAccount();
+  const { auth } = useSiweAuth();
   const [state, setState] = useState<LinkState>({ stage: "idle" });
 
+  const isAuthenticated = auth.state === "authenticated";
+
   async function generateCode() {
-    if (!address) return;
     setState({ stage: "loading" });
     try {
-      const response = await fetch("/api/link/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress: address }),
-      });
+      const response = await fetch("/api/link/generate", { method: "POST" });
+      if (response.status === 401) {
+        setState({ stage: "error", message: "Sign in with your wallet first." });
+        return;
+      }
       if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
       const data = (await response.json()) as { code: string; expiresAt: string };
       setState({ stage: "ready", code: data.code, expiresAt: data.expiresAt });
@@ -54,13 +52,13 @@ export function ConnectTelegramCard() {
         <FragmentDivider segments={16} />
       </div>
 
-      {!isConnected && (
+      {!isAuthenticated && (
         <p className="mt-4 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-          connect your wallet above first
+          {auth.state === "loading" ? "checking session…" : "connect and sign in with your wallet above first"}
         </p>
       )}
 
-      {isConnected && state.stage === "idle" && (
+      {isAuthenticated && state.stage === "idle" && (
         <div className="mt-4">
           <Button variant="primary" size="sm" magnetic onClick={generateCode}>
             Generate code
@@ -68,7 +66,7 @@ export function ConnectTelegramCard() {
         </div>
       )}
 
-      {isConnected && state.stage === "loading" && (
+      {isAuthenticated && state.stage === "loading" && (
         <div className="mt-4 w-32">
           <FragmentDivider segments={12} loading />
         </div>

@@ -70,12 +70,12 @@ NEMESIS is being built transparently in phases. This roadmap tracks our progress
 - Bot and Web monolith deployment operational on Railway.
 - Telegram wallet-linking flow successfully deployed.
 
-### Phase 1: Security & Agent Deployment 🚧 IN PROGRESS
-- **SIWE Authentication**: Wrap all APIs with secure Sign-In With Ethereum (`viem` + `iron-session`).
-- **Secure Deployment**: Wire the `DeployChat` UI directly to the secure database via authenticated sessions.
-- **Ownership Verification**: Ensure only the authenticated wallet can pause, resume, or view their agents.
+### Phase 1: Security & Agent Deployment ✅ DONE
+- **SIWE Authentication**: Challenge-response via `/api/auth/nonce` + `/api/auth/verify` using `siwe` + `iron-session`.
+- **Secure Deployment**: `DeployChat` now calls real `POST /api/agents` with session auth — agents are written to Supabase live.
+- **Ownership Verification**: Pause, resume, and link-generate routes all require authenticated session + wallet ownership check.
 
-### Phase 2: Sub-Agent Runner
+### Phase 2: Sub-Agent Runner 🚧 NEXT
 - Deploy the first background Node process (Runner) to monitor live conditions.
 - Integrate price feeds (Pyth/Base RPC) for the `dip-buyer` and `limit-order` templates.
 - Automatically dispatch proposals to Telegram when conditions are met.
