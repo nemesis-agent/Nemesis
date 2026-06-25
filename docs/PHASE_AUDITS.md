@@ -136,9 +136,11 @@ To replace the rudimentary keyword matcher with an intelligent, context-aware LL
    - Integrated `viem` to pull the user's live ETH balance from Base Mainnet and inject it into the System Prompt.
    - Integrated the Vercel AI SDK (`generateObject`) with `@openrouter/ai-sdk-provider` to guarantee that the LLM output mathematically adheres to our Zod Schema.
 
-3. **DeployChat Auto-Fill (`apps/web/components/DeployChat.tsx`)**
-   - Overhauled the UI component to post user prompts to `/api/intent`.
-   - The UI now perfectly prepopulates the configuration form with the exact parameters extracted by the LLM (e.g., automatically filling `5` in the input box if the user typed "5% drop").
+3. **DeployChat Auto-Fill & Multi-Template (`apps/web/components/DeployChat.tsx`)**
+   - Overhauled the UI component to post the entire conversational `messages` history to `/api/intent`.
+   - The UI flawlessly renders an array of `DeploymentPlanCard` components if the LLM determines multiple strategies are needed simultaneously (Phase 5C).
+   - If the user declines a plan, the LLM retains context (via the history array) and can adjust its proposal accordingly (Phase 5D).
+   - The UI perfectly prepopulates the configuration form with exact parameters extracted by the LLM (e.g., automatically filling `5` in the input box if the user typed "5% drop").
 
 ---
 
