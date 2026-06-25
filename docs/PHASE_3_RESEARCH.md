@@ -49,23 +49,24 @@ When the Runner detects a condition (e.g., ETH price drops 5%), it will instruct
 
 ## 3. Required Environment Variables
 
-To operate the Coinbase AgentKit integration, the deployment environment (Railway) must be injected with the following CDP credentials:
+Since we are stripping out the custodial wallet generation, we **DO NOT** need CDP API keys on the server. The only requirement is configuring the network.
 
 ```bash
-CDP_API_KEY_NAME="organizations/..."
-CDP_API_KEY_PRIVATE_KEY="-----BEGIN EC PRIVATE KEY-----\n..."
 NETWORK_ID="base-mainnet" # Or base-sepolia for testing
 ```
 
 ---
 
-## 4. Implementation Steps (Next Actions)
+## 4. Implementation Steps (Quant Grade Audit)
 
-1. **Database Schema Update:** Alter `agents` table to securely accept CDP Wallet credentials.
-2. **NPM Installation:** Install `@coinbase/agentkit` in `@nemesis/web` and `@nemesis/telegram-bot`.
-3. **Agent Creation Refactor:** Inject CDP Wallet generation into `apps/web/app/api/agents/route.ts`.
-4. **Transaction Builder:** Implement AgentKit action handlers in `apps/telegram-bot/src/runner.ts` to output unsigned transaction data.
-5. **UI/UX Handoff:** Route the unsigned data to the Telegram Bot for user signature via WalletConnect.
+To guarantee a flawless, no-mistake rollout of Phase 3, the implementation must follow these exact, minimized steps:
+
+1. **NPM Installation:** Install `@coinbase/agentkit` strictly within `@nemesis/telegram-bot` (the Web API no longer needs it since agents don't get wallets).
+2. **Transaction Builder (`runner.ts`):** 
+   - Initialize a stateless AgentKit instance.
+   - Use `erc20ActionProvider` (or custom provider) to formulate the unsigned transaction payload (`to`, `data`, `value`, `chainId`) when a price condition is met.
+3. **Database Schema Update (`proposals`):** Alter the `createProposal` interface in `@nemesis/db` to accept a new optional field: `unsignedTxPayload` (JSON).
+4. **UI/UX Handoff (`sendProposal`):** Forward the `unsignedTxPayload` to the user's Telegram chat along with the proposal alert. When the user approves, trigger a WalletConnect deep link containing the exact payload for them to sign safely on their personal device.
 
 ---
 *This document serves as the foundational research and architectural plan for Phase 3. No code changes will be applied until authorized.*
