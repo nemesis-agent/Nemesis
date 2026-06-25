@@ -145,3 +145,33 @@ To replace the rudimentary keyword matcher with an intelligent, context-aware LL
 ---
 
 *This log must be updated immediately upon the completion of any subsequent Phase.*
+
+## Phase 6: Production Ops, Scale & SRE
+**Status:** ✅ COMPLETELY REALIZED & ONLINE
+**Completed Date:** 26 June 2026
+
+### Objectives
+To upgrade the infrastructure to institutional ("Quant-Grade") reliability, ensuring database consistency across a PM2 monolith, structured logging, automated data pruning, and UI compliance for public beta.
+
+### Implementation Details
+1. **Monolith Deployment Topology (`ecosystem.config.js`)**
+   - Configured PM2 to boot both the Web (`npm run start:web`) and the Telegram Bot (`npm run start:bot`) under a single Railway container.
+   - Centralized process management ensures shared memory bounds and eliminates database lock corruption.
+
+2. **Zero-Blindspot Observability (`apps/telegram-bot/src/lib/logger.ts`)**
+   - Integrated `pino` to enforce structured JSON logging in production.
+   - Built a `/api/health` Next.js endpoint to enable continuous uptime monitoring by Railway.
+
+3. **Data Lifecycle Pruning (`packages/db/src/proposals.ts`)**
+   - Implemented `pruneOldProposals(7)` using strict PostgreSQL parameterized intervals (`NOW() - ($1 || ' days')::INTERVAL`).
+   - Injected a daily Cron cycle into the Sub-Agent Runner to scrub dead/skipped proposals and prevent persistent volume bloat.
+
+4. **Market Expiry Guardrail (`apps/telegram-bot/src/handlers/approval.ts`)**
+   - Injected a strict timestamp validation check on Telegram callback queries. If a user attempts to approve a proposal older than 24 hours, the backend forcibly aborts the Base transaction payload to protect against market slippage.
+
+5. **Onboarding Empty State (`apps/web/app/dashboard/page.tsx`)**
+   - Implemented a clear, 3-step onboarding guide ("Connect Wallet" → "Link Telegram" → "Deploy Master Agent") for new users with zero active agents.
+
+6. **Legal & Cloud Config (`apps/web/app/terms/page.tsx`, `wagmi.ts`)**
+   - Drafted strict non-custodial legal boilerplate for Terms of Service and Privacy Policy.
+   - Configured `NEXT_PUBLIC_SITE_URL` in Wagmi to comply with WalletConnect Cloud origin whitelist requirements.
