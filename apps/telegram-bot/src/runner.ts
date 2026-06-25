@@ -82,9 +82,16 @@ async function runCycle(bot: Telegraf) {
         continue;
       }
 
-      const proposal = await createProposal(agent.id, actionSummary, {
-        currentPrice: prices.ETH_USD,
-        timestamp: Date.now()
+      const proposal = await createProposal({
+        agentId: agent.id,
+        title: "Action Proposed",
+        proposedAction: actionSummary,
+        estimatedGasUsd: "$0.10",
+        details: [
+          { label: "Trigger", value: "Price target reached" },
+          { label: "Current Price", value: `$${prices.ETH_USD?.toFixed(2)}` },
+          { label: "Timestamp", value: new Date().toISOString() },
+        ],
       });
 
       await sendProposal(bot, chatId, proposal, agent.name);

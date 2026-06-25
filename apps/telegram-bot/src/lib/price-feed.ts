@@ -34,7 +34,7 @@ export async function getLivePrice(ticker: SupportedTicker): Promise<number> {
     throw new Error(`Pyth API error: ${res.status} ${res.statusText}`);
   }
 
-  const data = await res.json();
+  const data = (await res.json()) as any;
   const update = data.parsed?.[0];
   
   if (!update || !update.price) {
