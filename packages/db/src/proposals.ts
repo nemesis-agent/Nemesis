@@ -94,3 +94,11 @@ export async function skipProposal(id: string): Promise<Proposal | undefined> {
   await pool.query("UPDATE proposals SET status = 'skipped' WHERE id = $1", [id]);
   return getProposal(id);
 }
+
+export async function pruneOldProposals(daysOld: number = 7): Promise<number> {
+  const { rowCount } = await pool.query(
+    "DELETE FROM proposals WHERE status = 'skipped' AND created_at < NOW() - ($1 || ' days')::INTERVAL",
+    [daysOld.toString()]
+  );
+  return rowCount ?? 0;
+}

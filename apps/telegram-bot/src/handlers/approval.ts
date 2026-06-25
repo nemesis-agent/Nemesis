@@ -92,6 +92,16 @@ export function registerApprovalHandlers(
       return;
     }
 
+    // Phase 6: Market Expiry Guard (24 hours)
+    const proposalAgeMs = Date.now() - new Date(proposal.createdAt).getTime();
+    if (proposalAgeMs > 24 * 60 * 60 * 1000) {
+      await skipProposal(proposalId);
+      await ctx.answerCbQuery("Proposal expired");
+      await ctx.editMessageReplyMarkup(undefined);
+      await ctx.reply("<code>&gt; expired</code>\nProposal is older than 24 hours and has been skipped for safety.", { parse_mode: "HTML" });
+      return;
+    }
+
     const updated = await approveProposal(proposalId);
     await ctx.answerCbQuery("approved");
 

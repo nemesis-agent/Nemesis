@@ -1,9 +1,11 @@
 import type { Telegraf } from "telegraf";
-import { listAgents, createProposal, getTelegramChatIdForWallet } from "@nemesis/db";
+import { listAgents, createProposal, getTelegramChatIdForWallet, pruneOldProposals } from "@nemesis/db";
 import { getLivePrice } from "./lib/price-feed.js";
 import { sendProposal } from "./handlers/approval.js";
+import { logger } from "./lib/logger.js";
 
 const RUNNER_INTERVAL_MS = 1000 * 60; // 1 minute
+let cycleCount = 0;
 
 /**
  * The Sub-Agent Runner (Phase 2).
@@ -12,16 +14,26 @@ const RUNNER_INTERVAL_MS = 1000 * 60; // 1 minute
  * a proposal via the Telegram bot.
  */
 export function startRunner(bot: Telegraf) {
-  console.log("[runner] initializing sub-agent runner...");
+  logger.info({ msg: "initializing sub-agent runner" });
 
   setInterval(() => {
+    cycleCount++;
     runCycle(bot).catch((err) => {
-      console.error("[runner] error in runner cycle:", err);
+      logger.error({ msg: "error in runner cycle", err });
     });
+
+    // Prune old data once a day (1440 minutes)
+    if (cycleCount % 1440 === 0) {
+      pruneOldProposals(7)
+        .then((count) => {
+          if (count > 0) logger.info({ msg: `pruned ${count} old skipped proposals` });
+        })
+        .catch((err) => logger.error({ msg: "error pruning old proposals", err }));
+    }
   }, RUNNER_INTERVAL_MS);
 
   // Run the first cycle immediately
-  runCycle(bot).catch(console.error);
+  runCycle(bot).catch((err) => logger.error({ msg: "error in first runner cycle", err }));
 }
 
 async function runCycle(bot: Telegraf) {
@@ -29,11 +41,11 @@ async function runCycle(bot: Telegraf) {
   const activeAgents = agents.filter((a) => a.status === "active");
   
   if (activeAgents.length === 0) {
-    console.log("[runner] cycle skipped: 0 active agents");
+    logger.debug({ msg: "cycle skipped: 0 active agents" });
     return;
   }
 
-  console.log(`[runner] cycle started: evaluating ${activeAgents.length} active agent(s)...`);
+  logger.info({ msg: `cycle started: evaluating ${activeAgents.length} active agent(s)` });
 
   // Cache prices so we only fetch once per cycle
   const prices = {
@@ -41,7 +53,7 @@ async function runCycle(bot: Telegraf) {
   };
 
   for (const agent of activeAgents) {
-    console.log(`[runner] evaluating agent: ${agent.name} (${agent.templateId})`);
+    logger.debug({ msg: "evaluating agent", agentId: agent.id, templateId: agent.templateId });
 
     // In a full production scale, you'd use a strategy pattern here or Hermes LLM.
     // For Phase 2, we hardcode the logic for our top 2 high-volume templates.
@@ -93,11 +105,11 @@ async function runCycle(bot: Telegraf) {
     }
 
     if (conditionMet) {
-      console.log(`[runner] condition MET for agent ${agent.id} — dispatching proposal...`);
+      logger.info({ msg: "condition MET for agent — dispatching proposal", agentId: agent.id });
       
       const chatId = await getTelegramChatIdForWallet(agent.walletAddress);
       if (!chatId) {
-        console.warn(`[runner] skip: no Telegram linked for wallet ${agent.walletAddress}`);
+        logger.warn({ msg: "skip: no Telegram linked for wallet", walletAddress: agent.walletAddress });
         continue;
       }
 
@@ -115,7 +127,7 @@ async function runCycle(bot: Telegraf) {
       });
 
       await sendProposal(bot, chatId, proposal, agent.name);
-      console.log(`[runner] proposal ${proposal.id} dispatched to Telegram.`);
+      logger.info({ msg: "proposal dispatched to Telegram", proposalId: proposal.id });
       
       // Prevent spamming — in production we'd pause the agent or add a cooldown here.
       // For this phase, we rely on the fact that createProposal succeeds, but it will
