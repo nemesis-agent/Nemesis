@@ -119,4 +119,27 @@ To close the Base MCP execution lifecycle by allowing users to physically sign t
 
 ---
 
+## Phase 5: Master Agent (LLM Intent Layer)
+**Status:** ✅ COMPLETELY REALIZED & ONLINE
+**Completed Date:** 26 June 2026
+
+### Objectives
+To replace the rudimentary keyword matcher with an intelligent, context-aware LLM (Claude/Hermes) that parses user intent and wallet balance to automatically configure Agent deployments.
+
+### Implementation Details
+1. **Zero-Mistake Schema (`apps/web/lib/intent-schema.ts`)**
+   - Created a strict Zod schema enforcing exact `templateId` mapping and structured `parameters` extraction.
+   - Deleted the obsolete `apps/web/lib/match-template.ts`.
+
+2. **Master Agent API (`apps/web/app/api/intent/route.ts`)**
+   - Built a secure SIWE-protected backend route for LLM inference.
+   - Integrated `viem` to pull the user's live ETH balance from Base Mainnet and inject it into the System Prompt.
+   - Integrated the Vercel AI SDK (`generateObject`) with `@openrouter/ai-sdk-provider` to guarantee that the LLM output mathematically adheres to our Zod Schema.
+
+3. **DeployChat Auto-Fill (`apps/web/components/DeployChat.tsx`)**
+   - Overhauled the UI component to post user prompts to `/api/intent`.
+   - The UI now perfectly prepopulates the configuration form with the exact parameters extracted by the LLM (e.g., automatically filling `5` in the input box if the user typed "5% drop").
+
+---
+
 *This log must be updated immediately upon the completion of any subsequent Phase.*
