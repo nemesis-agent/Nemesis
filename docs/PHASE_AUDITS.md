@@ -94,4 +94,29 @@ To integrate Coinbase AgentKit in a completely stateless manner, enabling agents
 
 ---
 
+## Phase 4: Execution & Feedback Loop (Wagmi + Viem)
+**Status:** ✅ COMPLETELY REALIZED & ONLINE
+**Completed Date:** 26 June 2026
+
+### Objectives
+To close the Base MCP execution lifecycle by allowing users to physically sign the Agent-compiled transactions via the Web UI, and securely broadcasting the confirmation status back to the NEMESIS database.
+
+### Implementation Details
+1. **Frontend Execution Component (`apps/web/components/ExecuteProposalButton.tsx`)**
+   - Built a React Client Component that parses the `unsignedTxPayload` from the database.
+   - Integrates `useSendTransaction` from `wagmi` to prompt the user's connected wallet (e.g., MetaMask, Coinbase Wallet) to sign and execute the payload.
+   - Integrates `useWaitForTransactionReceipt` to hold the UI state until the transaction is successfully mined.
+
+2. **Server-Side Verification API (`apps/web/app/api/proposals/[id]/confirm/route.ts`)**
+   - Built a secure feedback API that accepts the `txHash` from the frontend.
+   - Uses `viem` `PublicClient` to independently poll the Base blockchain to verify the receipt.
+   - **Quant-Grade Security:** Implemented an anti-spoofing guardrail that rejects the transaction if the `receipt.from` address does not strictly match the authenticated user's SIWE session address.
+   - Upon successful verification, calls `approveProposal(id, txHash)` to permanently seal the database record.
+
+3. **UI Integration (`ProposalRecordRow.tsx`)**
+   - Injected the `ExecuteProposalButton` into the proposal history list, rendering the "Sign & Execute" flow solely for `pending` proposals.
+   - Once executed, the UI automatically transitions to display the immutable `txHash`.
+
+---
+
 *This log must be updated immediately upon the completion of any subsequent Phase.*
