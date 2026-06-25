@@ -69,4 +69,29 @@ To build the background process that reads active agents, evaluates market condi
 
 ---
 
+## Phase 3: Base MCP Integration (Stateless AgentKit)
+**Status:** ✅ COMPLETELY REALIZED & ONLINE
+**Completed Date:** 25 June 2026
+
+### Objectives
+To integrate Coinbase AgentKit in a completely stateless manner, enabling agents to build Unsigned Transactions (Base MCP) without custodying user funds or generating server-side wallets.
+
+### Implementation Details
+1. **AgentKit Integration (`package.json`)**
+   - Installed `@coinbase/agentkit` specifically in the `@nemesis/telegram-bot` workspace to isolate execution logic.
+
+2. **Database Migration (`packages/db/src/client.ts`, `proposals.ts`)**
+   - Executed a zero-downtime `ALTER TABLE` migration to add the `unsigned_tx_payload` (TEXT) column to the `proposals` table.
+   - Updated TypeScript interfaces (`Proposal`, `CreateProposalInput`) to safely handle the new payload column.
+
+3. **Stateless Transaction Builder (`apps/telegram-bot/src/runner.ts`)**
+   - Modified the `dip-buyer` and `limit-order` logic to generate structured JSON payloads containing `to`, `data`, `value`, and `chainId`.
+   - The payload formulation is dynamically linked to the agent's trigger state (e.g., configuring an ETH swap to Uniswap V3 Router).
+
+4. **UI Handoff / Telegram Delivery (`apps/telegram-bot/src/handlers/approval.ts`)**
+   - Overhauled the `bot.action(/^approve:(.+)$/)` callback.
+   - When a user approves a proposal, the Telegram Bot now extracts the `unsignedTxPayload` from the database and renders it in a raw code block format, staging it for the Phase 4 WalletConnect Deep Link routing.
+
+---
+
 *This log must be updated immediately upon the completion of any subsequent Phase.*

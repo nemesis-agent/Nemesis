@@ -80,10 +80,10 @@ NEMESIS is being built transparently in phases. This roadmap tracks our progress
 - Integrate price feeds (Pyth/Base RPC) for the `dip-buyer` and `limit-order` templates.
 - Automatically dispatch proposals to Telegram when conditions are met.
 
-### Phase 3: Base MCP Integration 🚧 IN PROGRESS
-- Implement Agentkit operational wallets for each sub-agent.
-- Build unsigned transactions based on approved Telegram proposals.
-- Deliver execution payloads back to the user's secure wallet for final broadcast.
+### Phase 3: Base MCP Integration ✅ DONE
+- Implement stateless Agentkit transaction builders.
+- Build unsigned transactions based on Sub-Agent market evaluations.
+- Deliver execution payloads (`unsignedTxPayload`) back to the user's secure wallet for final signature and broadcast.
 
 ### Phase 4: Master Agent (LLM Intent Engine)
 - Replace basic keyword matching with a Hermes/Claude Master Agent.
