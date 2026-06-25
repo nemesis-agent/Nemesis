@@ -60,7 +60,7 @@ export async function unlinkCommand(ctx: Context): Promise<void> {
   // consumeLinkCode doesn't know the wallet from a chatId; we need the
   // reverse lookup. getTelegramChatIdForWallet needs the wallet — so we
   // need getWalletForTelegramChatId which is exported from @nemesis/db.
-  const { getWalletForTelegramChatId, db } = await import("@nemesis/db");
+  const { getWalletForTelegramChatId, pool } = await import("@nemesis/db");
   const wallet = await getWalletForTelegramChatId(chatId);
 
   if (!wallet) {
@@ -68,7 +68,7 @@ export async function unlinkCommand(ctx: Context): Promise<void> {
     return;
   }
 
-  db.prepare("UPDATE users SET telegram_chat_id = NULL WHERE wallet_address = ?").run(wallet);
+  await pool.query("UPDATE users SET telegram_chat_id = NULL WHERE wallet_address = $1", [wallet]);
 
   const short = `${wallet.slice(0, 6)}...${wallet.slice(-4)}`;
   await ctx.reply(`Wallet <code>${short}</code> has been unlinked. Proposals will no longer be sent here.`, {

@@ -48,7 +48,7 @@ export async function demoCommand(ctx: Context): Promise<void> {
     return;
   }
 
-  const proposal = createProposal({
+  const proposal = await createProposal({
     agentId: agent.id,
     title: "Demo signal detected",
     details: [
