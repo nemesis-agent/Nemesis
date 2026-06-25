@@ -48,6 +48,7 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
   );
   const [stage, setStage] = useState<"idle" | "thinking" | "plan" | "deploying" | "deployed">("idle");
   const [pendingPlan, setPendingPlan] = useState<AgentTemplate | null>(null);
+  const [pendingParams, setPendingParams] = useState<Record<string, string | number | boolean>>({});
   const [riskModalOpen, setRiskModalOpen] = useState(false);
 
   // Auto sign-in when wallet connects and session is unauthenticated.
@@ -87,6 +88,16 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
       };
       setMessages((prev) => [...prev, planMessage]);
       setPendingPlan(template);
+      
+      // Initialize pending parameters with their defaults
+      const defaults: Record<string, string | number | boolean> = {};
+      if (template.parameters) {
+        for (const param of template.parameters) {
+          defaults[param.key] = param.default;
+        }
+      }
+      setPendingParams(defaults);
+      
       setStage("plan");
     }, 900);
   }
@@ -109,7 +120,7 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
       const res = await fetch("/api/agents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ templateId: pendingPlan.id }),
+        body: JSON.stringify({ templateId: pendingPlan.id, parameters: pendingParams }),
       });
 
       if (!res.ok) {
@@ -126,6 +137,7 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
       };
       setMessages((prev) => [...prev, confirmMessage]);
       setPendingPlan(null);
+      setPendingParams({});
       setStage("deployed");
 
       // Redirect to the new agent's page after a short delay.
@@ -142,6 +154,7 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
       };
       setMessages((prev) => [...prev, errorMessage]);
       setPendingPlan(null);
+      setPendingParams({});
       setStage("idle");
     }
   }
@@ -155,6 +168,7 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
     };
     setMessages((prev) => [...prev, declineMessage]);
     setPendingPlan(null);
+    setPendingParams({});
     setStage("idle");
   }
 
@@ -200,6 +214,8 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
                 showActions={stage === "plan" && pendingPlan?.id === message.plan.id}
                 onApprove={handleApproveClick}
                 onDecline={handleDecline}
+                pendingParams={stage === "plan" && pendingPlan?.id === message.plan.id ? pendingParams : {}}
+                setPendingParams={setPendingParams}
               />
             )}
           </div>
@@ -270,9 +286,18 @@ interface DeploymentPlanCardProps {
   showActions: boolean;
   onApprove: () => void;
   onDecline: () => void;
+  pendingParams?: Record<string, string | number | boolean>;
+  setPendingParams?: React.Dispatch<React.SetStateAction<Record<string, string | number | boolean>>>;
 }
 
-function DeploymentPlanCard({ template, showActions, onApprove, onDecline }: DeploymentPlanCardProps) {
+function DeploymentPlanCard({
+  template,
+  showActions,
+  onApprove,
+  onDecline,
+  pendingParams,
+  setPendingParams,
+}: DeploymentPlanCardProps) {
   return (
     <div className="mt-3 border border-nm-border bg-nm-surface p-4">
       <p className="font-mono text-xs font-bold uppercase tracking-widest2 text-nm-fg">{template.name}</p>
@@ -292,6 +317,47 @@ function DeploymentPlanCard({ template, showActions, onApprove, onDecline }: Dep
       {(template.risk === "high" || template.risk === "degen") && (
         <div className="mt-3">
           <RiskBanner template={template} />
+        </div>
+      )}
+
+      {showActions && template.parameters && template.parameters.length > 0 && pendingParams && setPendingParams && (
+        <div className="mt-4 flex flex-col gap-3 border-t border-nm-border pt-4">
+          <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fg">Parameters</p>
+          {template.parameters.map((param) => (
+            <div key={param.key} className="flex flex-col gap-1">
+              <label htmlFor={`param-${param.key}`} className="font-mono text-[10px] uppercase text-nm-muted">
+                {param.label} {param.unit ? `(${param.unit})` : ""}
+              </label>
+              {param.type === "boolean" ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    id={`param-${param.key}`}
+                    type="checkbox"
+                    checked={Boolean(pendingParams[param.key])}
+                    onChange={(e) =>
+                      setPendingParams((prev) => ({ ...prev, [param.key]: e.target.checked }))
+                    }
+                    className="h-4 w-4 rounded border-nm-border bg-nm-bg text-nm-fg focus:ring-nm-fg"
+                  />
+                  <span className="text-xs text-nm-fg">{param.description}</span>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <input
+                    id={`param-${param.key}`}
+                    type={param.type === "string" ? "text" : "number"}
+                    value={pendingParams[param.key] as string | number}
+                    onChange={(e) => {
+                      const val = param.type === "string" ? e.target.value : Number(e.target.value);
+                      setPendingParams((prev) => ({ ...prev, [param.key]: val }));
+                    }}
+                    className="border border-nm-border bg-nm-bg px-2 py-1 text-sm text-nm-fg focus:border-nm-fg"
+                  />
+                  {param.description && <span className="text-[10px] text-nm-muted">{param.description}</span>}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
