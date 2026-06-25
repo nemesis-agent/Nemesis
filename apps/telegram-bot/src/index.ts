@@ -9,6 +9,7 @@ import { startCommand } from "./commands/start.js";
 import { statusCommand } from "./commands/status.js";
 import { demoCommand, registerApprovalHandlers } from "./handlers/approval.js";
 import { createAccessControl } from "./lib/auth.js";
+import { startRunner } from "./runner.js";
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 if (!token) {
@@ -36,6 +37,9 @@ bot.catch((error, ctx) => {
 
 await bot.launch();
 console.log("[nemesis-bot] running");
+
+// Start the background agent evaluation loop
+startRunner(bot);
 
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
