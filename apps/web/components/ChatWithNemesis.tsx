@@ -39,7 +39,7 @@ const KNOWLEDGE_BASE = [
   },
   {
     keywords: ["base", "mcp", "chain", "network", "coinbase"],
-    reply: "NEMESIS is built for Base. Base MCP is the intended proposal and transaction-building layer, with final approval staying in your wallet.",
+    reply: "NEMESIS supports Base and Solana. Base templates can include verified payloads where safe; Solana templates are review-only for now, with final approval staying in your wallet.",
   },
 ];
 

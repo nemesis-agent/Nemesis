@@ -15,7 +15,7 @@ const STEPS = [
   {
     label: "03",
     title: "Approve every action",
-    body: "Deployed agents monitor their conditions and propose transactions through Base MCP. Proposals arrive on Telegram or the dashboard. Nothing moves until your wallet approves it.",
+    body: "Deployed agents monitor their conditions and create approval-first proposals. Base actions may include verified payloads; Solana actions are review-only for now. Nothing moves until your wallet approves it.",
   },
 ];
 

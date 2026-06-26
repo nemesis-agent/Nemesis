@@ -12,15 +12,15 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  title: "NEMESIS — autonomous agents on Base",
+  title: "NEMESIS - autonomous agents on Base and Solana",
   description:
-    "Deploy autonomous agents on Base. Built on Hermes, proposed through Base MCP. Approval-first, always.",
+    "Deploy approval-first agents on Base and Solana. Built on Hermes, review-first by design.",
   icons: {
     icon: "/assets/nemesis-icon.png",
   },
   openGraph: {
-    title: "NEMESIS — autonomous agents on Base",
-    description: "Chaos in. Order out. Deploy autonomous agents on Base.",
+    title: "NEMESIS - autonomous agents on Base and Solana",
+    description: "Chaos in. Order out. Deploy approval-first agents on Base and Solana.",
     images: ["/assets/nemesis-banner-dark.png"],
   },
 };

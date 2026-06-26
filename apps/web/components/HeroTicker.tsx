@@ -9,7 +9,7 @@ export function HeroTicker() {
     "base mainnet",
     "approval-first",
     "built on hermes",
-    "base mcp",
+    "base + solana",
     "your keys",
     "autonomous agents",
     "propose · not execute",
