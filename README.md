@@ -43,7 +43,7 @@ NEXT_PUBLIC_SITE_URL=
 
 ## Railway Deployment
 
-`railway.toml` configures a Nixpacks build with `npm run build` and starts the monolith with `npm start`, which launches both:
+Railway uses the repository `Dockerfile` for production builds and `railway.toml` starts the monolith with `npm start`, which launches both PM2 processes:
 
 - `nemesis-web`
 - `nemesis-bot`

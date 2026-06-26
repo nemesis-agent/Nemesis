@@ -118,10 +118,10 @@ railway logs --latest --lines 160
 
 Expected:
 
-- Railway service status is `Online`.
+- Railway service status is `Online`, and the latest deployment is `SUCCESS`.
 - Health returns `200` with `database: connected`.
 - Logs show `nemesis-web` online, `nemesis-bot` acquired polling lock, bot running, and runner initialized.
-- Telegram polling conflict or lock wait may appear during handoff; it must resolve to lock acquired and bot running. If lock wait exceeds 90 seconds, the bot process exits cleanly so PM2 can retry.
+- Telegram polling conflict or lock wait may appear during handoff; it must resolve to lock acquired and bot running. If lock wait exceeds 240 seconds, the bot process exits cleanly so PM2 can retry.
 
 ## Rollback
 

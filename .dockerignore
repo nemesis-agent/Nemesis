@@ -9,8 +9,13 @@ dist
 out
 data
 *.log
+logs.*.log
 npm-debug.log*
 .env
 .env.*
 audit-phase1.mjs
 railway-logs.txt
+fix-async.js
+fix-db-types.js
+migrate-db.js
+test-pyth.mjs
