@@ -4,6 +4,8 @@ export type RiskLevel = "low" | "mid" | "high" | "degen";
 
 export type TemplateRuntimeStatus = "production" | "gated";
 
+export type TemplateChain = "base" | "solana";
+
 export type BaseProtocol =
   | "uniswap"
   | "aerodrome"
@@ -12,6 +14,10 @@ export type BaseProtocol =
   | "avantis"
   | "bankr"
   | "virtuals";
+
+export type SolanaProtocol = "jupiter" | "solana-rpc" | "solflare";
+
+export type TemplateProtocol = BaseProtocol | SolanaProtocol;
 
 export interface TemplateParameter {
   /** Stable machine key, e.g. "maxApeAmount" */
@@ -37,14 +43,16 @@ export interface AgentTemplate {
   name: string;
   category: TemplateCategory;
   risk: RiskLevel;
+  /** Network this template belongs to. Missing values are treated as Base. */
+  chain?: TemplateChain;
   /** Short subtitle, shown in template cards (kept under ~12 words) */
   summary: string;
   /** Plain-language description of what the agent watches for */
   condition: string;
   /** Plain-language description of what the agent proposes when the condition is met */
   action: string;
-  /** Base MCP protocol skills this template depends on */
-  protocols: BaseProtocol[];
+  /** Protocol skills this template depends on */
+  protocols: TemplateProtocol[];
   /** Configurable parameters surfaced in the deploy form */
   parameters: TemplateParameter[];
   /**
