@@ -21,6 +21,9 @@ export function ConnectTelegramCard() {
   const [state, setState] = useState<LinkState>({ stage: "idle" });
 
   const isAuthenticated = auth.state === "authenticated";
+  const telegramBotUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME?.replace(/^@/, "");
+  const telegramBotLabel = telegramBotUsername ? `@${telegramBotUsername}` : "the NEMESIS bot";
+  const telegramBotUrl = telegramBotUsername ? `https://t.me/${telegramBotUsername}` : undefined;
 
   async function generateCode() {
     setState({ stage: "loading" });
@@ -76,12 +79,31 @@ export function ConnectTelegramCard() {
         <div className="mt-4">
           <p className="font-mono text-2xl font-bold tracking-widest2 text-nm-fragment-red">{state.code}</p>
           <p className="mt-2 text-sm leading-relaxed text-nm-muted">
-            Send <code className="text-nm-fg">/link {state.code}</code> to the NEMESIS bot on Telegram. Code
-            expires in 10 minutes.
+            Send <code className="text-nm-fg">/link {state.code}</code> to{" "}
+            {telegramBotUrl ? (
+              <a className="text-nm-fg underline decoration-nm-border underline-offset-4" href={telegramBotUrl} target="_blank" rel="noreferrer">
+                {telegramBotLabel}
+              </a>
+            ) : (
+              telegramBotLabel
+            )}{" "}
+            on Telegram. Code expires in 10 minutes.
           </p>
-          <Button variant="secondary" size="sm" magnetic onClick={generateCode} className="mt-3">
-            Generate new code
-          </Button>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {telegramBotUrl && (
+              <a
+                className="inline-block select-none border border-nm-fragment-red px-4 py-2 text-center font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red transition-colors duration-200 hover:bg-nm-fragment-red hover:text-nm-bg"
+                href={telegramBotUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open bot
+              </a>
+            )}
+            <Button variant="secondary" size="sm" magnetic onClick={generateCode}>
+              Generate new code
+            </Button>
+          </div>
         </div>
       )}
 

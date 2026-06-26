@@ -22,6 +22,7 @@ OPENROUTER_MODEL=xiaomi/mimo-v2.5
 TELEGRAM_BOT_TOKEN=
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
 NEXT_PUBLIC_SITE_URL=https://nemesis-agent.xyz
+NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=NemesisTesterBot
 NEMESIS_ALERT_WEBHOOK_URL= # optional but recommended
 BASE_RPC_URL= # optional, defaults to https://mainnet.base.org
 ```
