@@ -5,7 +5,7 @@ import type { AgentTemplate } from "./types";
  *
  * Every template follows the same shape: one condition, one proposed action,
  * proposed through Base MCP, always pending user approval. Templates are
- * intentionally scoped to single-condition logic — see ARCHITECTURE.md for
+ * intentionally scoped to single-condition logic â€” see ARCHITECTURE.md for
  * why compound strategies (looping, delta-neutral, perps) were cut from v1.
  */
 export const TEMPLATES: AgentTemplate[] = [
@@ -86,7 +86,7 @@ export const TEMPLATES: AgentTemplate[] = [
     approvalSummary:
       "This agent watches DexScreener Base pools. When a recently created pool matching {tokenWhitelist} has at least {minInitialLiquidity} USDC liquidity, it proposes reviewing a {allocationPerPool} USDC entry. You approve each entry before anything moves.",
     riskNote:
-      "Brand-new pools have no price history — the price you enter at can be wildly different from where it settles seconds later, and liquidity can be pulled entirely. Initial liquidity above your threshold does not mean the pool is safe, only that it passed one filter.",
+      "Brand-new pools have no price history â€” the price you enter at can be wildly different from where it settles seconds later, and liquidity can be pulled entirely. Initial liquidity above your threshold does not mean the pool is safe, only that it passed one filter.",
   },
   {
     id: "launch-flipper",
@@ -144,7 +144,7 @@ export const TEMPLATES: AgentTemplate[] = [
     approvalSummary:
       "This agent tracks {asset} from an entry price of {entryPrice} USDC. If it gains {takeProfitPercent}% it proposes taking profit; if it loses {stopLossPercent}% it proposes cutting the loss; if neither happens within {maxHoldHours} hours it proposes reviewing the position. Every exit needs your approval.",
     riskNote:
-      "Stop-loss and take-profit levels are proposals, not guarantees — by the time you approve an exit, the price may have moved further against you, especially in thin liquidity. A {stopLossPercent}% stop loss can still result in a larger realized loss if the price gaps past it.",
+      "Stop-loss and take-profit levels are proposals, not guarantees â€” by the time you approve an exit, the price may have moved further against you, especially in thin liquidity. A {stopLossPercent}% stop loss can still result in a larger realized loss if the price gaps past it.",
   },
 
   // ---------------------------------------------------------------------
@@ -195,7 +195,7 @@ export const TEMPLATES: AgentTemplate[] = [
       },
     ],
     approvalSummary:
-      "This agent waits until the price hits {targetPrice} USDC, then proposes a {direction} order for {amount} USDC. Neither Uniswap nor Aerodrome support native limit orders — this agent fills that gap, with your approval on every trade.",
+      "This agent waits until the price hits {targetPrice} USDC, then proposes a {direction} order for {amount} USDC. Neither Uniswap nor Aerodrome support native limit orders â€” this agent fills that gap, with your approval on every trade.",
   },
   {
     id: "dip-buyer",
@@ -370,7 +370,7 @@ export const TEMPLATES: AgentTemplate[] = [
       },
     ],
     approvalSummary:
-      "This agent holds a queued transaction until Base gas drops to {maxGasGwei} gwei or below, or {maxWaitHours} hours pass — whichever comes first. It then proposes executing the transaction for your approval.",
+      "This agent holds a queued transaction until Base gas drops to {maxGasGwei} gwei or below, or {maxWaitHours} hours pass â€” whichever comes first. It then proposes executing the transaction for your approval.",
   },
   {
     id: "airdrop-farmer",
@@ -401,7 +401,7 @@ export const TEMPLATES: AgentTemplate[] = [
       },
     ],
     approvalSummary:
-      "This agent proposes a small interaction with your selected protocols on a weekly schedule, staying within a {weeklyBudget} USDC gas budget. Nemesis memory tracks which protocols you've already interacted with — you approve each interaction.",
+      "This agent proposes a small interaction with your selected protocols on a weekly schedule, staying within a {weeklyBudget} USDC gas budget. Nemesis memory tracks which protocols you've already interacted with â€” you approve each interaction.",
   },
   {
     id: "portfolio-rebalancer",
@@ -434,10 +434,107 @@ export const TEMPLATES: AgentTemplate[] = [
     approvalSummary:
       "This agent monitors your wallet's ETH/USDC allocation against a {targetAllocation} target split. Once it drifts more than {driftTolerancePercent}% from target, it proposes reviewing a rebalance. You approve each rebalance.",
   },
-];
+  {
+    id: "solana-dip-buyer",
+    name: "Solana dip buyer",
+    category: "simple-actions",
+    risk: "low",
+    chain: "solana",
+    runtimeStatus: "production",
+    summary: "Review SOL buys when price drops from recent high",
+    condition: "SOL price drops by your configured percentage from the agent's recorded high.",
+    action: "Propose reviewing a Jupiter SOL buy. No Solana transaction is generated or broadcast automatically.",
+    protocols: ["jupiter", "solana-rpc", "solflare"],
+    parameters: [
+      {
+        key: "asset",
+        label: "Tracked asset",
+        type: "select",
+        default: "SOL_USD",
+        options: ["SOL_USD"],
+        description: "Solana price feed this agent monitors for dips.",
+      },
+      {
+        key: "dipPercent",
+        label: "Dip trigger",
+        type: "percent",
+        default: 5,
+        unit: "%",
+        description: "Propose a buy review whenever SOL falls this much from its recorded high.",
+      },
+      {
+        key: "buyAmount",
+        label: "Buy amount",
+        type: "currency",
+        default: 50,
+        unit: "USDC",
+        description: "Amount shown in the proposal for the Jupiter review.",
+      },
+      {
+        key: "cooldownHours",
+        label: "Cooldown between reviews",
+        type: "number",
+        default: 12,
+        unit: "hours",
+        description: "Minimum time between two dip-triggered proposals.",
+      },
+    ],
+    approvalSummary:
+      "This Solana agent tracks SOL and proposes reviewing a Jupiter buy for {buyAmount} USDC when price drops {dipPercent}% from its recorded high, with at least {cooldownHours} hours between proposals. It never creates or broadcasts a Solana transaction automatically.",
+  },
+  {
+    id: "solana-profit-taker",
+    name: "Solana profit taker",
+    category: "simple-actions",
+    risk: "mid",
+    chain: "solana",
+    runtimeStatus: "production",
+    summary: "Review SOL exits once your gain target is reached",
+    condition: "SOL price rises by your configured gain percentage from your reference entry price.",
+    action: "Propose reviewing a Jupiter sell. No Solana transaction is generated or broadcast automatically.",
+    protocols: ["jupiter", "solana-rpc", "solflare"],
+    parameters: [
+      {
+        key: "asset",
+        label: "Tracked asset",
+        type: "select",
+        default: "SOL_USD",
+        options: ["SOL_USD"],
+        description: "Solana price feed this agent monitors for profit-taking.",
+      },
+      {
+        key: "entryPrice",
+        label: "Entry price",
+        type: "currency",
+        default: 140,
+        unit: "USDC",
+        description: "Reference SOL entry price for this review agent.",
+      },
+      {
+        key: "gainTargetPercent",
+        label: "Gain target",
+        type: "percent",
+        default: 25,
+        unit: "%",
+        description: "Propose a sell review once SOL is up this much from entry.",
+      },
+      {
+        key: "sellPortionPercent",
+        label: "Portion to review",
+        type: "percent",
+        default: 25,
+        unit: "%",
+        description: "How much of the position the proposal suggests reviewing.",
+      },
+    ],
+    approvalSummary:
+      "This Solana agent tracks SOL from an entry price of {entryPrice} USDC. Once SOL is up {gainTargetPercent}%, it proposes reviewing a Jupiter sell for {sellPortionPercent}% of the position. You still make the final decision in your own wallet.",
+  },];
 
 export const isTemplateProductionReady = (template: AgentTemplate): boolean =>
   template.runtimeStatus === "production";
+
+export const getTemplateChain = (template: AgentTemplate) => template.chain ?? "base";
 
 export const getTemplateUnavailableReason = (template: AgentTemplate): string =>
   template.disabledReason ??
@@ -449,5 +546,5 @@ export const getTemplateById = (id: string): AgentTemplate | undefined =>
 export const getTemplatesByCategory = (category: AgentTemplate["category"]): AgentTemplate[] =>
   TEMPLATES.filter((template) => template.category === category);
 
-export type { AgentTemplate, TemplateCategory, RiskLevel, TemplateRuntimeStatus, BaseProtocol, TemplateParameter } from "./types";
+export type { AgentTemplate, TemplateCategory, RiskLevel, TemplateRuntimeStatus, BaseProtocol, SolanaProtocol, TemplateProtocol, TemplateChain, TemplateParameter } from "./types";
 export { TEMPLATE_CATEGORIES, RISK_LABELS } from "./types";

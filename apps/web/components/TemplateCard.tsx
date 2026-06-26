@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import type { AgentTemplate } from "@nemesis/templates";
-import { RISK_LABELS, isTemplateProductionReady } from "@nemesis/templates";
+import { RISK_LABELS, getTemplateChain, isTemplateProductionReady } from "@nemesis/templates";
 
 const RISK_STYLES: Record<AgentTemplate["risk"], string> = {
   low:   "text-nm-resolve border-nm-resolve",
@@ -35,6 +35,9 @@ export function TemplateCard({ template }: TemplateCardProps) {
               className={`border px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest2 ${RISK_STYLES[template.risk]}`}
             >
               {RISK_LABELS[template.risk]}
+            </span>
+            <span className="border border-nm-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+              {getTemplateChain(template)}
             </span>
             {!isProductionReady && (
               <span className="border border-nm-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">

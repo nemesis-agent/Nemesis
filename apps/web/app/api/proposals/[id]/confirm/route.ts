@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { createPublicClient, http } from "viem";
 import { baseChain } from "@/lib/base-chain";
 
-import { rejectCrossOrigin, requireAuth } from "@/lib/auth";
+import { rejectCrossOrigin, requireAnyWalletAuth, walletOwnsAgent } from "@/lib/auth";
 import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { approveProposal, getProposal, getAgent, recordProposalExecutionStep } from "@nemesis/db";
 
@@ -35,10 +35,10 @@ export async function POST(
   const originError = rejectCrossOrigin(request);
   if (originError) return originError;
 
-  const auth = await requireAuth();
+  const auth = await requireAnyWalletAuth();
   if (auth.error) return auth.error;
 
-  const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "proposals:confirm", auth.address), limit: 10, windowMs: 60_000 });
+  const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "proposals:confirm", auth.wallet.walletKey), limit: 10, windowMs: 60_000 });
   if (rateLimit) return rateLimit;
 
   const proposalId = params.id;
@@ -70,7 +70,7 @@ export async function POST(
     }
 
     const agent = await getAgent(proposal.agentId);
-    if (!agent || agent.walletAddress.toLowerCase() !== auth.address.toLowerCase()) {
+    if (!agent || !walletOwnsAgent(auth.wallet, agent.walletAddress)) {
       return NextResponse.json({ error: "Unauthorized. You do not own this agent." }, { status: 403 });
     }
 
@@ -87,7 +87,7 @@ export async function POST(
     const tx = await publicClient.getTransaction({ hash: txHash as `0x${string}` });
 
     // Anti-spoofing: ensure signer and transaction payload match this proposal.
-    if (tx.from.toLowerCase() !== auth.address.toLowerCase()) {
+    if (auth.wallet.chain !== "base" || tx.from.toLowerCase() !== auth.wallet.address.toLowerCase()) {
       return NextResponse.json({ error: "Transaction signer does not match authenticated wallet." }, { status: 403 });
     }
 

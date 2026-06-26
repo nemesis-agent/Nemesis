@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { NetworkPulse } from "@/components/NetworkPulse";
+import { SolanaConnectButton } from "@/components/SolanaConnectButton";
 
 const NAV_LINKS = [
   { href: "/agents/new", label: "deploy" },
@@ -89,8 +90,9 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           <NetworkPulse />
           <ConnectButton showBalance={false} />
+          <SolanaConnectButton />
 
-          {/* Mobile menu toggle — only the hamburger is hidden on desktop, not the whole control */}
+          {/* Mobile menu toggle â€” only the hamburger is hidden on desktop, not the whole control */}
           <button
             type="button"
             className="flex h-11 w-11 flex-col items-center justify-center gap-1.5 border border-nm-border md:hidden"

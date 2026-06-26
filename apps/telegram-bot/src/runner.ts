@@ -29,6 +29,8 @@ const PRODUCTION_TEMPLATES = new Set([
   "gas-optimizer",
   "airdrop-farmer",
   "portfolio-rebalancer",
+  "solana-dip-buyer",
+  "solana-profit-taker",
 ]);
 const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 let cycleCount = 0;
@@ -94,10 +96,9 @@ async function runCycle(bot: Telegraf) {
 
     if (!result) continue;
 
-    await updateAgentRuntimeState(agent.id, result.state, result.lastEvent);
-
     const chatId = await getTelegramChatIdForWallet(agent.walletAddress);
     if (!chatId) {
+      await updateAgentRuntimeState(agent.id, agent.runtimeState, "Proposal trigger detected, but Telegram is not linked yet.");
       logger.warn({ msg: "skip proposal dispatch: no Telegram linked", walletAddress: agent.walletAddress });
       continue;
     }
@@ -113,6 +114,7 @@ async function runCycle(bot: Telegraf) {
       });
 
       await sendProposal(bot, chatId, proposal, agent.name);
+      await updateAgentRuntimeState(agent.id, result.state, result.lastEvent);
       logger.info({ msg: "proposal dispatched to Telegram", proposalId: proposal.id, agentId: agent.id });
     } catch (err) {
       await sendOpsAlert({
@@ -136,6 +138,8 @@ async function evaluateAgent(agent: Agent): Promise<EvaluationResult | null> {
   if (agent.templateId === "gas-optimizer") return evaluateGasOptimizer(agent);
   if (agent.templateId === "airdrop-farmer") return evaluateAirdropFarmer(agent);
   if (agent.templateId === "portfolio-rebalancer") return evaluatePortfolioRebalancer(agent);
+  if (agent.templateId === "solana-dip-buyer") return evaluateSolanaDipBuyer(agent);
+  if (agent.templateId === "solana-profit-taker") return evaluateSolanaProfitTaker(agent);
   return null;
 }
 
@@ -480,6 +484,70 @@ async function evaluateProfitTaker(agent: Agent): Promise<EvaluationResult | nul
 }
 
 
+async function evaluateSolanaDipBuyer(agent: Agent): Promise<EvaluationResult | null> {
+  const ticker: SupportedTicker = "SOL_USD";
+  const price = await getLivePrice(ticker);
+  const dipPercent = Number(agent.parameters.dipPercent ?? 5);
+  const buyAmount = Number(agent.parameters.buyAmount ?? 50);
+  const cooldownHours = Number(agent.parameters.cooldownHours ?? 12);
+  const previousHigh = Number(agent.runtimeState.highPrice ?? price);
+  const highPrice = Math.max(previousHigh, price);
+  const lastProposalAt = typeof agent.runtimeState.lastProposalAt === "string" ? Date.parse(agent.runtimeState.lastProposalAt) : 0;
+  const cooldownMs = Math.max(1, cooldownHours) * 60 * 60 * 1000;
+  const triggerPrice = highPrice * (1 - dipPercent / 100);
+  const state = { ...agent.runtimeState, ticker, chain: "solana", highPrice, lastPrice: price, checkedAt: new Date().toISOString() };
+
+  if (price > triggerPrice) return null;
+  if (lastProposalAt && Date.now() - lastProposalAt < cooldownMs) return null;
+
+  return {
+    title: "SOL dip review ready",
+    action: `SOL traded at $${price.toFixed(2)}, below the ${dipPercent}% dip trigger from $${highPrice.toFixed(2)}. Review a ${buyAmount} USDC Jupiter buy before signing anything in Solflare.`,
+    estimatedGasUsd: "Solana review only",
+    details: [
+      { label: "chain", value: "Solana" },
+      { label: "asset", value: ticker },
+      { label: "current price", value: `$${price.toFixed(2)}` },
+      { label: "recorded high", value: `$${highPrice.toFixed(2)}` },
+      { label: "trigger", value: `${dipPercent}% dip` },
+      { label: "review amount", value: `${buyAmount} USDC` },
+      { label: "wallet action", value: "review only - no transaction payload generated" },
+    ],
+    state: { ...state, highPrice: price, lastProposalAt: new Date().toISOString() },
+    lastEvent: `Solana dip review triggered for SOL at $${price.toFixed(2)}.`,
+  };
+}
+
+async function evaluateSolanaProfitTaker(agent: Agent): Promise<EvaluationResult | null> {
+  const ticker: SupportedTicker = "SOL_USD";
+  const price = await getLivePrice(ticker);
+  const entryPrice = Number(agent.parameters.entryPrice ?? 140);
+  const gainTargetPercent = Number(agent.parameters.gainTargetPercent ?? 25);
+  const sellPortionPercent = Number(agent.parameters.sellPortionPercent ?? 25);
+  const gainPercent = ((price - entryPrice) / entryPrice) * 100;
+
+  if (gainPercent < gainTargetPercent) {
+    await updateAgentRuntimeState(agent.id, { ...agent.runtimeState, ticker, chain: "solana", lastPrice: price, gainPercent, checkedAt: new Date().toISOString() }, `Checked SOL: ${gainPercent.toFixed(2)}% gain; target not hit.`);
+    return null;
+  }
+
+  return {
+    title: "SOL profit review ready",
+    action: `SOL is up ${gainPercent.toFixed(2)}% from your $${entryPrice} entry. Review selling ${sellPortionPercent}% through Jupiter before signing anything in Solflare.`,
+    estimatedGasUsd: "Solana review only",
+    details: [
+      { label: "chain", value: "Solana" },
+      { label: "asset", value: ticker },
+      { label: "current price", value: `$${price.toFixed(2)}` },
+      { label: "entry price", value: `$${entryPrice}` },
+      { label: "gain", value: `${gainPercent.toFixed(2)}%` },
+      { label: "portion", value: `${sellPortionPercent}%` },
+      { label: "wallet action", value: "review only - no transaction payload generated" },
+    ],
+    state: { ...agent.runtimeState, ticker, chain: "solana", lastPrice: price, gainPercent, lastProposalAt: new Date().toISOString() },
+    lastEvent: `Solana profit review triggered for SOL at ${gainPercent.toFixed(2)}% gain.`,
+  };
+}
 async function evaluateGasOptimizer(agent: Agent): Promise<EvaluationResult | null> {
   const maxGasGwei = Number(agent.parameters.maxGasGwei ?? 5);
   const maxWaitHours = Number(agent.parameters.maxWaitHours ?? 6);

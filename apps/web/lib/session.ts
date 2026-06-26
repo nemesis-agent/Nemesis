@@ -1,10 +1,14 @@
 import type { SessionOptions } from "iron-session";
 
 export interface SessionData {
-  /** The authenticated wallet address (checksum format). null = guest. */
+  /** The authenticated Base/EVM wallet address (checksum format). null = guest. */
   address?: `0x${string}`;
+  /** The authenticated Solana public key. null = guest. */
+  solanaAddress?: string;
   /** Nonce issued during the SIWE challenge. Consumed on verify. */
   nonce?: string;
+  /** Nonce issued during Solana sign-in. Consumed on verify. */
+  solanaNonce?: string;
 }
 
 const sessionPassword = process.env.SESSION_SECRET;
