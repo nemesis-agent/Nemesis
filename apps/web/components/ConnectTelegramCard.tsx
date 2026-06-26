@@ -21,7 +21,7 @@ export function ConnectTelegramCard() {
   const [state, setState] = useState<LinkState>({ stage: "idle" });
 
   const isAuthenticated = auth.state === "authenticated";
-  const telegramBotUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME?.replace(/^@/, "");
+  const telegramBotUsername = (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? "NemesisAgentAppBot").replace(/^@/, "");
   const telegramBotLabel = telegramBotUsername ? `@${telegramBotUsername}` : "the NEMESIS bot";
   const telegramBotUrl = telegramBotUsername ? `https://t.me/${telegramBotUsername}` : undefined;
   const telegramBotButtonClass = "inline-block select-none border border-nm-fragment-red px-4 py-2 text-center font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red transition-colors duration-200 hover:bg-nm-fragment-red hover:text-nm-bg";
