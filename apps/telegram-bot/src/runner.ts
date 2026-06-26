@@ -12,6 +12,7 @@ import {
 import { getLivePrice, type SupportedTicker } from "./lib/price-feed.js";
 import { sendProposal } from "./handlers/approval.js";
 import { logger } from "./lib/logger.js";
+import { buildEthToUsdcSwapPayload } from "./lib/uniswap-base.js";
 
 const RUNNER_INTERVAL_MS = 1000 * 60;
 const BASE_RPC_URL = process.env.BASE_RPC_URL ?? "https://mainnet.base.org";
@@ -24,6 +25,7 @@ interface EvaluationResult {
   action: string;
   estimatedGasUsd: string;
   details: ProposalDetail[];
+  unsignedTxPayload?: string;
   state: Record<string, unknown>;
   lastEvent: string;
 }
@@ -93,6 +95,7 @@ async function runCycle(bot: Telegraf) {
       proposedAction: result.action,
       estimatedGasUsd: result.estimatedGasUsd,
       details: result.details,
+      unsignedTxPayload: result.unsignedTxPayload,
     });
 
     await sendProposal(bot, chatId, proposal, agent.name);
@@ -168,16 +171,27 @@ async function evaluateLimitOrder(agent: Agent): Promise<EvaluationResult | null
     return null;
   }
 
+  const ethAmount = ticker === "ETH_USD" && direction === "sell" ? (amount / price).toFixed(8) : undefined;
+  const unsignedTxPayload = ethAmount
+    ? JSON.stringify(buildEthToUsdcSwapPayload({
+        recipient: agent.walletAddress,
+        ethAmount,
+        ethUsdPrice: price,
+      }))
+    : undefined;
+
   return {
     title: `${ticker} limit ${direction} hit`,
     action: `${ticker} traded at $${price.toFixed(2)} and crossed your ${direction} target of $${targetPrice}. Review a ${direction} proposal for ${amount} USDC notional.`,
     estimatedGasUsd: "$0.10",
+    unsignedTxPayload,
     details: [
       { label: "asset", value: ticker },
       { label: "direction", value: direction },
       { label: "current price", value: `$${price.toFixed(2)}` },
       { label: "target price", value: `$${targetPrice}` },
       { label: "notional", value: `${amount} USDC` },
+      { label: "wallet action", value: unsignedTxPayload ? "sign ETH -> USDC swap" : "review only" },
     ],
     state: { ...agent.runtimeState, ticker, lastPrice: price, lastProposalAt: new Date().toISOString() },
     lastEvent: `Limit ${direction} trigger fired for ${ticker} at $${price.toFixed(2)}.`,
@@ -336,16 +350,29 @@ async function evaluatePortfolioRebalancer(agent: Agent): Promise<EvaluationResu
   }
 
   const direction = drift > 0 ? "sell ETH for USDC" : "buy ETH with USDC";
+  const targetEthValue = totalValue * (targetEthPercent / 100);
+  const excessEthValue = Math.max(0, ethValue - targetEthValue);
+  const ethAmount = excessEthValue > 0 ? (excessEthValue / ethPrice).toFixed(8) : undefined;
+  const unsignedTxPayload = ethAmount
+    ? JSON.stringify(buildEthToUsdcSwapPayload({
+        recipient: agent.walletAddress,
+        ethAmount,
+        ethUsdPrice: ethPrice,
+      }))
+    : undefined;
+
   return {
     title: "Portfolio drift detected",
     action: `ETH allocation is ${currentEthPercent.toFixed(2)}% versus target ${targetEthPercent}%. Review a rebalance to ${direction}.`,
     estimatedGasUsd: "$0.10",
+    unsignedTxPayload,
     details: [
       { label: "ETH value", value: `$${ethValue.toFixed(2)}` },
       { label: "USDC balance", value: `$${usdcBalance.toFixed(2)}` },
       { label: "current ETH allocation", value: `${currentEthPercent.toFixed(2)}%` },
       { label: "target", value: `${targetEthPercent}% ETH` },
       { label: "drift", value: `${drift.toFixed(2)}%` },
+      { label: "wallet action", value: unsignedTxPayload ? "sign ETH -> USDC swap" : "review only" },
     ],
     state: { ...agent.runtimeState, ethBalance, usdcBalance, ethValue, currentEthPercent, lastProposalAt: new Date().toISOString() },
     lastEvent: `Portfolio drift fired at ${currentEthPercent.toFixed(2)}% ETH allocation.`,
