@@ -1,0 +1,16 @@
+.git
+.vscode
+node_modules
+apps/*/.next
+apps/*/dist
+packages/*/dist
+.next
+dist
+out
+data
+*.log
+npm-debug.log*
+.env
+.env.*
+audit-phase1.mjs
+railway-logs.txt

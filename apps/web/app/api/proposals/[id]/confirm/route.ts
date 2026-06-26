@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createPublicClient, http } from "viem";
-import { base } from "viem/chains";
+import { baseChain } from "@/lib/base-chain";
 
 import { rejectCrossOrigin, requireAuth } from "@/lib/auth";
 import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { approveProposal, getProposal, getAgent, recordProposalExecutionStep } from "@nemesis/db";
 
 const publicClient = createPublicClient({
-  chain: base,
+  chain: baseChain,
   transport: http(),
 });
 

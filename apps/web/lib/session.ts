@@ -8,8 +8,9 @@ export interface SessionData {
 }
 
 const sessionPassword = process.env.SESSION_SECRET;
+const isProductionBuild = process.env.NEXT_PHASE === "phase-production-build";
 
-if (process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV === "production" && !isProductionBuild) {
   if (!sessionPassword || sessionPassword.length < 32 || sessionPassword === "change-me-in-production-min-32-chars!!") {
     throw new Error("SESSION_SECRET must be set to a strong, unique value of at least 32 characters in production.");
   }

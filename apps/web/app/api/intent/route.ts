@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateObject } from "ai";
 import { createPublicClient, http, formatEther } from "viem";
-import { base } from "viem/chains";
+import { baseChain } from "@/lib/base-chain";
 
 import { requireAuth } from "@/lib/auth";
 import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
@@ -10,7 +10,7 @@ import { TEMPLATES, isTemplateProductionReady } from "@nemesis/templates";
 import { intentSchema } from "@/lib/intent-schema";
 
 const publicClient = createPublicClient({
-  chain: base,
+  chain: baseChain,
   transport: http(),
 });
 

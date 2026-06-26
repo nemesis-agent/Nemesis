@@ -1,11 +1,16 @@
 import { Pool } from "pg";
 
 const DATABASE_URL = process.env.DATABASE_URL;
+const isNextProductionBuild = process.env.NEXT_PHASE === "phase-production-build";
+const isRuntimeProduction = process.env.NODE_ENV === "production" && !isNextProductionBuild;
 
-if (!DATABASE_URL) {
-  console.warn("NEMESIS: DATABASE_URL is not set. The Supabase Postgres migration requires this variable.");
+if (!DATABASE_URL && isRuntimeProduction) {
+  throw new Error("DATABASE_URL must be set in production.");
 }
 
+if (!DATABASE_URL && !isNextProductionBuild) {
+  console.warn("NEMESIS: DATABASE_URL is not set. The Supabase Postgres migration requires this variable.");
+}
 export const pool = new Pool({
   connectionString: DATABASE_URL,
   ssl: {
@@ -94,4 +99,3 @@ if (DATABASE_URL) {
       console.error("Failed to initialize database schema or run migrations:", err);
     });
 }
-
