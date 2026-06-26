@@ -66,10 +66,14 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
       if (payload.data && !/^0x[a-fA-F0-9]*$/.test(payload.data)) {
         throw new Error("Invalid transaction calldata");
       }
+      if (payload.value && !/^(0|[1-9][0-9]*)$/.test(payload.value)) {
+        throw new Error("Invalid transaction value");
+      }
       sendTransaction({
+        chainId: 8453,
         to: payload.to as `0x${string}`,
         data: (payload.data ?? "0x") as `0x${string}`,
-        value: payload.value ? BigInt(payload.value) : undefined,
+        value: BigInt(payload.value ?? "0"),
       });
     } catch (err) {
       setVerificationError(err instanceof Error ? err.message : "Failed to parse transaction payload");

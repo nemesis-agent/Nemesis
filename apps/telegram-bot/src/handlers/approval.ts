@@ -2,7 +2,6 @@ import type { Telegraf, Context } from "telegraf";
 import { Markup } from "telegraf";
 
 import {
-  approveProposal,
   createProposal,
   getAgent,
   getProposal,
@@ -11,6 +10,7 @@ import {
   skipProposal,
   type Proposal,
 } from "@nemesis/db";
+import { buildWalletSignatureCheckPayload, dashboardProposalUrl } from "../lib/base-payload.js";
 import { escapeHtml, formatProposalMessage } from "../lib/format.js";
 
 /**
@@ -59,12 +59,14 @@ export async function demoCommand(ctx: Context): Promise<void> {
     agentId: agent.id,
     title: "Demo signal detected",
     details: [
+      { label: "network", value: "Base mainnet" },
       { label: "liquidity", value: "$48,200" },
       { label: "holders", value: "312" },
-      { label: "dev wallet", value: "2.1%" },
+      { label: "payload", value: "zero-value wallet signature check" },
     ],
-    proposedAction: "Ape $50 USDC",
+    proposedAction: "Sign a zero-value Base wallet check from your own wallet",
     estimatedGasUsd: "$0.04",
+    unsignedTxPayload: buildWalletSignatureCheckPayload(wallet),
   });
 
   await ctx.reply(formatProposalMessage(proposal, agent.name), {
@@ -77,10 +79,9 @@ export async function demoCommand(ctx: Context): Promise<void> {
 }
 
 /**
- * Registers the approve / skip callback handlers. On approval this
- * records the decision in the database. When a real Base MCP execution
- * layer exists, the onApprove callback should also build and deliver the
- * unsigned transaction — see ARCHITECTURE.md.
+ * Registers the approve / skip callback handlers. Approval from Telegram
+ * routes the user to the dashboard for final wallet signature. The database
+ * only moves to approved after the web app verifies the on-chain transaction.
  */
 export function registerApprovalHandlers(
   bot: Telegraf,
@@ -122,24 +123,25 @@ export function registerApprovalHandlers(
       return;
     }
 
-    const updated = await approveProposal(proposalId);
-    await ctx.answerCbQuery("approved");
+    await ctx.answerCbQuery("open dashboard to sign");
 
-    if (updated && options.onApprove) {
-      await options.onApprove(updated, ctx);
+    if (options.onApprove) {
+      await options.onApprove(proposal, ctx);
     }
 
     await ctx.editMessageReplyMarkup(undefined);
+    const dashboardUrl = dashboardProposalUrl(agent.id);
     await ctx.reply(
       [
-        `<code>&gt; approved</code>`,
+        `<code>&gt; ready for wallet signature</code>`,
         agent ? `agent: <b>${escapeHtml(agent.name)}</b>` : "",
         `proposal: <code>${proposalId}</code>`,
         ``,
-        `<b>Transaction Ready for Signature:</b>`,
-        updated?.unsignedTxPayload ? `<pre>${escapeHtml(updated.unsignedTxPayload)}</pre>` : `<i>No payload generated</i>`,
+        proposal.unsignedTxPayload
+          ? `<b>Open dashboard and sign from your own wallet:</b>\n${escapeHtml(dashboardUrl)}`
+          : `<i>No executable payload generated yet. Review this proposal in the dashboard.</i>`,
         ``,
-        `<i>[WalletConnect Deep Link generation handled via Phase 4 / Web App]</i>`
+        `<i>NEMESIS never signs or broadcasts from the server.</i>`
       ]
         .filter(Boolean)
         .join("\n"),
