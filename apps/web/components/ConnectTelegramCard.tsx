@@ -24,6 +24,7 @@ export function ConnectTelegramCard() {
   const telegramBotUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME?.replace(/^@/, "");
   const telegramBotLabel = telegramBotUsername ? `@${telegramBotUsername}` : "the NEMESIS bot";
   const telegramBotUrl = telegramBotUsername ? `https://t.me/${telegramBotUsername}` : undefined;
+  const telegramBotButtonClass = "inline-block select-none border border-nm-fragment-red px-4 py-2 text-center font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red transition-colors duration-200 hover:bg-nm-fragment-red hover:text-nm-bg";
 
   async function generateCode() {
     setState({ stage: "loading" });
@@ -62,10 +63,15 @@ export function ConnectTelegramCard() {
       )}
 
       {isAuthenticated && state.stage === "idle" && (
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap gap-2">
           <Button variant="primary" size="sm" magnetic onClick={generateCode}>
             Generate code
           </Button>
+          {telegramBotUrl && (
+            <a className={telegramBotButtonClass} href={telegramBotUrl} target="_blank" rel="noreferrer">
+              Open bot
+            </a>
+          )}
         </div>
       )}
 
@@ -92,7 +98,7 @@ export function ConnectTelegramCard() {
           <div className="mt-3 flex flex-wrap gap-2">
             {telegramBotUrl && (
               <a
-                className="inline-block select-none border border-nm-fragment-red px-4 py-2 text-center font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red transition-colors duration-200 hover:bg-nm-fragment-red hover:text-nm-bg"
+                className={telegramBotButtonClass}
                 href={telegramBotUrl}
                 target="_blank"
                 rel="noreferrer"
