@@ -31,7 +31,7 @@ const KNOWLEDGE_BASE = [
   },
   {
     keywords: ["master", "agent", "sub", "sub-agent", "template", "how"],
-    reply: "I am the Master Agent. When you give me an intent, I interpret it and select specific templates, like Dip Buyer or Portfolio Rebalancer. Production-ready templates can be deployed as sub-agents. Gated templates remain review-only until monitoring and Base calldata are verified.",
+    reply: "I am the Master Agent. When you give me an intent, I interpret it and select specific production templates, like Dip Buyer or Portfolio Rebalancer. Deployed sub-agents monitor one condition and create approval-first proposals for your wallet to review.",
   },
   {
     keywords: ["hermes", "nous", "llm", "ai", "model"],
@@ -46,7 +46,7 @@ const KNOWLEDGE_BASE = [
 const FALLBACK_REPLIES = [
   "I am designed to turn intent into approval-first proposals. What else would you like to know about the architecture?",
   "An interesting query. NEMESIS fundamentally changes how you interact with DeFi by abstracting the complexity into plain-language intents.",
-  "I focus primarily on orchestrating market strategies. If you want to inspect the system, review the template library and dashboard gating state.",
+  "I focus primarily on orchestrating market strategies. If you want to inspect the system, review the template library, dashboard, terms, and privacy policy.",
 ];
 
 export function ChatWithNemesis() {

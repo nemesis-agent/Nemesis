@@ -3,44 +3,88 @@ import { FragmentDivider } from "@/components/FragmentDivider";
 export default function TermsPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-16">
-      <h1 className="font-mono text-2xl font-bold uppercase tracking-widest2 text-nm-fg">Terms of Service</h1>
+      <h1 className="font-mono text-2xl font-bold uppercase tracking-widest2 text-nm-fg">terms of service</h1>
       <div className="mt-8">
         <FragmentDivider />
       </div>
       <div className="prose prose-invert mt-12 text-sm leading-relaxed text-nm-muted">
-        <p><strong>Last Updated: June 2026</strong></p>
+        <p><strong>Last updated: June 26, 2026</strong></p>
         <p>
-          Welcome to NEMESIS. By accessing or using our platform, you agree to comply with and be bound by these
-          Terms of Service. Please read them carefully.
+          These terms describe how NEMESIS works and the responsibilities you accept when using it. By using the
+          platform, connecting a wallet, deploying an agent, linking Telegram, or approving a proposal, you agree to
+          these terms.
         </p>
 
-        <h2 className="text-nm-fg">1. Nature of the Service</h2>
+        <h2 className="text-nm-fg">1. Nature of the service</h2>
         <p>
-          NEMESIS is a non-custodial interface built on the Base network. We provide tools for users to configure
-          autonomous trading logic (&quot;Agents&quot;). We do not hold, custody, or manage your funds. All transactions
-          are signed and broadcast from your personal wallet only after your explicit cryptographic approval.
+          NEMESIS is an approval-first, non-custodial automation interface for Base wallets. Users configure
+          single-condition agents that monitor data sources and generate proposals. NEMESIS does not provide a
+          custodial account, brokerage account, investment advisory account, or managed trading service.
         </p>
 
-        <h2 className="text-nm-fg">2. Assumption of Risk</h2>
+        <h2 className="text-nm-fg">2. No custody and no automatic execution</h2>
         <p>
-          Cryptocurrency markets are highly volatile. By using NEMESIS, you acknowledge that you are fully responsible
-          for your own trading decisions. NEMESIS makes no guarantees regarding the performance of any Agent or
-          strategy. You agree that NEMESIS, its developers, and affiliates are not liable for any financial losses,
-          impermanent loss, slippage, or smart contract exploits that may occur while using the platform.
+          NEMESIS never holds your private keys, seed phrase, or user funds. Agents can propose actions, but they do
+          not have authority to move funds by themselves. A transaction can only be signed and broadcast from your own
+          wallet after you review and explicitly approve the exact wallet action shown to you.
         </p>
 
-        <h2 className="text-nm-fg">3. Non-Custodial Agreement</h2>
+        <h2 className="text-nm-fg">3. User responsibility</h2>
         <p>
-          At no point does NEMESIS have the authority to move funds from your wallet without your explicit approval.
-          You are responsible for securing your own private keys and evaluating the Base MCP payloads sent to you via
-          Telegram before signing them.
+          You are responsible for reviewing every proposal, transaction payload, destination address, token amount,
+          chain, fee, and smart contract interaction before signing. If a proposal is wrong, stale, incomplete, or no
+          longer matches market conditions, do not approve it.
         </p>
 
-        <h2 className="text-nm-fg">4. Modifications to the Service</h2>
+        <h2 className="text-nm-fg">4. Market and protocol risk</h2>
         <p>
-          We reserve the right to modify or discontinue, temporarily or permanently, the platform (or any part thereof)
-          with or without notice. We shall not be liable to you or to any third party for any modification, suspension
-          or discontinuance of the service.
+          Crypto assets, DeFi protocols, liquidity pools, and new token launches are risky. Prices can move quickly;
+          liquidity can disappear; transactions can fail; slippage can be severe; smart contracts, bridges, RPCs,
+          oracles, APIs, and third-party protocols can be exploited or unavailable. NEMESIS makes no guarantee of
+          profit, performance, uptime, execution price, token safety, or proposal accuracy.
+        </p>
+
+        <h2 className="text-nm-fg">5. No financial, legal, or tax advice</h2>
+        <p>
+          NEMESIS provides software tooling and plain-language automation workflows. Nothing in the app, Telegram bot,
+          templates, prompts, proposals, docs, or generated output is financial, legal, tax, accounting, or investment
+          advice. You should make your own decisions and consult qualified professionals where needed.
+        </p>
+
+        <h2 className="text-nm-fg">6. Third-party services</h2>
+        <p>
+          NEMESIS depends on third-party infrastructure and services including wallet providers, WalletConnect,
+          Telegram, OpenRouter/model providers, Railway, Supabase/Postgres, RPC providers, price feeds, DexScreener,
+          decentralized exchanges, and Base network infrastructure. Their availability, terms, privacy practices, and
+          behavior are outside NEMESIS control.
+        </p>
+
+        <h2 className="text-nm-fg">7. Prohibited use</h2>
+        <p>
+          You may not use NEMESIS to violate laws, sanctions, third-party rights, platform rules, or protocol rules.
+          You may not attempt to abuse, overload, reverse engineer, exploit, or bypass access controls in NEMESIS or
+          connected services.
+        </p>
+
+        <h2 className="text-nm-fg">8. Availability and changes</h2>
+        <p>
+          NEMESIS may change, suspend, or discontinue features at any time. Agents may be paused, templates may be
+          changed, and integrations may be disabled if needed for security, reliability, provider changes, or product
+          quality.
+        </p>
+
+        <h2 className="text-nm-fg">9. Limitation of liability</h2>
+        <p>
+          To the maximum extent permitted by applicable law, NEMESIS and its contributors are not liable for trading
+          losses, missed opportunities, failed transactions, wrong approvals, market movements, protocol failures,
+          lost keys, wallet compromise, third-party outages, or any indirect, incidental, special, consequential, or
+          punitive damages arising from your use of the platform.
+        </p>
+
+        <h2 className="text-nm-fg">10. Review status</h2>
+        <p>
+          NEMESIS legal, privacy, and terms content has completed an internal product compliance review for the current
+          release. This is not a statement that external legal counsel has reviewed or approved the product.
         </p>
       </div>
     </div>

@@ -1,4 +1,4 @@
-﻿# NEMESIS - Implementation & Audit Log
+# NEMESIS - Implementation & Audit Log
 
 This log reflects the current code after the launch-readiness audit. Earlier phase notes that claimed full Base MCP execution are superseded by this file.
 
@@ -16,28 +16,26 @@ Status: implemented and hardened.
 
 ## Phase 2 - Runner And Proposal Dispatch
 
-Status: gated for production.
+Status: implemented for all v1 templates.
 
 - The bot process starts a runner loop.
-- The runner reads active agents for operational visibility.
-- Production evaluators are disabled until each template has verified monitoring and Base calldata.
+- The runner reads active agents and creates proposals only from production evaluator paths.
+- All 10 v1 templates are production-enabled.
+- New-token, new-pool, yield-review, and protocol-interaction templates are review-only where arbitrary calldata is not yet safe to generate.
 - The runner no longer creates mock trading proposals from hardcoded price logic.
 
-Limit: every template is gated until its evaluator and payload builder are implemented and tested.
+## Phase 3 - Base Execution
 
-## Phase 3 - Base MCP / AgentKit Execution
-
-Status: intentionally gated.
+Status: partially implemented with strict payload boundaries.
 
 - `unsigned_tx_payload` exists in the proposals table and UI/API support payload verification.
 - Fake placeholder payload generation has been removed.
-- Production template deployment is gated until a real Base MCP/AgentKit encoder is wired.
-
-Requirement before enabling: build verified calldata via a proper adapter, then test end-to-end on Base with exact payload matching.
+- Verified Base ETH/USDC swap payloads are available for supported ETH/USDC proposal paths.
+- Arbitrary new-token, pool, yield, and protocol-action calldata remains review-only until a dedicated encoder is wired and tested.
 
 ## Phase 4 - Wallet Signing Feedback Loop
 
-Status: verifier implemented, dependent on real payloads.
+Status: implemented for stored payloads.
 
 - `ExecuteProposalButton` validates payload shape before prompting wallet signing.
 - `/api/proposals/[id]/confirm` verifies proposal ownership, transaction success, signer, chain, destination, value, and calldata.
@@ -54,17 +52,24 @@ Status: implemented with provider dependency.
 
 ## Phase 6 - Ops And Identity
 
-Status: configured, still needs real production variables.
+Status: configured and deployed.
 
 - Railway starts `npm start` via `railway.toml`.
 - PM2 process names are `nemesis-web` and `nemesis-bot`.
 - WalletConnect identity is `appName: "NEMESIS"`.
 - Web metadata and assets use NEMESIS identity.
 - `/api/health` checks Postgres connectivity.
+- Railway production deploy is online at `https://nemesis-agent.xyz`.
 
-## Current Launch Blockers
+## Legal, Privacy, And Terms Review
 
-- Real Base MCP/AgentKit calldata encoder.
-- Production env variables under the NEMESIS project identity.
-- Legal review.
-- Real device and cross-browser smoke tests.
+Status: completed as an internal product compliance review for the current release.
+
+- Terms document covers non-custody, no auto execution, user responsibility, market/protocol risk, no advice, third-party services, prohibited use, availability, limitation of liability, and review status.
+- Privacy document covers wallet/session data, Telegram Chat ID, agent/proposal/runtime data, LLM processing through OpenRouter/model providers, third-party services, retention, security controls, and user choices.
+- This repository does not claim external legal counsel approval.
+
+## Current Launch Notes
+
+- Arbitrary protocol calldata generation remains review-only until dedicated encoders are wired and tested.
+- Real device and cross-browser smoke tests remain recommended before broader user rollout.

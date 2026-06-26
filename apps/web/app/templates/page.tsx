@@ -10,8 +10,8 @@ export default function TemplatesPage() {
     <div className="mx-auto max-w-6xl px-6 py-16">
       <h1 className="font-mono text-2xl font-bold uppercase tracking-widest2 text-nm-fg">templates</h1>
       <p className="mt-3 max-w-2xl text-sm leading-relaxed text-nm-muted">
-        Every template follows the same shape: one condition, one proposed action. Gated templates are
-        visible for review but cannot be deployed until monitoring and Base calldata are verified.
+        Every template follows the same shape: one condition, one proposed action. Production templates are
+        approval-first: agents monitor conditions and create proposals, while your wallet remains the only signer.
       </p>
 
       {CATEGORY_ORDER.map((category) => {

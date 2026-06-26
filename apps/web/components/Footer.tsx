@@ -11,6 +11,8 @@ export function Footer() {
           <span>nemesis — the market&apos;s reckoning</span>
           <div className="hidden h-3 w-px bg-nm-border sm:block" aria-hidden="true" />
           <div className="flex items-center gap-5">
+            <a href="/terms" className="text-nm-muted transition-colors hover:text-nm-fg">terms</a>
+            <a href="/privacy" className="text-nm-muted transition-colors hover:text-nm-fg">privacy</a>
             <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="text-nm-muted transition-colors hover:text-nm-fg" aria-label="X (Twitter)">
               <svg viewBox="0 0 24 24" fill="currentColor" className="h-[14px] w-[14px]">
                 <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />

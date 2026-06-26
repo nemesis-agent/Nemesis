@@ -1,4 +1,4 @@
-﻿# NEMESIS
+# NEMESIS
 
 NEMESIS is an approval-first automation platform for Base wallets. Users describe intent in plain language, the Master Agent proposes one or more single-condition agent plans, and every transaction remains user-approved from the user's own wallet.
 
@@ -19,11 +19,11 @@ NEMESIS is an approval-first automation platform for Base wallets. Users describ
 - Database: Supabase/Postgres through `pg`, shared by web and bot.
 - Templates: `@nemesis/templates`, 10 v1 templates.
 - Master Agent API: SIWE-protected `/api/intent`, OpenRouter-backed structured output.
-- Runner: remains online for pruning and operational visibility; production template evaluators are currently gated.
+- Runner: production evaluators are enabled for all 10 v1 templates, with review-only proposals where arbitrary calldata is not yet safe to generate.
 
 ## Important Reality Check
 
-The app is safer after the latest audit, but Base MCP / AgentKit transaction encoding is not production-complete. Production template deployment is gated until each template has verified monitoring, proposal generation, and calldata. The `/demo` command is limited to a zero-value Base signature check for smoke testing the wallet handoff.
+NEMESIS is approval-first and non-custodial. Some production templates generate executable ETH/USDC swap payloads after exact proposal review; templates that involve arbitrary new tokens, pools, yield claims, or protocol interactions remain review-only until a dedicated encoder is wired and tested. The `/demo` command is limited to smoke testing the proposal handoff.
 
 ## Required Production Environment
 
@@ -75,9 +75,10 @@ For full local runtime, create local env files from:
 - `/resume <agent_id>` - resume linked wallet agent
 - `/demo` - create a demo proposal for the linked wallet
 
-## Launch Blockers
+## Launch Status
 
-- Legal review for ToS/privacy before public launch.
-- Real Base MCP/AgentKit calldata encoder and end-to-end signing test before any production template is enabled.
-- Production env variables set under the NEMESIS project identity.
-- Real mobile-device and cross-browser smoke tests.
+- Legal/privacy/terms internal product compliance review: completed for the current release.
+- External legal counsel review: not claimed by this repository.
+- Production env variables: configured under the NEMESIS project identity.
+- Production deploy: live on Railway at `https://nemesis-agent.xyz`.
+- Remaining operational recommendation: real mobile-device and cross-browser smoke tests before broader user rollout.
