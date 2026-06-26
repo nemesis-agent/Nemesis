@@ -79,6 +79,6 @@ Status: completed as an internal product compliance review for the current relea
 Status: implemented for the current release.
 
 - Sensitive API routes have in-process rate limits for nonce, SIWE verify, Master Agent intent, agent creation, Telegram link-code generation, pause/resume, and proposal confirmation.
-- Telegram bot and runner emit structured logs plus optional `NEMESIS_ALERT_WEBHOOK_URL` alerts for polling conflicts, lock waits, runner errors, evaluation failures, prune failures, and proposal dispatch failures.
+- Telegram bot and runner emit structured logs plus optional `NEMESIS_ALERT_WEBHOOK_URL` alerts for polling conflicts, lock waits, lock wait timeouts, runner errors, evaluation failures, prune failures, and proposal dispatch failures.
 - Production smoke script `npm run smoke:prod` checks health, public pages, protected API rejection, nonce generation, static route rate-limit coverage, and review-only calldata boundaries.
 - `docs/OPS_RUNBOOK.md` documents deploy verification, mobile/cross-browser smoke checklists, rollback, secret rotation, rate limits, alerts, and calldata boundaries.

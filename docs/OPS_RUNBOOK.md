@@ -97,7 +97,7 @@ If Railway is scaled to multiple replicas, replace the in-process limiter with R
 The bot emits structured logs and optional webhook alerts for:
 
 - Telegram polling lock acquired.
-- Telegram polling conflict / lock wait.
+- Telegram polling conflict / lock wait / lock wait timeout.
 - Runner cycle errors.
 - Agent evaluation failures.
 - Proposal pruning failures.
@@ -121,7 +121,7 @@ Expected:
 - Railway service status is `Online`.
 - Health returns `200` with `database: connected`.
 - Logs show `nemesis-web` online, `nemesis-bot` acquired polling lock, bot running, and runner initialized.
-- Telegram polling conflict may appear during handoff; it must resolve to lock acquired and bot running.
+- Telegram polling conflict or lock wait may appear during handoff; it must resolve to lock acquired and bot running. If lock wait exceeds 90 seconds, the bot process exits cleanly so PM2 can retry.
 
 ## Rollback
 

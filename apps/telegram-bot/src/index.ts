@@ -79,12 +79,24 @@ async function launchPollingWithRetry(botInstance: Telegraf): Promise<void> {
   }
 }
 
-async function waitForBotLock() {
+async function waitForBotLock(maxWaitMs = 90_000) {
+  const startedAt = Date.now();
+
   for (;;) {
     const client = await acquireBotLock();
     if (client) {
       await sendOpsAlert({ event: "telegram_lock_acquired", severity: "info", message: "acquired Telegram polling lock" });
       return client;
+    }
+
+    if (Date.now() - startedAt >= maxWaitMs) {
+      await sendOpsAlert({
+        event: "telegram_lock_wait_timeout",
+        severity: "critical",
+        message: "Telegram polling lock was not acquired before timeout; restarting process",
+        context: { maxWaitMs },
+      });
+      process.exit(0);
     }
 
     await sendOpsAlert({ event: "telegram_lock_wait", severity: "warning", message: "another polling instance is active; waiting for lock" });
