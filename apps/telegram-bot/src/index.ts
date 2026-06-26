@@ -45,21 +45,31 @@ async function launchPollingWithRetry(botInstance: Telegraf): Promise<void> {
   let attempt = 0;
 
   for (;;) {
-    try {
-      await botInstance.telegram.deleteWebhook({ drop_pending_updates: false });
-      await botInstance.launch({ dropPendingUpdates: attempt === 0 });
+    await botInstance.telegram.deleteWebhook({ drop_pending_updates: false });
+    const launchPromise = botInstance.launch({ dropPendingUpdates: attempt === 0 });
+
+    const startupError = await Promise.race([
+      launchPromise.then(() => undefined, (error: unknown) => error),
+      sleep(3_000).then(() => undefined),
+    ]);
+
+    if (!startupError) {
+      launchPromise.catch((error) => {
+        console.error("[nemesis-bot] polling stopped unexpectedly", error);
+        process.exit(1);
+      });
       console.log("[nemesis-bot] running");
       return;
-    } catch (error) {
-      if (!isTelegramPollingConflict(error)) {
-        throw error;
-      }
-
-      attempt += 1;
-      const delayMs = Math.min(60_000, 5_000 * attempt);
-      console.warn(`[nemesis-bot] Telegram polling conflict; retrying in ${Math.round(delayMs / 1000)}s`);
-      await sleep(delayMs);
     }
+
+    if (!isTelegramPollingConflict(startupError)) {
+      throw startupError;
+    }
+
+    attempt += 1;
+    const delayMs = Math.min(60_000, 5_000 * attempt);
+    console.warn(`[nemesis-bot] Telegram polling conflict; retrying in ${Math.round(delayMs / 1000)}s`);
+    await sleep(delayMs);
   }
 }
 
