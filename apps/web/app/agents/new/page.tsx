@@ -13,7 +13,7 @@ export default function DeployPage({ searchParams }: DeployPageProps) {
       <h1 className="font-mono text-2xl font-bold uppercase tracking-widest2 text-nm-fg">deploy</h1>
       <p className="mt-3 max-w-2xl text-sm leading-relaxed text-nm-muted">
         {template
-          ? `Reviewing the "${template.name}" template. Deployment stays gated until its runtime and Base calldata are verified.`
+          ? `Starting from the "${template.name}" template. If it is production-ready, you can deploy it after reviewing the plan.`
           : "Describe what you want in plain language. The Master Agent will only propose production-ready templates."}
       </p>
 

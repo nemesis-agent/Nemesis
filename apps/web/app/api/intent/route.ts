@@ -101,6 +101,15 @@ Task: Analyze the conversation history. Select only from the production-ready te
       messages: safeMessages as Array<{ role: "user" | "assistant"; content: string }>,
     });
 
+    const productionTemplateIds = new Set(productionTemplates.map((template) => template.id));
+    const hasUnsupportedPlan = object.plans.some((plan) => !productionTemplateIds.has(plan.templateId));
+    if (hasUnsupportedPlan) {
+      return NextResponse.json(
+        { error: "Master Agent returned a template that is not production-ready." },
+        { status: 502 },
+      );
+    }
+
     return NextResponse.json({ intent: object }, { status: 200 });
   } catch (error: any) {
     console.error("[Master Agent] Inference Error:", error);

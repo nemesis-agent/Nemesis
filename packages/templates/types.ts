@@ -48,8 +48,9 @@ export interface AgentTemplate {
   /** Configurable parameters surfaced in the deploy form */
   parameters: TemplateParameter[];
   /**
-   * Production means the template has verified monitoring, proposal, and
-   * transaction payload behavior. Missing values are treated as gated.
+   * Production means the template has verified monitoring and proposal behavior.
+   * Templates that need on-chain calldata must not include payloads until verified.
+   * Missing values are treated as gated.
    */
   runtimeStatus?: TemplateRuntimeStatus;
   /** Clear user-facing reason when deployment is gated. */

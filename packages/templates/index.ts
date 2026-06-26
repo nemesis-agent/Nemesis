@@ -106,12 +106,29 @@ export const TEMPLATES: AgentTemplate[] = [
     name: "Launch flipper",
     category: "launch-snipe",
     risk: "high",
-    summary: "Enter a launch and propose exit at your profit target",
+    runtimeStatus: "production",
+    summary: "Track a position and propose exit at your thresholds",
     condition:
       "You hold a position from a launch via Bankr, and its price reaches your take-profit or stop-loss target.",
     action: "Propose selling the position back to USDC.",
     protocols: ["bankr", "uniswap"],
     parameters: [
+      {
+        key: "asset",
+        label: "Tracked asset",
+        type: "select",
+        default: "ETH_USD",
+        options: ["ETH_USD", "BTC_USD", "SOL_USD"],
+        description: "Price feed this agent monitors for exits.",
+      },
+      {
+        key: "entryPrice",
+        label: "Entry price",
+        type: "currency",
+        default: 3000,
+        unit: "USDC",
+        description: "Reference entry price for this position.",
+      },
       {
         key: "takeProfitPercent",
         label: "Take profit",
@@ -138,7 +155,7 @@ export const TEMPLATES: AgentTemplate[] = [
       },
     ],
     approvalSummary:
-      "This agent tracks one launch position. If it gains {takeProfitPercent}% it proposes taking profit; if it loses {stopLossPercent}% it proposes cutting the loss; if neither happens within {maxHoldHours} hours it proposes exiting anyway. Every exit needs your approval.",
+      "This agent tracks {asset} from an entry price of {entryPrice} USDC. If it gains {takeProfitPercent}% it proposes taking profit; if it loses {stopLossPercent}% it proposes cutting the loss; if neither happens within {maxHoldHours} hours it proposes reviewing the position. Every exit needs your approval.",
     riskNote:
       "Stop-loss and take-profit levels are proposals, not guarantees — by the time you approve an exit, the price may have moved further against you, especially in thin liquidity. A {stopLossPercent}% stop loss can still result in a larger realized loss if the price gaps past it.",
   },
@@ -151,11 +168,20 @@ export const TEMPLATES: AgentTemplate[] = [
     name: "Limit order agent",
     category: "simple-actions",
     risk: "low",
-    summary: "Buy or sell a token when it reaches your target price",
-    condition: "The price of your chosen token crosses your target price.",
+    runtimeStatus: "production",
+    summary: "Buy or sell a tracked asset when it reaches your target price",
+    condition: "The price of your selected tracked asset crosses your target price.",
     action: "Propose a swap at the current market price.",
     protocols: ["uniswap", "aerodrome"],
     parameters: [
+      {
+        key: "asset",
+        label: "Tracked asset",
+        type: "select",
+        default: "ETH_USD",
+        options: ["ETH_USD", "BTC_USD", "SOL_USD"],
+        description: "Price feed this agent monitors.",
+      },
       {
         key: "targetPrice",
         label: "Target price",
@@ -189,11 +215,20 @@ export const TEMPLATES: AgentTemplate[] = [
     name: "Dip buyer",
     category: "simple-actions",
     risk: "low",
-    summary: "Buy a fixed amount every time the price drops by a set %",
-    condition: "The price of your chosen token drops by your set percentage from its recent high.",
+    runtimeStatus: "production",
+    summary: "Buy a fixed amount every time a tracked asset dips",
+    condition: "The price of your selected tracked asset drops by your set percentage from its recent high.",
     action: "Propose a buy of a fixed amount.",
     protocols: ["uniswap"],
     parameters: [
+      {
+        key: "asset",
+        label: "Tracked asset",
+        type: "select",
+        default: "ETH_USD",
+        options: ["ETH_USD", "BTC_USD", "SOL_USD"],
+        description: "Price feed this agent monitors for dips.",
+      },
       {
         key: "dipPercent",
         label: "Dip trigger",
@@ -220,18 +255,35 @@ export const TEMPLATES: AgentTemplate[] = [
       },
     ],
     approvalSummary:
-      "This agent proposes buying {buyAmount} USDC of your chosen token every time its price drops {dipPercent}% from its recent high, with at least {cooldownHours} hours between proposals. You approve each buy individually.",
+      "This agent tracks {asset} and proposes buying {buyAmount} USDC when price drops {dipPercent}% from its recorded high, with at least {cooldownHours} hours between proposals. You approve each buy individually.",
   },
   {
     id: "profit-taker",
     name: "Profit taker",
     category: "simple-actions",
     risk: "mid",
-    summary: "Sell a portion of a position once it hits your target gain",
+    runtimeStatus: "production",
+    summary: "Propose taking profit once a tracked asset hits your gain target",
     condition: "Your position in a chosen token gains your target percentage from your entry price.",
     action: "Propose selling a portion of the position back to USDC.",
     protocols: ["uniswap", "aerodrome"],
     parameters: [
+      {
+        key: "asset",
+        label: "Tracked asset",
+        type: "select",
+        default: "ETH_USD",
+        options: ["ETH_USD", "BTC_USD", "SOL_USD"],
+        description: "Price feed this agent monitors for profit-taking.",
+      },
+      {
+        key: "entryPrice",
+        label: "Entry price",
+        type: "currency",
+        default: 3000,
+        unit: "USDC",
+        description: "Reference entry price for this position.",
+      },
       {
         key: "gainTargetPercent",
         label: "Gain target",
@@ -257,7 +309,7 @@ export const TEMPLATES: AgentTemplate[] = [
       },
     ],
     approvalSummary:
-      "This agent watches your position in a chosen token. Once it's up {gainTargetPercent}% from your entry, it proposes selling {sellPortionPercent}% of it back to USDC, then resets to watch for the next target if repeat is on. You approve each sell.",
+      "This agent watches {asset} from an entry price of {entryPrice} USDC. Once it's up {gainTargetPercent}% from your entry, it proposes selling {sellPortionPercent}% of the position back to USDC, then resets to watch for the next target if repeat is on. You approve each sell.",
   },
   {
     id: "auto-compound",
@@ -298,9 +350,10 @@ export const TEMPLATES: AgentTemplate[] = [
     name: "Gas optimizer",
     category: "utility",
     risk: "low",
-    summary: "Hold a pending transaction until gas drops below your threshold",
+    runtimeStatus: "production",
+    summary: "Notify when Base gas drops below your threshold",
     condition: "Base network gas price drops below your threshold while a transaction is queued.",
-    action: "Propose executing the queued transaction.",
+    action: "Propose reviewing your queued transaction while gas is below your threshold.",
     protocols: ["uniswap"],
     parameters: [
       {
@@ -328,7 +381,8 @@ export const TEMPLATES: AgentTemplate[] = [
     name: "Airdrop farmer",
     category: "utility",
     risk: "low",
-    summary: "Run a scheduled interaction pattern across target protocols",
+    runtimeStatus: "production",
+    summary: "Send scheduled protocol interaction reminders",
     condition: "Your weekly interaction schedule comes due for one of your target protocols.",
     action: "Propose a small, low-cost interaction (swap, deposit, or withdrawal) with that protocol.",
     protocols: ["morpho", "aerodrome", "uniswap", "moonwell"],
@@ -358,8 +412,9 @@ export const TEMPLATES: AgentTemplate[] = [
     name: "Portfolio rebalancer",
     category: "utility",
     risk: "mid",
-    summary: "Propose a rebalance when your allocation drifts from target",
-    condition: "Your wallet's allocation between two assets drifts beyond your tolerance from the target split.",
+    runtimeStatus: "production",
+    summary: "Propose a rebalance when ETH/USDC allocation drifts",
+    condition: "Your wallet's ETH/USDC allocation drifts beyond your tolerance from the target split.",
     action: "Propose a swap to bring the allocation back to target.",
     protocols: ["uniswap", "aerodrome"],
     parameters: [
@@ -381,7 +436,7 @@ export const TEMPLATES: AgentTemplate[] = [
       },
     ],
     approvalSummary:
-      "This agent monitors your allocation against a {targetAllocation} target split. Once it drifts more than {driftTolerancePercent}% from target, it proposes a swap to bring it back in line. You approve each rebalance.",
+      "This agent monitors your wallet's ETH/USDC allocation against a {targetAllocation} target split. Once it drifts more than {driftTolerancePercent}% from target, it proposes reviewing a rebalance. You approve each rebalance.",
   },
 ];
 
