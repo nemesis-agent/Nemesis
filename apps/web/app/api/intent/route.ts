@@ -4,9 +4,9 @@ import { generateObject } from "ai";
 import { createPublicClient, http, formatEther } from "viem";
 import { baseChain } from "@/lib/base-chain";
 
-import { requireAuth } from "@/lib/auth";
+import { requireAnyWalletAuth } from "@/lib/auth";
 import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
-import { TEMPLATES, isTemplateProductionReady } from "@nemesis/templates";
+import { TEMPLATES, getTemplateChain, isTemplateProductionReady } from "@nemesis/templates";
 import { intentSchema } from "@/lib/intent-schema";
 
 const publicClient = createPublicClient({
@@ -22,10 +22,10 @@ const openrouter = createOpenRouter({
 });
 
 export async function POST(request: Request) {
-  const auth = await requireAuth();
+  const auth = await requireAnyWalletAuth();
   if (auth.error) return auth.error;
 
-  const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "intent", auth.address), limit: 12, windowMs: 60_000 });
+  const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "intent", auth.wallet.walletKey), limit: 12, windowMs: 60_000 });
   if (rateLimit) return rateLimit;
 
   let body: { messages?: any[] } | null = null;
@@ -73,31 +73,30 @@ export async function POST(request: Request) {
   }
 
   try {
-    // 1. Context Gathering (Quant-Grade Viem Balance Check)
-    const rawBalance = await publicClient.getBalance({ address: auth.address as `0x${string}` });
-    const ethBalance = formatEther(rawBalance);
+    const ethBalance = auth.wallet.chain === "base"
+      ? formatEther(await publicClient.getBalance({ address: auth.wallet.address as `0x${string}` }))
+      : "not connected";
 
-    // 2. Format Available Templates for the LLM
-    const templatesContext = productionTemplates.map((t) => ({
-      id: t.id,
-      name: t.name,
-      condition: t.condition,
-      action: t.action,
-      parameters: t.parameters.map((p) => `${p.key} (${p.type}): ${p.description}`),
+    const templatesContext = productionTemplates.map((template) => ({
+      id: template.id,
+      name: template.name,
+      chain: getTemplateChain(template),
+      condition: template.condition,
+      action: template.action,
+      parameters: template.parameters.map((param) => `${param.key} (${param.type}): ${param.description}`),
     }));
 
-    // 3. System Prompt setup
-    const systemPrompt = `You are the NEMESIS Master Agent, a Quant-Grade crypto trading assistant on the Base network.
+    const systemPrompt = `You are the NEMESIS Master Agent, an approval-first crypto automation assistant for Base and Solana.
 The user wants to deploy new automated strategies or modify existing pending ones.
 
+AUTHENTICATED WALLET CHAIN: ${auth.wallet.chain}
 USER'S BASE ETH BALANCE: ${ethBalance} ETH
 
 AVAILABLE TEMPLATES:
 ${JSON.stringify(templatesContext, null, 2)}
 
-Task: Analyze the conversation history. Select only from the production-ready templates above and extract the parameters the user specified. You can propose multiple templates only when all selected templates are production-ready. If they didn't specify a parameter, infer a safe default or omit it.`;
+Task: Analyze the conversation history. Select only from the production-ready templates above and prefer templates whose chain matches the authenticated wallet chain. Extract the parameters the user specified. You can propose multiple templates only when all selected templates are production-ready. If they didn't specify a parameter, infer a safe default or omit it.`;
 
-    // 4. Master Agent Inference (Structured JSON)
     const { object } = await generateObject({
       model: openrouter(openrouterModel),
       schema: intentSchema,
@@ -119,7 +118,7 @@ Task: Analyze the conversation history. Select only from the production-ready te
     console.error("[Master Agent] Inference Error:", error);
     return NextResponse.json(
       { error: "Failed to process intent. The AI model may be unavailable." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

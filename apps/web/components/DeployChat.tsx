@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 
@@ -10,7 +11,8 @@ import { RiskAcknowledgmentModal } from "@/components/RiskAcknowledgmentModal";
 import { RiskBanner } from "@/components/RiskBanner";
 import { fillApprovalSummary } from "@/lib/format-template";
 import { useSiweAuth } from "@/lib/use-siwe-auth";
-import { getTemplateById, getTemplateUnavailableReason, isTemplateProductionReady, type AgentTemplate } from "@nemesis/templates";
+import { useSolanaAuth } from "@/lib/use-solana-auth";
+import { getTemplateById, getTemplateChain, getTemplateUnavailableReason, isTemplateProductionReady, type AgentTemplate } from "@nemesis/templates";
 
 type MessageRole = "agent" | "user";
 
@@ -31,7 +33,7 @@ const INTRO_MESSAGE: ChatMessage = {
   id: "intro",
   role: "agent",
   content:
-    "Tell me what you want to do — what you're holding, what you want to happen, and how much risk you're comfortable with. I'll read your wallet and propose which agents to deploy.",
+    "Tell me what you want to do â€” what you're holding, what you want to happen, and how much risk you're comfortable with. I'll read your wallet and propose which agents to deploy.",
 };
 
 interface DeployChatProps {
@@ -43,9 +45,12 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
   const initialTemplate = initialTemplateId ? getTemplateById(initialTemplateId) : undefined;
   const router = useRouter();
   const { isConnected } = useAccount();
+  const { connected: isSolanaConnected } = useWallet();
   const { auth, signIn } = useSiweAuth();
+  const { auth: solanaAuth, signIn: signInSolana } = useSolanaAuth();
   const [signingIn, setSigningIn] = useState(false);
   const [signInError, setSignInError] = useState<string | null>(null);
+  const [solanaSigningIn, setSolanaSigningIn] = useState(false);
 
   const [messages, setMessages] = useState<ChatMessage[]>([INTRO_MESSAGE]);
   const [input, setInput] = useState(
@@ -69,6 +74,19 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
     // Only trigger on auth state change, not on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected, auth.state]);
+
+  useEffect(() => {
+    if (isSolanaConnected && solanaAuth.state === "unauthenticated") {
+      setSolanaSigningIn(true);
+      setSignInError(null);
+      signInSolana()
+        .catch((err: unknown) => {
+          setSignInError(err instanceof Error ? err.message : "Solana signature cancelled.");
+        })
+        .finally(() => setSolanaSigningIn(false));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSolanaConnected, solanaAuth.state]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -211,7 +229,7 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
     const declineMessage: ChatMessage = {
       id: `declined-${Date.now()}`,
       role: "agent",
-      content: "Got it — I've discarded that plan.",
+      content: "Got it â€” I've discarded that plan.",
     };
     setMessages((prev) => [...prev, declineMessage]);
     
@@ -222,26 +240,27 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
     });
   }
 
-  const isAuthenticated = auth.state === "authenticated";
-  const isLoading = auth.state === "loading" || signingIn;
+  const isAuthenticated = auth.state === "authenticated" || solanaAuth.state === "authenticated";
+  const anyWalletConnected = isConnected || isSolanaConnected;
+  const isLoading = auth.state === "loading" || solanaAuth.state === "loading" || signingIn || solanaSigningIn;
 
   return (
     <div className="border border-nm-border">
       <div className="flex flex-col gap-4 p-6">
         {/* Auth status banner */}
-        {isConnected && isLoading && (
+        {anyWalletConnected && isLoading && (
           <div className="flex items-center gap-3">
             <div className="w-24">
               <FragmentDivider segments={8} loading />
             </div>
             <span className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-              {signingIn ? "waiting for signature…" : "checking session…"}
+              {signingIn || solanaSigningIn ? "waiting for signature..." : "checking session..."}
             </span>
           </div>
         )}
         {signInError && (
           <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red">
-            {signInError} — reload to try again.
+            {signInError} â€” reload to try again.
           </p>
         )}
 
@@ -282,7 +301,7 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
             </div>
             {stage === "deploying" && (
               <p className="mt-2 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-                creating agent…
+                creating agentâ€¦
               </p>
             )}
           </div>
@@ -301,20 +320,20 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
           value={input}
           onChange={(event) => setInput(event.target.value)}
           placeholder={
-            !isConnected
-              ? "connect your wallet first"
+            !anyWalletConnected
+              ? "connect Base or Solflare first"
               : !isAuthenticated
                 ? "sign in with your wallet to deploy"
                 : "e.g. I want to buy ETH whenever it drops 5%"
           }
-          disabled={!isConnected || !isAuthenticated || stage === "thinking" || stage === "deploying"}
+          disabled={!anyWalletConnected || !isAuthenticated || stage === "thinking" || stage === "deploying"}
           className="flex-1 border border-nm-border bg-nm-surface px-4 py-3 text-sm text-nm-fg placeholder:text-nm-muted focus:border-nm-fg disabled:opacity-50"
         />
         <Button
           type="submit"
           variant="primary"
           magnetic
-          disabled={!isConnected || !isAuthenticated || stage === "thinking" || stage === "deploying" || !input.trim()}
+          disabled={!anyWalletConnected || !isAuthenticated || stage === "thinking" || stage === "deploying" || !input.trim()}
         >
           Send
         </Button>
@@ -357,6 +376,9 @@ function DeploymentPlanCard({
       <p className="mt-2 text-sm leading-relaxed text-nm-muted">{fillApprovalSummary(template, pendingParams)}</p>
 
       <div className="mt-3 flex flex-wrap gap-2">
+        <span className="border border-nm-border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+          {getTemplateChain(template)}
+        </span>
         {template.protocols.map((protocol) => (
           <span
             key={protocol}

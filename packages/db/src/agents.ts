@@ -55,6 +55,12 @@ export async function listAgentsForWallet(walletAddress: string): Promise<Agent[
   return (rows as AgentRow[]).map(rowToAgent);
 }
 
+export async function listAgentsForWallets(walletAddresses: string[]): Promise<Agent[]> {
+  if (walletAddresses.length === 0) return [];
+  const { rows } = await pool.query("SELECT * FROM agents WHERE wallet_address = ANY($1::text[]) ORDER BY created_at DESC", [walletAddresses]);
+  return (rows as AgentRow[]).map(rowToAgent);
+}
+
 export async function getAgent(id: string): Promise<Agent | undefined> {
   const { rows } = await pool.query("SELECT * FROM agents WHERE id = $1", [id]);
   const row = rows[0] as AgentRow | undefined;
@@ -72,7 +78,7 @@ export async function createAgent(input: CreateAgentInput): Promise<Agent> {
   const id = `agent_${randomUUID().slice(0, 8)}`;
   await pool.query(
     `INSERT INTO agents (id, wallet_address, template_id, name, status, parameters, last_event)
-     VALUES ($1, $2, $3, $4, 'active', $5, 'Deployed — waiting for first monitoring cycle')`,
+     VALUES ($1, $2, $3, $4, 'active', $5, 'Deployed â€” waiting for first monitoring cycle')`,
     [id, input.walletAddress, input.templateId, input.name, JSON.stringify(input.parameters ?? {})]
   );
 

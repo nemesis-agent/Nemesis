@@ -8,14 +8,14 @@ import { FragmentDivider } from "@/components/FragmentDivider";
 import { ProposalRecordRow } from "@/components/ProposalRecordRow";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { getAgent, listProposalsForAgent } from "@nemesis/db";
-import { getSession } from "@/lib/auth";
+import { getSession, getSessionWalletKeys } from "@/lib/auth";
 import { getTemplateById } from "@nemesis/templates";
 
 interface AgentDetailPageProps {
   params: { id: string };
 }
 
-// Reads live from Postgres — pause/resume mutate this row, and a scheduler
+// Reads live from Postgres â€” pause/resume mutate this row, and a scheduler
 // can add new proposals at any time, so this can never be statically
 // cached. See CONTEXT.md, "What changed in the database pass".
 export const dynamic = "force-dynamic";
@@ -41,11 +41,12 @@ const STATUS_LABELS = {
 
 export default async function AgentDetailPage({ params }: AgentDetailPageProps) {
   const session = await getSession();
-  if (!session.address) redirect("/");
+  const walletKeys = getSessionWalletKeys(session);
+  if (walletKeys.length === 0) redirect("/");
 
   const agent = await getAgent(params.id);
   if (!agent) notFound();
-  if (agent.walletAddress.toLowerCase() !== session.address.toLowerCase()) notFound();
+  if (!walletKeys.some((walletKey) => walletKey.toLowerCase() === agent.walletAddress.toLowerCase())) notFound();
 
   const template = getTemplateById(agent.templateId);
   const proposals = await listProposalsForAgent(agent.id);
@@ -60,7 +61,7 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
         href="/dashboard"
         className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted"
       >
-        ← agents
+        â† agents
       </Link>
 
       {/* Header */}
@@ -70,7 +71,7 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
             {agent.name}
           </h1>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-            {agent.id} · {agent.walletAddress.slice(0, 6)}...{agent.walletAddress.slice(-4)}
+            {agent.id} Â· {agent.walletAddress.slice(0, 6)}...{agent.walletAddress.slice(-4)}
           </p>
         </div>
         <span
@@ -115,7 +116,7 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
               href={`/templates/${template.id}`}
               className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red"
             >
-              view full spec →
+              view full spec â†’
             </Link>
           </div>
 
