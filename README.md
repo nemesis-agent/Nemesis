@@ -1,6 +1,6 @@
 # NEMESIS
 
-NEMESIS is an approval-first automation platform for Base wallets. Users describe intent in plain language, the Master Agent proposes one or more single-condition agent plans, and every transaction remains user-approved from the user's own wallet.
+NEMESIS is an approval-first automation platform for Base and Solana wallets. Users describe intent in plain language, the Master Agent proposes one or more single-condition agent plans, and every transaction remains user-approved from the user's own wallet.
 
 ![NEMESIS](/assets/nemesis-banner-dark.png)
 
@@ -14,16 +14,16 @@ NEMESIS is an approval-first automation platform for Base wallets. Users describ
 
 ## Current Implementation
 
-- Web app: Next.js 14, RainbowKit, Wagmi, SIWE, iron-session.
+- Web app: Next.js 14, RainbowKit, Wagmi, SIWE, Solana wallet adapter, iron-session.
 - Bot: Telegraf with linked-wallet command authorization.
 - Database: Supabase/Postgres through `pg`, shared by web and bot.
-- Templates: `@nemesis/templates`, 10 v1 templates.
+- Templates: `@nemesis/templates`, 10 Base v1 templates plus 2 Solana proposal-only templates.
 - Master Agent API: SIWE-protected `/api/intent`, OpenRouter-backed structured output.
-- Runner: production evaluators are enabled for all 10 v1 templates, with review-only proposals where arbitrary calldata is not yet safe to generate.
+- Runner: production evaluators are enabled for Base v1 templates and Solana proposal-only templates, with review-only proposals where arbitrary calldata is not yet safe to generate.
 
 ## Important Reality Check
 
-NEMESIS is approval-first and non-custodial. Some production templates generate executable ETH/USDC swap payloads after exact proposal review; templates that involve arbitrary new tokens, pools, yield claims, or protocol interactions remain review-only until a dedicated encoder is wired and tested. The `/demo` command is limited to smoke testing the proposal handoff.
+NEMESIS is approval-first and non-custodial. Some Base production templates generate executable ETH/USDC swap payloads after exact proposal review; templates that involve arbitrary new tokens, pools, yield claims, protocol interactions, or Solana/Jupiter actions remain review-only until a dedicated encoder is wired and tested. The `/demo` command is limited to smoke testing the proposal handoff.
 
 ## Required Production Environment
 
@@ -38,6 +38,7 @@ TELEGRAM_BOT_TOKEN=
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
 NEXT_PUBLIC_SITE_URL=
 NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=
+NEXT_PUBLIC_SOLANA_RPC_URL= # optional, defaults to Solana mainnet-beta
 ```
 
 `SESSION_SECRET` must be unique and at least 32 characters. `NEXT_PUBLIC_SITE_URL` must be the canonical HTTPS URL. `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` must belong to the NEMESIS WalletConnect project.

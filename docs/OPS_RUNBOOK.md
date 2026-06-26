@@ -22,7 +22,8 @@ OPENROUTER_MODEL=xiaomi/mimo-v2.5
 TELEGRAM_BOT_TOKEN=
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
 NEXT_PUBLIC_SITE_URL=https://nemesis-agent.xyz
-NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=NemesisTesterBot
+NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=NemesisAgentAppBot
+NEXT_PUBLIC_SOLANA_RPC_URL= # optional, defaults to Solana mainnet-beta
 NEMESIS_ALERT_WEBHOOK_URL= # optional but recommended
 BASE_RPC_URL= # optional, defaults to https://mainnet.base.org
 ```
@@ -44,11 +45,11 @@ npm run smoke:prod
 The smoke test verifies:
 
 - `/api/health` returns healthy and database connected.
-- `/`, `/templates`, `/terms`, `/privacy`, and `/templates/ape-agent` return 200.
+- `/`, `/templates`, `/terms`, `/privacy`, `/templates/ape-agent`, and `/templates/solana-dip-buyer` return 200.
 - Protected POST APIs reject unauthenticated requests.
 - SIWE nonce endpoint returns a nonce.
 - Sensitive routes have rate-limit enforcement.
-- Review-only template boundaries do not generate arbitrary calldata.
+- Review-only template boundaries, including Solana/Jupiter templates, do not generate arbitrary calldata.
 
 ## Manual Mobile Smoke Checklist
 
@@ -76,7 +77,7 @@ Complete on desktop Chrome, Brave, Edge, and at least one mobile browser:
 - Wallet connect modal opens.
 - SIWE nonce request succeeds.
 - Unauthenticated dashboard/API states do not leak private data.
-- Template detail pages render all 10 templates.
+- Template detail pages render all Base and Solana templates.
 
 ## Rate Limits
 
