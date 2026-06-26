@@ -30,6 +30,39 @@ async function acquireBotLock() {
   return client;
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isTelegramPollingConflict(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+
+  const maybeTelegramError = error as Error & { response?: { error_code?: number } };
+  return maybeTelegramError.response?.error_code === 409 || error.message.includes("409: Conflict");
+}
+
+async function launchPollingWithRetry(botInstance: Telegraf): Promise<void> {
+  let attempt = 0;
+
+  for (;;) {
+    try {
+      await botInstance.telegram.deleteWebhook({ drop_pending_updates: false });
+      await botInstance.launch({ dropPendingUpdates: attempt === 0 });
+      console.log("[nemesis-bot] running");
+      return;
+    } catch (error) {
+      if (!isTelegramPollingConflict(error)) {
+        throw error;
+      }
+
+      attempt += 1;
+      const delayMs = Math.min(60_000, 5_000 * attempt);
+      console.warn(`[nemesis-bot] Telegram polling conflict; retrying in ${Math.round(delayMs / 1000)}s`);
+      await sleep(delayMs);
+    }
+  }
+}
+
 const botLockClient = await acquireBotLock();
 if (!botLockClient) {
   console.warn("[nemesis-bot] another polling instance is already active; this process will stay idle");
@@ -58,9 +91,7 @@ bot.catch((error, ctx) => {
 });
 
 if (botLockClient) {
-  await bot.telegram.deleteWebhook({ drop_pending_updates: false });
-  await bot.launch({ dropPendingUpdates: true });
-  console.log("[nemesis-bot] running");
+  await launchPollingWithRetry(bot);
 
   // Start the background agent evaluation loop only in the active polling process.
   startRunner(bot);
