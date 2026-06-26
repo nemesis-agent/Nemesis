@@ -13,6 +13,7 @@ export interface Agent {
   parameters: Record<string, string | number | boolean>;
   lastCheckedAt: string | null;
   lastEvent: string | null;
+  runtimeState: Record<string, unknown>;
   createdAt: string;
 }
 
@@ -25,6 +26,7 @@ interface AgentRow {
   parameters: string;
   last_checked_at: Date | null;
   last_event: string | null;
+  runtime_state: string | null;
   created_at: Date;
 }
 
@@ -38,6 +40,7 @@ function rowToAgent(row: AgentRow): Agent {
     parameters: JSON.parse(row.parameters),
     lastCheckedAt: row.last_checked_at ? row.last_checked_at.toISOString() : null,
     lastEvent: row.last_event,
+    runtimeState: row.runtime_state ? JSON.parse(row.runtime_state) : {},
     createdAt: row.created_at.toISOString(),
   };
 }
@@ -87,4 +90,15 @@ export async function setAgentStatus(id: string, status: AgentStatus): Promise<A
 
 export async function recordAgentCheck(id: string, lastEvent: string): Promise<void> {
   await pool.query("UPDATE agents SET last_checked_at = CURRENT_TIMESTAMP, last_event = $1 WHERE id = $2", [lastEvent, id]);
+}
+
+export async function updateAgentRuntimeState(
+  id: string,
+  runtimeState: Record<string, unknown>,
+  lastEvent: string,
+): Promise<void> {
+  await pool.query(
+    "UPDATE agents SET last_checked_at = CURRENT_TIMESTAMP, last_event = $1, runtime_state = $2 WHERE id = $3",
+    [lastEvent, JSON.stringify(runtimeState), id],
+  );
 }

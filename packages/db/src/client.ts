@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS agents (
   name              TEXT NOT NULL,
   status            TEXT NOT NULL CHECK (status IN ('active', 'paused', 'awaiting-approval')),
   parameters        TEXT NOT NULL DEFAULT '{}',
+  runtime_state     TEXT NOT NULL DEFAULT '{}',
   last_checked_at   TIMESTAMP WITH TIME ZONE,
   last_event        TEXT,
   created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -62,15 +63,21 @@ CREATE INDEX IF NOT EXISTS idx_link_codes_wallet ON link_codes(wallet_address);
 if (DATABASE_URL) {
   pool.query(SCHEMA)
     .then(() => {
-      // Run migration for Phase 3: Add unsigned_tx_payload
       return pool.query(`
         DO $$
         BEGIN
           IF NOT EXISTS (
-            SELECT 1 FROM information_schema.columns 
+            SELECT 1 FROM information_schema.columns
             WHERE table_name='proposals' AND column_name='unsigned_tx_payload'
           ) THEN
             ALTER TABLE proposals ADD COLUMN unsigned_tx_payload TEXT;
+          END IF;
+
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name='agents' AND column_name='runtime_state'
+          ) THEN
+            ALTER TABLE agents ADD COLUMN runtime_state TEXT NOT NULL DEFAULT '{}';
           END IF;
         END $$;
       `);

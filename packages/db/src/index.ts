@@ -7,6 +7,7 @@ export {
   skipProposal,
   pruneOldProposals,
   type Proposal,
+  type ProposalDetail,
   type ProposalStatus,
 } from "./proposals.js";
 export * from "./links.js";
