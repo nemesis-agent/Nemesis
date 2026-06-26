@@ -8,7 +8,7 @@ COPY apps/web/package.json ./apps/web/package.json
 COPY apps/telegram-bot/package.json ./apps/telegram-bot/package.json
 COPY packages/db/package.json ./packages/db/package.json
 COPY packages/templates/package.json ./packages/templates/package.json
-RUN npm ci --ignore-scripts
+RUN npm ci
 
 FROM node:22-bookworm-slim AS builder
 WORKDIR /app

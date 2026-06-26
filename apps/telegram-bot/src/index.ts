@@ -79,7 +79,7 @@ async function launchPollingWithRetry(botInstance: Telegraf): Promise<void> {
   }
 }
 
-async function waitForBotLock(maxWaitMs = 90_000) {
+async function waitForBotLock(maxWaitMs = 240_000) {
   const startedAt = Date.now();
 
   for (;;) {
