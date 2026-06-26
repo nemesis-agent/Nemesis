@@ -73,6 +73,20 @@ export async function requireAnyWalletAuth(): Promise<
   };
 }
 
+export async function requireSolanaAuth(): Promise<
+  { wallet: Extract<AuthenticatedWallet, { chain: "solana" }>; error?: never } | { wallet?: never; error: NextResponse }
+> {
+  const session = await getSession();
+  if (!session.solanaAddress) {
+    return {
+      error: NextResponse.json(
+        { error: "Unauthorized. Sign in with your Solana wallet first." },
+        { status: 401 },
+      ),
+    };
+  }
+  return { wallet: { chain: "solana", solanaAddress: session.solanaAddress, walletKey: solanaWalletKey(session.solanaAddress) } };
+}
 export function expectedRequestOrigin(request: Request): { origin: string; domain: string } {
   const url = new URL(request.url);
   const forwardedHost = request.headers.get("x-forwarded-host");

@@ -15,6 +15,7 @@ import { sendProposal } from "./handlers/approval.js";
 import { logger } from "./lib/logger.js";
 import { sendOpsAlert } from "./lib/alerts.js";
 import { buildEthToUsdcSwapPayload, buildUsdcApproveAndSwapToEthPayload } from "./lib/uniswap-base.js";
+import { buildSolanaUsdcToSolSwapPayload } from "./lib/jupiter-solana.js";
 
 const RUNNER_INTERVAL_MS = 1000 * 60;
 const BASE_RPC_URL = process.env.BASE_RPC_URL ?? "https://mainnet.base.org";
@@ -500,10 +501,34 @@ async function evaluateSolanaDipBuyer(agent: Agent): Promise<EvaluationResult | 
   if (price > triggerPrice) return null;
   if (lastProposalAt && Date.now() - lastProposalAt < cooldownMs) return null;
 
+  let unsignedTxPayload: string | undefined;
+  let walletAction = "review only - no transaction payload generated";
+  const solanaWallet = solanaAddressFromWalletKey(agent.walletAddress);
+  if (solanaWallet) {
+    try {
+      unsignedTxPayload = JSON.stringify(await buildSolanaUsdcToSolSwapPayload({
+        walletAddress: solanaWallet,
+        usdcAmount: buyAmount,
+      }));
+      walletAction = "sign Jupiter USDC -> SOL swap in Solflare";
+    } catch (err) {
+      logger.warn({ msg: "Solana Jupiter payload unavailable", agentId: agent.id, error: String(err) });
+      void sendOpsAlert({
+        event: "solana_jupiter_payload_unavailable",
+        severity: "warning",
+        message: "Solana proposal created without executable Jupiter payload",
+        context: { agentId: agent.id, error: String(err) },
+      });
+    }
+  }
+
   return {
     title: "SOL dip review ready",
-    action: `SOL traded at $${price.toFixed(2)}, below the ${dipPercent}% dip trigger from $${highPrice.toFixed(2)}. Review a ${buyAmount} USDC Jupiter buy before signing anything in Solflare.`,
-    estimatedGasUsd: "Solana review only",
+    action: unsignedTxPayload
+      ? `SOL traded at $${price.toFixed(2)}, below the ${dipPercent}% dip trigger from $${highPrice.toFixed(2)}. Sign the prepared ${buyAmount} USDC Jupiter buy only if the wallet preview still matches this proposal.`
+      : `SOL traded at $${price.toFixed(2)}, below the ${dipPercent}% dip trigger from $${highPrice.toFixed(2)}. Review a ${buyAmount} USDC buy before signing anything in Solflare.`,
+    estimatedGasUsd: unsignedTxPayload ? "Solana network fee" : "Solana review only",
+    unsignedTxPayload,
     details: [
       { label: "chain", value: "Solana" },
       { label: "asset", value: ticker },
@@ -511,11 +536,15 @@ async function evaluateSolanaDipBuyer(agent: Agent): Promise<EvaluationResult | 
       { label: "recorded high", value: `$${highPrice.toFixed(2)}` },
       { label: "trigger", value: `${dipPercent}% dip` },
       { label: "review amount", value: `${buyAmount} USDC` },
-      { label: "wallet action", value: "review only - no transaction payload generated" },
+      { label: "wallet action", value: walletAction },
     ],
     state: { ...state, highPrice: price, lastProposalAt: new Date().toISOString() },
     lastEvent: `Solana dip review triggered for SOL at $${price.toFixed(2)}.`,
   };
+}
+
+function solanaAddressFromWalletKey(walletAddress: string): string | null {
+  return walletAddress.startsWith("solana:") ? walletAddress.slice("solana:".length) : null;
 }
 
 async function evaluateSolanaProfitTaker(agent: Agent): Promise<EvaluationResult | null> {

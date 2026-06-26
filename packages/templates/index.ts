@@ -443,7 +443,7 @@ export const TEMPLATES: AgentTemplate[] = [
     runtimeStatus: "production",
     summary: "Review SOL buys when price drops from recent high",
     condition: "SOL price drops by your configured percentage from the agent's recorded high.",
-    action: "Propose reviewing a Jupiter SOL buy. No Solana transaction is generated or broadcast automatically.",
+    action: "Propose a Jupiter SOL buy for final wallet signature in Solflare. Nothing signs or broadcasts automatically.",
     protocols: ["jupiter", "solana-rpc", "solflare"],
     parameters: [
       {
@@ -468,7 +468,7 @@ export const TEMPLATES: AgentTemplate[] = [
         type: "currency",
         default: 50,
         unit: "USDC",
-        description: "Amount shown in the proposal for the Jupiter review.",
+        description: "USDC amount used when preparing the Jupiter swap proposal.",
       },
       {
         key: "cooldownHours",
@@ -480,7 +480,7 @@ export const TEMPLATES: AgentTemplate[] = [
       },
     ],
     approvalSummary:
-      "This Solana agent tracks SOL and proposes reviewing a Jupiter buy for {buyAmount} USDC when price drops {dipPercent}% from its recorded high, with at least {cooldownHours} hours between proposals. It never creates or broadcasts a Solana transaction automatically.",
+      "This Solana agent tracks SOL and prepares a Jupiter buy for {buyAmount} USDC when price drops {dipPercent}% from its recorded high, with at least {cooldownHours} hours between proposals. The proposal can only move after you review and sign it in your own Solflare wallet.",
   },
   {
     id: "solana-profit-taker",

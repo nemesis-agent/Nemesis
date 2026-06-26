@@ -9,9 +9,9 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@coinbase/agentkit": "^0.10.4",
     "@nemesis/db": "*",
     "@nemesis/templates": "*",
+    "@solana/web3.js": "^1.98.4",
     "dotenv": "^16.4.5",
     "pino": "^7.11.0",
     "pino-pretty": "^13.1.3",
