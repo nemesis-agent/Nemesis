@@ -5,7 +5,7 @@ import { createPublicClient, http, formatEther } from "viem";
 import { base } from "viem/chains";
 
 import { requireAuth } from "@/lib/auth";
-import { TEMPLATES } from "@nemesis/templates";
+import { TEMPLATES, isTemplateProductionReady } from "@nemesis/templates";
 import { intentSchema } from "@/lib/intent-schema";
 
 const publicClient = createPublicClient({
@@ -40,6 +40,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Messages array is required and must contain 1-20 messages." }, { status: 400 });
   }
 
+  const productionTemplates = TEMPLATES.filter(isTemplateProductionReady);
+  if (productionTemplates.length === 0) {
+    return NextResponse.json(
+      { error: "No production-ready templates are available yet." },
+      { status: 503 },
+    );
+  }
+
   const safeMessages = messages.map((message) => {
     if (
       !message ||
@@ -66,7 +74,7 @@ export async function POST(request: Request) {
     const ethBalance = formatEther(rawBalance);
 
     // 2. Format Available Templates for the LLM
-    const templatesContext = TEMPLATES.map((t) => ({
+    const templatesContext = productionTemplates.map((t) => ({
       id: t.id,
       name: t.name,
       condition: t.condition,
@@ -78,13 +86,12 @@ export async function POST(request: Request) {
     const systemPrompt = `You are the NEMESIS Master Agent, a Quant-Grade crypto trading assistant on the Base network.
 The user wants to deploy new automated strategies or modify existing pending ones.
 
-USER'S ADDRESS: ${auth.address}
-USER'S ETH BALANCE: ${ethBalance} ETH
+USER'S BASE ETH BALANCE: ${ethBalance} ETH
 
 AVAILABLE TEMPLATES:
 ${JSON.stringify(templatesContext, null, 2)}
 
-Task: Analyze the conversation history. Select the most appropriate template(s) and extract the parameters the user specified. You can propose multiple templates if the user asks for a combined strategy. If they didn't specify a parameter, try to infer a safe default or omit it.`;
+Task: Analyze the conversation history. Select only from the production-ready templates above and extract the parameters the user specified. You can propose multiple templates only when all selected templates are production-ready. If they didn't specify a parameter, infer a safe default or omit it.`;
 
     // 4. Master Agent Inference (Structured JSON)
     const { object } = await generateObject({

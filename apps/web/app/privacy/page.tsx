@@ -29,9 +29,10 @@ export default function PrivacyPage() {
 
         <h2 className="text-nm-fg">3. Third-Party Integrations</h2>
         <p>
-          When you use the Master Agent chat interface, your natural language prompts and current wallet balances
-          are sent to our LLM provider (OpenRouter / MiMo) to generate the appropriate strategy configuration.
-          We do not send your wallet address or any identifiable information in these prompts.
+          When you use the Master Agent chat interface, your natural language prompts and current Base ETH balance
+          may be sent to our LLM provider (OpenRouter / MiMo) to generate an appropriate strategy configuration.
+          We do not include your wallet address in the LLM prompt. Your prompts and outputs are also subject to
+          OpenRouter and model-provider data terms.
         </p>
 
         <h2 className="text-nm-fg">4. Data Retention</h2>
