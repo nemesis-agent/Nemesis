@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { getAgent, setAgentStatus } from "@nemesis/db";
 import { rejectCrossOrigin, requireAuth } from "@/lib/auth";
+import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   const originError = rejectCrossOrigin(request);
@@ -11,6 +12,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
   // 1. Auth check — must be signed in.
   const auth = await requireAuth();
   if (auth.error) return auth.error;
+
+  const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "agents:pause", auth.address), limit: 30, windowMs: 60_000 });
+  if (rateLimit) return rateLimit;
 
   // 2. Load the agent.
   const existing = await getAgent(params.id);

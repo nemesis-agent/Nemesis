@@ -13,6 +13,7 @@ import { getLivePrice, type SupportedTicker } from "./lib/price-feed.js";
 import { getBaseTokenPairs, getLatestBaseTokenProfiles, type DexScreenerPair } from "./lib/dexscreener.js";
 import { sendProposal } from "./handlers/approval.js";
 import { logger } from "./lib/logger.js";
+import { sendOpsAlert } from "./lib/alerts.js";
 import { buildEthToUsdcSwapPayload, buildUsdcApproveAndSwapToEthPayload } from "./lib/uniswap-base.js";
 
 const RUNNER_INTERVAL_MS = 1000 * 60;
@@ -48,7 +49,7 @@ export function startRunner(bot: Telegraf) {
   setInterval(() => {
     cycleCount++;
     runCycle(bot).catch((err) => {
-      logger.error({ msg: "error in runner cycle", err });
+      void sendOpsAlert({ event: "runner_cycle_error", severity: "critical", message: "error in runner cycle", context: { error: String(err) } });
     });
 
     if (cycleCount % 1440 === 0) {
@@ -56,11 +57,11 @@ export function startRunner(bot: Telegraf) {
         .then((count) => {
           if (count > 0) logger.info({ msg: `pruned ${count} old skipped proposals` });
         })
-        .catch((err) => logger.error({ msg: "error pruning old proposals", err }));
+        .catch((err) => { void sendOpsAlert({ event: "proposal_prune_error", severity: "warning", message: "error pruning old proposals", context: { error: String(err) } }); });
     }
   }, RUNNER_INTERVAL_MS);
 
-  runCycle(bot).catch((err) => logger.error({ msg: "error in first runner cycle", err }));
+  runCycle(bot).catch((err) => { void sendOpsAlert({ event: "runner_first_cycle_error", severity: "critical", message: "error in first runner cycle", context: { error: String(err) } }); });
 }
 
 async function runCycle(bot: Telegraf) {
@@ -87,7 +88,7 @@ async function runCycle(bot: Telegraf) {
     }
 
     const result = await evaluateAgent(agent).catch((err) => {
-      logger.error({ msg: "agent evaluation failed", agentId: agent.id, err });
+      void sendOpsAlert({ event: "agent_evaluation_failed", severity: "warning", message: "agent evaluation failed", context: { agentId: agent.id, templateId: agent.templateId, error: String(err) } });
       return null;
     });
 
@@ -101,17 +102,26 @@ async function runCycle(bot: Telegraf) {
       continue;
     }
 
-    const proposal = await createProposal({
-      agentId: agent.id,
-      title: result.title,
-      proposedAction: result.action,
-      estimatedGasUsd: result.estimatedGasUsd,
-      details: result.details,
-      unsignedTxPayload: result.unsignedTxPayload,
-    });
+    try {
+      const proposal = await createProposal({
+        agentId: agent.id,
+        title: result.title,
+        proposedAction: result.action,
+        estimatedGasUsd: result.estimatedGasUsd,
+        details: result.details,
+        unsignedTxPayload: result.unsignedTxPayload,
+      });
 
-    await sendProposal(bot, chatId, proposal, agent.name);
-    logger.info({ msg: "proposal dispatched to Telegram", proposalId: proposal.id, agentId: agent.id });
+      await sendProposal(bot, chatId, proposal, agent.name);
+      logger.info({ msg: "proposal dispatched to Telegram", proposalId: proposal.id, agentId: agent.id });
+    } catch (err) {
+      await sendOpsAlert({
+        event: "proposal_dispatch_failed",
+        severity: "critical",
+        message: "proposal dispatch failed",
+        context: { agentId: agent.id, templateId: agent.templateId, error: String(err) },
+      });
+    }
   }
 }
 

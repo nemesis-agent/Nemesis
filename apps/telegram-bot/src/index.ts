@@ -10,6 +10,7 @@ import { startCommand } from "./commands/start.js";
 import { statusCommand } from "./commands/status.js";
 import { demoCommand, registerApprovalHandlers } from "./handlers/approval.js";
 import { createAccessControl } from "./lib/auth.js";
+import { sendOpsAlert } from "./lib/alerts.js";
 import { startRunner } from "./runner.js";
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -54,9 +55,9 @@ async function launchPollingWithRetry(botInstance: Telegraf): Promise<void> {
     ]);
 
     if (!startupError) {
-      launchPromise.catch((error) => {
+      launchPromise.catch(async (error) => {
         if (isTelegramPollingConflict(error)) {
-          console.warn("[nemesis-bot] Telegram polling conflict after startup; restarting cleanly");
+          await sendOpsAlert({ event: "telegram_polling_conflict", severity: "critical", message: "Telegram polling conflict after startup; restarting cleanly" });
           process.exit(0);
         }
 
@@ -82,11 +83,11 @@ async function waitForBotLock() {
   for (;;) {
     const client = await acquireBotLock();
     if (client) {
-      console.log("[nemesis-bot] acquired polling lock");
+      await sendOpsAlert({ event: "telegram_lock_acquired", severity: "info", message: "acquired Telegram polling lock" });
       return client;
     }
 
-    console.warn("[nemesis-bot] another polling instance is active; waiting for lock");
+    await sendOpsAlert({ event: "telegram_lock_wait", severity: "warning", message: "another polling instance is active; waiting for lock" });
     await sleep(10_000);
   }
 }

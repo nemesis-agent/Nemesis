@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { createAgent } from "@nemesis/db";
 import { getTemplateById, getTemplateUnavailableReason, isTemplateProductionReady, type TemplateParameter } from "@nemesis/templates";
 import { rejectCrossOrigin, requireAuth } from "@/lib/auth";
+import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
 
 
 function validateParameters(
@@ -77,6 +78,9 @@ export async function POST(request: Request) {
 
   const auth = await requireAuth();
   if (auth.error) return auth.error;
+
+  const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "agents:create", auth.address), limit: 20, windowMs: 60_000 });
+  if (rateLimit) return rateLimit;
 
   let body: { templateId?: string; name?: string; parameters?: Record<string, string | number | boolean> } | null = null;
   try {

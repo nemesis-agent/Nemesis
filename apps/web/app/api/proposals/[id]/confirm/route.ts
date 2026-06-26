@@ -4,6 +4,7 @@ import { createPublicClient, http } from "viem";
 import { base } from "viem/chains";
 
 import { rejectCrossOrigin, requireAuth } from "@/lib/auth";
+import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { approveProposal, getProposal, getAgent, recordProposalExecutionStep } from "@nemesis/db";
 
 const publicClient = createPublicClient({
@@ -36,6 +37,9 @@ export async function POST(
 
   const auth = await requireAuth();
   if (auth.error) return auth.error;
+
+  const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "proposals:confirm", auth.address), limit: 10, windowMs: 60_000 });
+  if (rateLimit) return rateLimit;
 
   const proposalId = params.id;
   if (!proposalId) {

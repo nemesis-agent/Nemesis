@@ -5,6 +5,7 @@ import { createPublicClient, http, formatEther } from "viem";
 import { base } from "viem/chains";
 
 import { requireAuth } from "@/lib/auth";
+import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { TEMPLATES, isTemplateProductionReady } from "@nemesis/templates";
 import { intentSchema } from "@/lib/intent-schema";
 
@@ -23,6 +24,9 @@ const openrouter = createOpenRouter({
 export async function POST(request: Request) {
   const auth = await requireAuth();
   if (auth.error) return auth.error;
+
+  const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "intent", auth.address), limit: 12, windowMs: 60_000 });
+  if (rateLimit) return rateLimit;
 
   let body: { messages?: any[] } | null = null;
   try {

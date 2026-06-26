@@ -48,7 +48,7 @@ NEXT_PUBLIC_SITE_URL=
 - `nemesis-web`
 - `nemesis-bot`
 
-The health endpoint is `/api/health`.
+The health endpoint is `/api/health`. Run `npm run smoke:prod` after production deploys. See `docs/OPS_RUNBOOK.md` for launch operations, rate limits, alerts, rollback, and manual device smoke checks.
 
 ## Local Development
 
@@ -81,4 +81,5 @@ For full local runtime, create local env files from:
 - External legal counsel review: not claimed by this repository.
 - Production env variables: configured under the NEMESIS project identity.
 - Production deploy: live on Railway at `https://nemesis-agent.xyz`.
-- Remaining operational recommendation: real mobile-device and cross-browser smoke tests before broader user rollout.
+- P1 API rate limits, ops alert hooks, production smoke script, and launch runbook: completed.
+- Real mobile-device and cross-browser smoke test checklist: documented in `docs/OPS_RUNBOOK.md` and must be executed on actual target devices before broad marketing rollout.

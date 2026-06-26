@@ -2,6 +2,7 @@ import { SiweMessage } from "siwe";
 import { NextResponse } from "next/server";
 
 import { expectedRequestOrigin, getSession, rejectCrossOrigin } from "@/lib/auth";
+import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
 
 /**
  * POST /api/auth/verify
@@ -15,6 +16,9 @@ import { expectedRequestOrigin, getSession, rejectCrossOrigin } from "@/lib/auth
 export async function POST(request: Request) {
   const originError = rejectCrossOrigin(request);
   if (originError) return originError;
+
+  const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "auth:verify"), limit: 12, windowMs: 60_000 });
+  if (rateLimit) return rateLimit;
 
   const session = await getSession();
 
