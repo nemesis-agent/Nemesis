@@ -10,13 +10,25 @@ import {
   type ProposalDetail,
 } from "@nemesis/db";
 import { getLivePrice, type SupportedTicker } from "./lib/price-feed.js";
+import { getBaseTokenPairs, getLatestBaseTokenProfiles, type DexScreenerPair } from "./lib/dexscreener.js";
 import { sendProposal } from "./handlers/approval.js";
 import { logger } from "./lib/logger.js";
 import { buildEthToUsdcSwapPayload, buildUsdcApproveAndSwapToEthPayload } from "./lib/uniswap-base.js";
 
 const RUNNER_INTERVAL_MS = 1000 * 60;
 const BASE_RPC_URL = process.env.BASE_RPC_URL ?? "https://mainnet.base.org";
-const PRODUCTION_TEMPLATES = new Set(["dip-buyer", "limit-order", "launch-flipper", "profit-taker", "gas-optimizer", "airdrop-farmer", "portfolio-rebalancer"]);
+const PRODUCTION_TEMPLATES = new Set([
+  "ape-agent",
+  "pool-sniper",
+  "launch-flipper",
+  "limit-order",
+  "dip-buyer",
+  "profit-taker",
+  "auto-compound",
+  "gas-optimizer",
+  "airdrop-farmer",
+  "portfolio-rebalancer",
+]);
 const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 let cycleCount = 0;
 
@@ -104,10 +116,13 @@ async function runCycle(bot: Telegraf) {
 }
 
 async function evaluateAgent(agent: Agent): Promise<EvaluationResult | null> {
+  if (agent.templateId === "ape-agent") return evaluateApeAgent(agent);
+  if (agent.templateId === "pool-sniper") return evaluatePoolSniper(agent);
   if (agent.templateId === "dip-buyer") return evaluateDipBuyer(agent);
   if (agent.templateId === "limit-order") return evaluateLimitOrder(agent);
   if (agent.templateId === "launch-flipper") return evaluateLaunchFlipper(agent);
   if (agent.templateId === "profit-taker") return evaluateProfitTaker(agent);
+  if (agent.templateId === "auto-compound") return evaluateAutoCompound(agent);
   if (agent.templateId === "gas-optimizer") return evaluateGasOptimizer(agent);
   if (agent.templateId === "airdrop-farmer") return evaluateAirdropFarmer(agent);
   if (agent.templateId === "portfolio-rebalancer") return evaluatePortfolioRebalancer(agent);
@@ -120,6 +135,173 @@ function tickerParam(agent: Agent): SupportedTicker {
   return "ETH_USD";
 }
 
+async function evaluateApeAgent(agent: Agent): Promise<EvaluationResult | null> {
+  const maxApeAmount = Number(agent.parameters.maxApeAmount ?? 50);
+  const minLiquidity = Number(agent.parameters.minLiquidity ?? 20000);
+  const seenTokens = new Set(readStringArray(agent.runtimeState.seenTokens));
+  const profiles = (await getLatestBaseTokenProfiles()).slice(0, 12);
+  const nextSeen = new Set(seenTokens);
+
+  for (const profile of profiles) {
+    const tokenAddress = profile.tokenAddress.toLowerCase();
+    if (seenTokens.has(tokenAddress)) continue;
+
+    nextSeen.add(tokenAddress);
+    const pairs = await getBaseTokenPairs(profile.tokenAddress);
+    const pair = selectMostLiquidPair(pairs);
+    if (!pair || pairLiquidityUsd(pair) < minLiquidity) continue;
+
+    const liquidity = pairLiquidityUsd(pair);
+    return {
+      title: "New Base token liquidity detected",
+      action: `DexScreener reported ${tokenLabel(pair)} with $${liquidity.toFixed(0)} public liquidity. Review a ${maxApeAmount} USDC entry before taking any wallet action.`,
+      estimatedGasUsd: "$0.10 review",
+      details: [
+        { label: "token", value: tokenLabel(pair) },
+        { label: "token address", value: profile.tokenAddress },
+        { label: "pair", value: pair.pairAddress },
+        { label: "dex", value: pair.dexId ?? "unknown" },
+        { label: "liquidity", value: `$${liquidity.toFixed(0)}` },
+        { label: "allocation", value: `${maxApeAmount} USDC` },
+        { label: "wallet action", value: "review only" },
+        { label: "source", value: pair.url ?? profile.url ?? "DexScreener" },
+      ],
+      state: {
+        ...agent.runtimeState,
+        seenTokens: capStringArray([...nextSeen], 100),
+        lastProposalAt: new Date().toISOString(),
+      },
+      lastEvent: `New Base token review proposed for ${tokenLabel(pair)} at $${liquidity.toFixed(0)} liquidity.`,
+    };
+  }
+
+  await updateAgentRuntimeState(
+    agent.id,
+    { ...agent.runtimeState, seenTokens: capStringArray([...nextSeen], 100), checkedAt: new Date().toISOString() },
+    `Checked ${profiles.length} latest Base token profile(s); no liquidity trigger.`
+  );
+  return null;
+}
+
+async function evaluatePoolSniper(agent: Agent): Promise<EvaluationResult | null> {
+  const minInitialLiquidity = Number(agent.parameters.minInitialLiquidity ?? 10000);
+  const allocationPerPool = Number(agent.parameters.allocationPerPool ?? 100);
+  const tokenWhitelist = String(agent.parameters.tokenWhitelist ?? "any-base-pair");
+  const seenPairs = new Set(readStringArray(agent.runtimeState.seenPairs));
+  const profiles = (await getLatestBaseTokenProfiles()).slice(0, 10);
+  const nextSeen = new Set(seenPairs);
+  const recentWindowMs = 24 * 60 * 60 * 1000;
+
+  for (const profile of profiles) {
+    const pairs = await getBaseTokenPairs(profile.tokenAddress);
+    const candidates = pairs
+      .filter((pair) => pair.pairCreatedAt && Date.now() - pair.pairCreatedAt <= recentWindowMs)
+      .filter((pair) => !seenPairs.has(pair.pairAddress.toLowerCase()))
+      .filter((pair) => pairLiquidityUsd(pair) >= minInitialLiquidity)
+      .filter((pair) => pairMatchesFilter(pair, tokenWhitelist))
+      .sort((a, b) => pairLiquidityUsd(b) - pairLiquidityUsd(a));
+
+    for (const pair of pairs) nextSeen.add(pair.pairAddress.toLowerCase());
+    const pair = candidates[0];
+    if (!pair) continue;
+
+    const liquidity = pairLiquidityUsd(pair);
+    return {
+      title: "New Base pool matched",
+      action: `A recent ${pair.dexId ?? "Base"} pool for ${tokenLabel(pair)} matched ${tokenWhitelist} with $${liquidity.toFixed(0)} liquidity. Review a ${allocationPerPool} USDC entry before taking any wallet action.`,
+      estimatedGasUsd: "$0.10 review",
+      details: [
+        { label: "token", value: tokenLabel(pair) },
+        { label: "pair", value: pair.pairAddress },
+        { label: "dex", value: pair.dexId ?? "unknown" },
+        { label: "liquidity", value: `$${liquidity.toFixed(0)}` },
+        { label: "pair age", value: pair.pairCreatedAt ? formatAge(pair.pairCreatedAt) : "unknown" },
+        { label: "filter", value: tokenWhitelist },
+        { label: "allocation", value: `${allocationPerPool} USDC` },
+        { label: "wallet action", value: "review only" },
+        { label: "source", value: pair.url ?? "DexScreener" },
+      ],
+      state: {
+        ...agent.runtimeState,
+        seenPairs: capStringArray([...nextSeen], 150),
+        lastProposalAt: new Date().toISOString(),
+      },
+      lastEvent: `New Base pool review proposed for ${tokenLabel(pair)} at $${liquidity.toFixed(0)} liquidity.`,
+    };
+  }
+
+  await updateAgentRuntimeState(
+    agent.id,
+    { ...agent.runtimeState, seenPairs: capStringArray([...nextSeen], 150), checkedAt: new Date().toISOString() },
+    `Checked ${profiles.length} latest Base token profile(s); no pool trigger.`
+  );
+  return null;
+}
+
+async function evaluateAutoCompound(agent: Agent): Promise<EvaluationResult | null> {
+  const minClaimAmount = Number(agent.parameters.minClaimAmount ?? 5);
+  const source = String(agent.parameters.source ?? "morpho-lending");
+  const reviewIntervalHours = Number(agent.parameters.reviewIntervalHours ?? 24);
+  const lastProposalAt = typeof agent.runtimeState.lastProposalAt === "string" ? Date.parse(agent.runtimeState.lastProposalAt) : 0;
+  const intervalMs = Math.max(1, reviewIntervalHours) * 60 * 60 * 1000;
+
+  if (lastProposalAt && Date.now() - lastProposalAt < intervalMs) {
+    await updateAgentRuntimeState(agent.id, { ...agent.runtimeState, checkedAt: new Date().toISOString() }, `Yield review cadence not due for ${source}.`);
+    return null;
+  }
+
+  return {
+    title: "Yield review due",
+    action: `Review ${source} and check whether at least ${minClaimAmount} USDC can be claimed and redeposited. Nothing will be claimed automatically.`,
+    estimatedGasUsd: "$0.10 review",
+    details: [
+      { label: "source", value: source },
+      { label: "minimum claim", value: `${minClaimAmount} USDC` },
+      { label: "cadence", value: `${reviewIntervalHours}h` },
+      { label: "wallet action", value: "review only" },
+    ],
+    state: { ...agent.runtimeState, lastProposalAt: new Date().toISOString() },
+    lastEvent: `Yield review proposed for ${source}.`,
+  };
+}
+
+function selectMostLiquidPair(pairs: DexScreenerPair[]): DexScreenerPair | undefined {
+  return [...pairs].sort((a, b) => pairLiquidityUsd(b) - pairLiquidityUsd(a))[0];
+}
+
+function pairLiquidityUsd(pair: DexScreenerPair): number {
+  const value = pair.liquidity?.usd;
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function tokenLabel(pair: DexScreenerPair): string {
+  const symbol = pair.baseToken?.symbol ?? pair.baseToken?.name ?? "unknown token";
+  const quote = pair.quoteToken?.symbol ?? "quote";
+  return `${symbol}/${quote}`;
+}
+
+function pairMatchesFilter(pair: DexScreenerPair, filter: string): boolean {
+  if (filter === "any-base-pair") return true;
+  const symbols = [pair.baseToken?.symbol, pair.quoteToken?.symbol].map((value) => value?.toUpperCase() ?? "");
+  if (filter === "eth-pairs-only") return symbols.some((symbol) => symbol === "ETH" || symbol === "WETH");
+  if (filter === "stable-pairs-only") return symbols.some((symbol) => ["USDC", "USDBC", "DAI"].includes(symbol));
+  return false;
+}
+
+function readStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string");
+}
+
+function capStringArray(values: string[], max: number): string[] {
+  return [...new Set(values.map((value) => value.toLowerCase()))].slice(-max);
+}
+
+function formatAge(createdAtMs: number): string {
+  const ageMinutes = Math.max(0, Math.floor((Date.now() - createdAtMs) / (60 * 1000)));
+  if (ageMinutes < 60) return `${ageMinutes}m`;
+  return `${(ageMinutes / 60).toFixed(1)}h`;
+}
 async function evaluateDipBuyer(agent: Agent): Promise<EvaluationResult | null> {
   const ticker = tickerParam(agent);
   const price = await getLivePrice(ticker);

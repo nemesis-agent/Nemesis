@@ -17,11 +17,12 @@ export const TEMPLATES: AgentTemplate[] = [
     name: "Ape agent",
     category: "launch-snipe",
     risk: "degen",
-    summary: "Auto-detect new token launches and ape in if filters pass",
+    runtimeStatus: "production",
+    summary: "Detect new Base token profiles with enough public liquidity",
     condition:
-      "A new token launches on Bankr or Virtuals and passes your safety filters: minimum liquidity, max dev wallet share, and a simulated honeypot check.",
-    action: "Propose a buy of a fixed USDC amount for the new token.",
-    protocols: ["bankr", "virtuals", "uniswap"],
+      "A new Base token profile appears on DexScreener and at least one tracked pool has liquidity above your threshold.",
+    action: "Propose reviewing a fixed USDC entry for the new token.",
+    protocols: ["uniswap"],
     parameters: [
       {
         key: "maxApeAmount",
@@ -39,36 +40,22 @@ export const TEMPLATES: AgentTemplate[] = [
         unit: "USDC",
         description: "Launches below this liquidity are skipped entirely.",
       },
-      {
-        key: "maxDevWalletPercent",
-        label: "Max dev wallet share",
-        type: "percent",
-        default: 5,
-        unit: "%",
-        description: "Launches where the dev wallet holds more than this are skipped.",
-      },
-      {
-        key: "honeypotCheck",
-        label: "Run honeypot simulation",
-        type: "boolean",
-        default: true,
-        description: "Simulate a sell before proposing a buy to filter out honeypots.",
-      },
     ],
     approvalSummary:
-      "This agent watches new token launches on Bankr and Virtuals. When a launch has at least {minLiquidity} USDC liquidity, a dev wallet holding under {maxDevWalletPercent}%, and passes a honeypot simulation, it proposes buying {maxApeAmount} USDC of the token. Every buy needs your approval — nothing executes automatically.",
+      "This agent watches DexScreener's latest Base token profiles. When a new token has at least {minLiquidity} USDC public liquidity, it proposes reviewing a {maxApeAmount} USDC entry. Every entry is review-only until you explicitly approve a wallet action.",
     riskNote:
-      "New token launches fail far more often than they succeed. Filters reduce obvious scams but cannot guarantee a token isn't a rug, a honeypot variant the simulation missed, or simply worthless within hours. Treat every approved ape as money you are comfortable losing completely.",
+      "New token launches fail far more often than they succeed. DexScreener liquidity and profile data do not prove contract safety, sellability, or team quality. Treat every approved ape as money you are comfortable losing completely.",
   },
   {
     id: "pool-sniper",
     name: "Pool sniper",
     category: "launch-snipe",
     risk: "degen",
-    summary: "Detect new liquidity pools and propose entry early",
+    runtimeStatus: "production",
+    summary: "Detect newly listed Base pools with enough public liquidity",
     condition:
-      "A new pool is created on Aerodrome or Uniswap with initial liquidity above your threshold, for a token pair you've whitelisted.",
-    action: "Propose a swap into the new pool for a fixed allocation.",
+      "A recently created Base pool appears on DexScreener with liquidity above your threshold and matches your pair filter.",
+    action: "Propose reviewing an entry into the new pool's base token.",
     protocols: ["aerodrome", "uniswap"],
     parameters: [
       {
@@ -97,7 +84,7 @@ export const TEMPLATES: AgentTemplate[] = [
       },
     ],
     approvalSummary:
-      "This agent watches for new pools on Aerodrome and Uniswap. When a new pool matching {tokenWhitelist} launches with at least {minInitialLiquidity} USDC liquidity, it proposes a {allocationPerPool} USDC swap into that pool. You approve each entry before anything moves.",
+      "This agent watches DexScreener Base pools. When a recently created pool matching {tokenWhitelist} has at least {minInitialLiquidity} USDC liquidity, it proposes reviewing a {allocationPerPool} USDC entry. You approve each entry before anything moves.",
     riskNote:
       "Brand-new pools have no price history — the price you enter at can be wildly different from where it settles seconds later, and liquidity can be pulled entirely. Initial liquidity above your threshold does not mean the pool is safe, only that it passed one filter.",
   },
@@ -316,9 +303,10 @@ export const TEMPLATES: AgentTemplate[] = [
     name: "Auto compound",
     category: "simple-actions",
     risk: "low",
-    summary: "Collect yield from Morpho or Aerodrome and reinvest it",
-    condition: "Accrued yield or fees on your position exceed your minimum claim amount.",
-    action: "Propose claiming the yield and depositing it back into the same position.",
+    runtimeStatus: "production",
+    summary: "Review yield positions on a recurring threshold schedule",
+    condition: "Your configured yield review cadence is due for the selected source.",
+    action: "Propose reviewing claim and redeposit options for that source.",
     protocols: ["morpho", "aerodrome"],
     parameters: [
       {
@@ -337,9 +325,17 @@ export const TEMPLATES: AgentTemplate[] = [
         options: ["morpho-lending", "aerodrome-lp-fees"],
         description: "Which position this agent monitors for accruing yield.",
       },
+      {
+        key: "reviewIntervalHours",
+        label: "Review cadence",
+        type: "number",
+        default: 24,
+        unit: "hours",
+        description: "Minimum time between yield review proposals.",
+      },
     ],
     approvalSummary:
-      "This agent monitors your chosen position. Once accrued yield passes {minClaimAmount} USDC, it proposes claiming it and depositing it straight back into the same position — set and forget, with your approval on each compound.",
+      "This agent schedules recurring reviews for {source}. Every {reviewIntervalHours} hours, it proposes checking whether at least {minClaimAmount} USDC can be claimed and redeposited. Nothing is claimed or deposited automatically.",
   },
 
   // ---------------------------------------------------------------------
