@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { VersionedTransaction } from "@solana/web3.js";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useSendTransaction, useWaitForTransactionReceipt } from "wagmi";
 import type { Proposal } from "@nemesis/db";
 import { Button } from "./Button";
@@ -11,9 +13,26 @@ interface ExecuteProposalButtonProps {
 
 type TxPayload = { to?: string; data?: string; value?: string; chainId?: number; label?: string };
 type MultiStepPayload = { steps?: TxPayload[] };
+type SolanaJupiterSwapPayload = {
+  kind: "solana-jupiter-swap";
+  chain: "solana";
+  walletAddress: string;
+  serializedTransaction: string;
+  messageHash: string;
+  label?: string;
+};
+
+function parsePayload(rawPayload: string): TxPayload | MultiStepPayload | SolanaJupiterSwapPayload {
+  return JSON.parse(rawPayload) as TxPayload | MultiStepPayload | SolanaJupiterSwapPayload;
+}
+
+function isSolanaPayload(payload: TxPayload | MultiStepPayload | SolanaJupiterSwapPayload): payload is SolanaJupiterSwapPayload {
+  return (payload as SolanaJupiterSwapPayload).kind === "solana-jupiter-swap" && (payload as SolanaJupiterSwapPayload).chain === "solana";
+}
 
 function getPayloadSteps(rawPayload: string): TxPayload[] {
-  const parsed = JSON.parse(rawPayload) as TxPayload | MultiStepPayload;
+  const parsed = parsePayload(rawPayload);
+  if (isSolanaPayload(parsed)) return [];
   return Array.isArray((parsed as MultiStepPayload).steps) ? ((parsed as MultiStepPayload).steps ?? []) : [parsed as TxPayload];
 }
 
@@ -22,9 +41,28 @@ function getCompletedStepCount(proposal: Proposal): number {
   return Array.isArray(hashes) ? hashes.length : 0;
 }
 
+function base64ToBytes(value: string): Uint8Array {
+  const binary = atob(value);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index++) bytes[index] = binary.charCodeAt(index);
+  return bytes;
+}
+
+function getButtonLabel(rawPayload: string, proposal: Proposal): string {
+  const parsed = parsePayload(rawPayload);
+  if (isSolanaPayload(parsed)) return parsed.label ?? "Sign Jupiter swap in Solflare";
+
+  const steps = getPayloadSteps(rawPayload);
+  const step = steps[getCompletedStepCount(proposal)];
+  return step?.label ?? "Sign in wallet";
+}
+
 export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) {
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isSolanaSigning, setIsSolanaSigning] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
+  const { connection } = useConnection();
+  const solanaWallet = useWallet();
 
   const {
     data: hash,
@@ -42,7 +80,6 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
     confirmations: 1,
   });
 
-  // Handle successful confirmation by notifying the backend
   useEffect(() => {
     if (isConfirmed && hash) {
       setIsVerifying(true);
@@ -56,8 +93,7 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
             const err = await res.json();
             throw new Error(err.error || "Failed to verify transaction");
           }
-          // The page will automatically revalidate due to Next.js revalidatePath in the API
-          window.location.reload(); 
+          window.location.reload();
         })
         .catch((err) => {
           setVerificationError(err.message);
@@ -68,10 +104,41 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
     }
   }, [isConfirmed, hash, proposal.id]);
 
-  const handleExecute = () => {
+  const handleSolanaExecute = async (payload: SolanaJupiterSwapPayload) => {
+    if (!solanaWallet.publicKey) throw new Error("Connect Solflare first");
+    if (solanaWallet.publicKey.toBase58() !== payload.walletAddress) {
+      throw new Error("Connected Solana wallet does not match this proposal");
+    }
+    if (!solanaWallet.sendTransaction) throw new Error("Solana wallet cannot send transactions");
+
+    const transaction = VersionedTransaction.deserialize(base64ToBytes(payload.serializedTransaction));
+    const signature = await solanaWallet.sendTransaction(transaction, connection, { skipPreflight: false });
+
+    const response = await fetch(`/api/proposals/${proposal.id}/confirm-solana`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ signature }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || "Failed to verify Solana transaction");
+    }
+
+    window.location.reload();
+  };
+
+  const handleExecute = async () => {
     if (!proposal.unsignedTxPayload) return;
     try {
       setVerificationError(null);
+      const parsed = parsePayload(proposal.unsignedTxPayload);
+      if (isSolanaPayload(parsed)) {
+        setIsSolanaSigning(true);
+        await handleSolanaExecute(parsed);
+        return;
+      }
+
       const steps = getPayloadSteps(proposal.unsignedTxPayload);
       const payload = steps[getCompletedStepCount(proposal)];
       if (!payload) {
@@ -94,6 +161,8 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
       });
     } catch (err) {
       setVerificationError(err instanceof Error ? err.message : "Failed to parse transaction payload");
+    } finally {
+      setIsSolanaSigning(false);
     }
   };
 
@@ -107,17 +176,15 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
 
   let stepLabel = "Sign in wallet";
   try {
-    if (proposal.unsignedTxPayload) {
-      const steps = getPayloadSteps(proposal.unsignedTxPayload);
-      const step = steps[getCompletedStepCount(proposal)];
-      if (step?.label) stepLabel = step.label;
-    }
+    stepLabel = getButtonLabel(proposal.unsignedTxPayload, proposal);
   } catch {
     stepLabel = "Invalid payload";
   }
 
-  const isLoading = isSigning || isConfirming || isVerifying;
-  const buttonText = isSigning
+  const isLoading = isSigning || isConfirming || isVerifying || isSolanaSigning;
+  const buttonText = isSolanaSigning
+    ? "Signing in Solflare..."
+    : isSigning
     ? "Signing in Wallet..."
     : isConfirming
     ? "Broadcasting..."
@@ -135,7 +202,6 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
         {buttonText}
       </Button>
 
-      {/* Error Displays */}
       {sendError && (
         <span className="text-[10px] text-nm-fragment-red font-mono lowercase">
           {sendError.message.split("\n")[0]}
