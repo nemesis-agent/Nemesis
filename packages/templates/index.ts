@@ -385,11 +385,18 @@ export const TEMPLATES: AgentTemplate[] = [
   },
 ];
 
+export const isTemplateProductionReady = (template: AgentTemplate): boolean =>
+  template.runtimeStatus === "production";
+
+export const getTemplateUnavailableReason = (template: AgentTemplate): string =>
+  template.disabledReason ??
+  "This template is gated until NEMESIS has verified monitoring, proposal generation, and Base calldata for it.";
+
 export const getTemplateById = (id: string): AgentTemplate | undefined =>
   TEMPLATES.find((template) => template.id === id);
 
 export const getTemplatesByCategory = (category: AgentTemplate["category"]): AgentTemplate[] =>
   TEMPLATES.filter((template) => template.category === category);
 
-export type { AgentTemplate, TemplateCategory, RiskLevel, BaseProtocol, TemplateParameter } from "./types";
+export type { AgentTemplate, TemplateCategory, RiskLevel, TemplateRuntimeStatus, BaseProtocol, TemplateParameter } from "./types";
 export { TEMPLATE_CATEGORIES, RISK_LABELS } from "./types";

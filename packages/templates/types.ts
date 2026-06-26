@@ -2,6 +2,8 @@ export type TemplateCategory = "launch-snipe" | "simple-actions" | "utility";
 
 export type RiskLevel = "low" | "mid" | "high" | "degen";
 
+export type TemplateRuntimeStatus = "production" | "gated";
+
 export type BaseProtocol =
   | "uniswap"
   | "aerodrome"
@@ -45,6 +47,13 @@ export interface AgentTemplate {
   protocols: BaseProtocol[];
   /** Configurable parameters surfaced in the deploy form */
   parameters: TemplateParameter[];
+  /**
+   * Production means the template has verified monitoring, proposal, and
+   * transaction payload behavior. Missing values are treated as gated.
+   */
+  runtimeStatus?: TemplateRuntimeStatus;
+  /** Clear user-facing reason when deployment is gated. */
+  disabledReason?: string;
   /**
    * Plain-language summary the Master Agent must read back to the user
    * before deployment, per the approval-first design requirement.

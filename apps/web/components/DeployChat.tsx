@@ -10,7 +10,7 @@ import { RiskAcknowledgmentModal } from "@/components/RiskAcknowledgmentModal";
 import { RiskBanner } from "@/components/RiskBanner";
 import { fillApprovalSummary } from "@/lib/format-template";
 import { useSiweAuth } from "@/lib/use-siwe-auth";
-import { getTemplateById, type AgentTemplate } from "@nemesis/templates";
+import { getTemplateById, getTemplateUnavailableReason, isTemplateProductionReady, type AgentTemplate } from "@nemesis/templates";
 
 type MessageRole = "agent" | "user";
 
@@ -147,6 +147,18 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
   }
 
   function handleApproveClick(plan: PendingPlan) {
+    if (!isTemplateProductionReady(plan.template)) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `gated-${Date.now()}`,
+          role: "agent",
+          content: getTemplateUnavailableReason(plan.template),
+        },
+      ]);
+      return;
+    }
+
     if (plan.template.risk === "high" || plan.template.risk === "degen") {
       setRiskModalPlan(plan);
       return;
@@ -270,7 +282,7 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
             </div>
             {stage === "deploying" && (
               <p className="mt-2 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-                writing to chain…
+                creating agent…
               </p>
             )}
           </div>
@@ -342,7 +354,7 @@ function DeploymentPlanCard({
   return (
     <div className="mt-3 border border-nm-border bg-nm-surface p-4">
       <p className="font-mono text-xs font-bold uppercase tracking-widest2 text-nm-fg">{template.name}</p>
-      <p className="mt-2 text-sm leading-relaxed text-nm-muted">{fillApprovalSummary(template)}</p>
+      <p className="mt-2 text-sm leading-relaxed text-nm-muted">{fillApprovalSummary(template, pendingParams)}</p>
 
       <div className="mt-3 flex flex-wrap gap-2">
         {template.protocols.map((protocol) => (
@@ -380,6 +392,22 @@ function DeploymentPlanCard({
                   />
                   <span className="text-xs text-nm-fg">{param.description}</span>
                 </div>
+              ) : param.type === "select" ? (
+                <div className="flex flex-col gap-1">
+                  <select
+                    id={`param-${param.key}`}
+                    value={String(pendingParams[param.key])}
+                    onChange={(e) => onChangeParam(param.key, e.target.value)}
+                    className="border border-nm-border bg-nm-bg px-2 py-1 text-sm text-nm-fg focus:border-nm-fg"
+                  >
+                    {param.options?.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                  {param.description && <span className="text-[10px] text-nm-muted">{param.description}</span>}
+                </div>
               ) : (
                 <div className="flex flex-col gap-1">
                   <input
@@ -402,8 +430,14 @@ function DeploymentPlanCard({
 
       {showActions && (
         <div className="mt-4 flex gap-3">
-          <Button variant="resolve" size="sm" magnetic onClick={onApprove}>
-            Approve &amp; deploy
+          <Button
+            variant="resolve"
+            size="sm"
+            magnetic
+            onClick={onApprove}
+            disabled={!isTemplateProductionReady(template)}
+          >
+            {isTemplateProductionReady(template) ? "Approve & deploy" : "gated"}
           </Button>
           <Button variant="secondary" size="sm" magnetic onClick={onDecline}>
             Not this

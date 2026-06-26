@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
 
 import { createAgent } from "@nemesis/db";
-import { getTemplateById, type TemplateParameter } from "@nemesis/templates";
+import { getTemplateById, getTemplateUnavailableReason, isTemplateProductionReady, type TemplateParameter } from "@nemesis/templates";
 import { rejectCrossOrigin, requireAuth } from "@/lib/auth";
 
 
@@ -94,6 +94,13 @@ export async function POST(request: Request) {
   const template = getTemplateById(templateId);
   if (!template) {
     return NextResponse.json({ error: `Unknown template: ${templateId}` }, { status: 400 });
+  }
+
+  if (!isTemplateProductionReady(template)) {
+    return NextResponse.json(
+      { error: getTemplateUnavailableReason(template) },
+      { status: 409 },
+    );
   }
 
   // Use provided name or auto-generate from template.

@@ -8,7 +8,7 @@ import { RiskBanner } from "@/components/RiskBanner";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { SimulationView } from "@/components/SimulationView";
 import { fillApprovalSummary } from "@/lib/format-template";
-import { RISK_LABELS, TEMPLATE_CATEGORIES, TEMPLATES, getTemplateById } from "@nemesis/templates";
+import { RISK_LABELS, TEMPLATE_CATEGORIES, TEMPLATES, getTemplateById, getTemplateUnavailableReason, isTemplateProductionReady } from "@nemesis/templates";
 
 interface TemplateDetailPageProps {
   params: { id: string };
@@ -28,6 +28,7 @@ export function generateMetadata({ params }: TemplateDetailPageProps) {
 export default function TemplateDetailPage({ params }: TemplateDetailPageProps) {
   const template = getTemplateById(params.id);
   if (!template) notFound();
+  const isProductionReady = isTemplateProductionReady(template);
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
@@ -125,9 +126,16 @@ export default function TemplateDetailPage({ params }: TemplateDetailPageProps) 
       </section>
 
       <div className="mt-10">
-        <Button href={`/agents/new?template=${template.id}`} variant="primary" magnetic>
-          Deploy this template
-        </Button>
+        {isProductionReady ? (
+          <Button href={`/agents/new?template=${template.id}`} variant="primary" magnetic>
+            Deploy this template
+          </Button>
+        ) : (
+          <div className="border border-nm-border bg-nm-surface p-4">
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">gated</p>
+            <p className="mt-2 text-sm leading-relaxed text-nm-muted">{getTemplateUnavailableReason(template)}</p>
+          </div>
+        )}
       </div>
     </div>
   );
