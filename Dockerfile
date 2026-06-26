@@ -16,7 +16,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_SITE_URL=https://nemesis-agent.xyz
 ENV NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=720ee22098d1b9ac6fa8918c49f968fa
 
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app ./
 COPY . .
 RUN npm run build
 
