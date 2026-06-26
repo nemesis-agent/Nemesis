@@ -16,14 +16,14 @@ Status: implemented and hardened.
 
 ## Phase 2 - Runner And Proposal Dispatch
 
-Status: partially production-ready.
+Status: gated for production.
 
 - The bot process starts a runner loop.
-- The runner reads active agents and evaluates initial `dip-buyer` and `limit-order` style price conditions.
-- The runner creates proposals and sends them to the linked Telegram chat.
-- Duplicate pending proposals are suppressed per agent.
+- The runner reads active agents for operational visibility.
+- Production evaluators are disabled until each template has verified monitoring and Base calldata.
+- The runner no longer creates mock trading proposals from hardcoded price logic.
 
-Limit: condition logic is still MVP-grade and must be expanded before supporting every template.
+Limit: every template is gated until its evaluator and payload builder are implemented and tested.
 
 ## Phase 3 - Base MCP / AgentKit Execution
 
@@ -31,7 +31,7 @@ Status: intentionally gated.
 
 - `unsigned_tx_payload` exists in the proposals table and UI/API support payload verification.
 - Fake placeholder payload generation has been removed.
-- The runner does not attach executable calldata until a real Base MCP/AgentKit encoder is wired.
+- Production template deployment is gated until a real Base MCP/AgentKit encoder is wired.
 
 Requirement before enabling: build verified calldata via a proper adapter, then test end-to-end on Base with exact payload matching.
 

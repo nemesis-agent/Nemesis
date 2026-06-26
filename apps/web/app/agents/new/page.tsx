@@ -13,8 +13,8 @@ export default function DeployPage({ searchParams }: DeployPageProps) {
       <h1 className="font-mono text-2xl font-bold uppercase tracking-widest2 text-nm-fg">deploy</h1>
       <p className="mt-3 max-w-2xl text-sm leading-relaxed text-nm-muted">
         {template
-          ? `Starting from the "${template.name}" template. Adjust the message below or send it as-is.`
-          : "Describe what you want in plain language. The Master Agent will propose a plan before deploying anything."}
+          ? `Reviewing the "${template.name}" template. Deployment stays gated until its runtime and Base calldata are verified.`
+          : "Describe what you want in plain language. The Master Agent will only propose production-ready templates."}
       </p>
 
       <div className="mt-8">

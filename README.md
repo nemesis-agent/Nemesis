@@ -19,11 +19,11 @@ NEMESIS is an approval-first automation platform for Base wallets. Users describ
 - Database: Supabase/Postgres through `pg`, shared by web and bot.
 - Templates: `@nemesis/templates`, 10 v1 templates.
 - Master Agent API: SIWE-protected `/api/intent`, OpenRouter-backed structured output.
-- Runner: polls active agents and sends Telegram proposals for initial price-trigger templates.
+- Runner: remains online for pruning and operational visibility; production template evaluators are currently gated.
 
 ## Important Reality Check
 
-The app is safer after the latest audit, but Base MCP / AgentKit transaction encoding is not production-complete. Runner proposals currently do not attach fake executable payloads. Real executable payloads must only be re-enabled after a proper Base MCP/AgentKit encoder builds verified calldata.
+The app is safer after the latest audit, but Base MCP / AgentKit transaction encoding is not production-complete. Production template deployment is gated until each template has verified monitoring, proposal generation, and calldata. The `/demo` command is limited to a zero-value Base signature check for smoke testing the wallet handoff.
 
 ## Required Production Environment
 
@@ -78,6 +78,6 @@ For full local runtime, create local env files from:
 ## Launch Blockers
 
 - Legal review for ToS/privacy before public launch.
-- Real Base MCP/AgentKit calldata encoder and end-to-end signing test.
+- Real Base MCP/AgentKit calldata encoder and end-to-end signing test before any production template is enabled.
 - Production env variables set under the NEMESIS project identity.
 - Real mobile-device and cross-browser smoke tests.
