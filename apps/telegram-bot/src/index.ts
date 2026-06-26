@@ -55,6 +55,11 @@ async function launchPollingWithRetry(botInstance: Telegraf): Promise<void> {
 
     if (!startupError) {
       launchPromise.catch((error) => {
+        if (isTelegramPollingConflict(error)) {
+          console.warn("[nemesis-bot] Telegram polling conflict after startup; restarting cleanly");
+          process.exit(0);
+        }
+
         console.error("[nemesis-bot] polling stopped unexpectedly", error);
         process.exit(1);
       });
@@ -73,13 +78,20 @@ async function launchPollingWithRetry(botInstance: Telegraf): Promise<void> {
   }
 }
 
-const botLockClient = await acquireBotLock();
-if (!botLockClient) {
-  console.warn("[nemesis-bot] another polling instance is already active; this process will stay idle");
-  setInterval(() => undefined, 60_000);
-} else {
-  console.log("[nemesis-bot] acquired polling lock");
+async function waitForBotLock() {
+  for (;;) {
+    const client = await acquireBotLock();
+    if (client) {
+      console.log("[nemesis-bot] acquired polling lock");
+      return client;
+    }
+
+    console.warn("[nemesis-bot] another polling instance is active; waiting for lock");
+    await sleep(10_000);
+  }
 }
+
+const botLockClient = await waitForBotLock();
 
 const bot = new Telegraf(token);
 
