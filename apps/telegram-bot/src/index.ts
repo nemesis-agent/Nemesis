@@ -57,8 +57,14 @@ async function launchPollingWithRetry(botInstance: Telegraf): Promise<void> {
     if (!startupError) {
       launchPromise.catch(async (error) => {
         if (isTelegramPollingConflict(error)) {
-          await sendOpsAlert({ event: "telegram_polling_conflict", severity: "critical", message: "Telegram polling conflict after startup; restarting cleanly" });
-          process.exit(0);
+          await sendOpsAlert({
+            event: "telegram_polling_conflict",
+            severity: "warning",
+            message: "Telegram polling conflict after startup; retrying while retaining lock",
+          });
+          await sleep(5_000);
+          await launchPollingWithRetry(botInstance);
+          return;
         }
 
         console.error("[nemesis-bot] polling stopped unexpectedly", error);
