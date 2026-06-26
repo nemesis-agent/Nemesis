@@ -9,6 +9,19 @@ interface ExecuteProposalButtonProps {
   proposal: Proposal;
 }
 
+type TxPayload = { to?: string; data?: string; value?: string; chainId?: number; label?: string };
+type MultiStepPayload = { steps?: TxPayload[] };
+
+function getPayloadSteps(rawPayload: string): TxPayload[] {
+  const parsed = JSON.parse(rawPayload) as TxPayload | MultiStepPayload;
+  return Array.isArray((parsed as MultiStepPayload).steps) ? ((parsed as MultiStepPayload).steps ?? []) : [parsed as TxPayload];
+}
+
+function getCompletedStepCount(proposal: Proposal): number {
+  const hashes = proposal.executionState?.completedTxHashes;
+  return Array.isArray(hashes) ? hashes.length : 0;
+}
+
 export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
@@ -59,7 +72,11 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
     if (!proposal.unsignedTxPayload) return;
     try {
       setVerificationError(null);
-      const payload = JSON.parse(proposal.unsignedTxPayload) as { to?: string; data?: string; value?: string; chainId?: number };
+      const steps = getPayloadSteps(proposal.unsignedTxPayload);
+      const payload = steps[getCompletedStepCount(proposal)];
+      if (!payload) {
+        throw new Error("No remaining transaction step");
+      }
       if (payload.chainId !== 8453 || !payload.to || !/^0x[a-fA-F0-9]{40}$/.test(payload.to)) {
         throw new Error("Invalid transaction payload");
       }
@@ -88,6 +105,17 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
     );
   }
 
+  let stepLabel = "Sign in wallet";
+  try {
+    if (proposal.unsignedTxPayload) {
+      const steps = getPayloadSteps(proposal.unsignedTxPayload);
+      const step = steps[getCompletedStepCount(proposal)];
+      if (step?.label) stepLabel = step.label;
+    }
+  } catch {
+    stepLabel = "Invalid payload";
+  }
+
   const isLoading = isSigning || isConfirming || isVerifying;
   const buttonText = isSigning
     ? "Signing in Wallet..."
@@ -95,7 +123,7 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
     ? "Broadcasting..."
     : isVerifying
     ? "Verifying..."
-    : "Sign in wallet";
+    : stepLabel;
 
   return (
     <div className="flex flex-col items-end gap-1">

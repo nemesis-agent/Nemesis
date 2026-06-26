@@ -4,12 +4,28 @@ import { createPublicClient, http } from "viem";
 import { base } from "viem/chains";
 
 import { rejectCrossOrigin, requireAuth } from "@/lib/auth";
-import { approveProposal, getProposal, getAgent } from "@nemesis/db";
+import { approveProposal, getProposal, getAgent, recordProposalExecutionStep } from "@nemesis/db";
 
 const publicClient = createPublicClient({
   chain: base,
   transport: http(),
 });
+
+type TxPayload = { to?: string; value?: string; data?: string; chainId?: number; label?: string };
+type MultiStepPayload = { chainId?: number; steps?: TxPayload[] };
+
+function getPayloadSteps(rawPayload: string): TxPayload[] {
+  const parsed = JSON.parse(rawPayload) as TxPayload | MultiStepPayload;
+  if (Array.isArray((parsed as MultiStepPayload).steps)) {
+    return (parsed as MultiStepPayload).steps ?? [];
+  }
+  return [parsed as TxPayload];
+}
+
+function getCompletedStepHashes(executionState: Record<string, unknown>): string[] {
+  const hashes = executionState.completedTxHashes;
+  return Array.isArray(hashes) ? hashes.filter((hash): hash is string => typeof hash === "string") : [];
+}
 
 export async function POST(
   request: Request,
@@ -75,11 +91,21 @@ export async function POST(
       return NextResponse.json({ error: "Proposal has no executable transaction payload." }, { status: 400 });
     }
 
-    let expectedPayload: { to?: string; value?: string; data?: string; chainId?: number };
+    let steps: TxPayload[];
     try {
-      expectedPayload = JSON.parse(proposal.unsignedTxPayload);
+      steps = getPayloadSteps(proposal.unsignedTxPayload);
     } catch {
       return NextResponse.json({ error: "Stored transaction payload is invalid." }, { status: 500 });
+    }
+
+    if (steps.length === 0) {
+      return NextResponse.json({ error: "Stored transaction payload has no executable steps." }, { status: 500 });
+    }
+
+    const completedTxHashes = getCompletedStepHashes(proposal.executionState);
+    const expectedPayload = steps[completedTxHashes.length];
+    if (!expectedPayload) {
+      return NextResponse.json({ error: "All proposal steps are already confirmed." }, { status: 400 });
     }
 
     if (expectedPayload.chainId !== 8453) {
@@ -96,7 +122,16 @@ export async function POST(
     }
 
     // 3. Update Database
-    const updated = await approveProposal(proposalId, txHash);
+    const nextCompletedTxHashes = [...completedTxHashes, txHash];
+    const complete = nextCompletedTxHashes.length >= steps.length;
+    const updated = steps.length === 1
+      ? await approveProposal(proposalId, txHash)
+      : await recordProposalExecutionStep(
+          proposalId,
+          { completedTxHashes: nextCompletedTxHashes, completedSteps: nextCompletedTxHashes.length },
+          txHash,
+          complete,
+        );
     if (!updated) {
       return NextResponse.json({ error: "Failed to update database." }, { status: 500 });
     }

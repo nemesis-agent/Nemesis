@@ -12,7 +12,7 @@ import {
 import { getLivePrice, type SupportedTicker } from "./lib/price-feed.js";
 import { sendProposal } from "./handlers/approval.js";
 import { logger } from "./lib/logger.js";
-import { buildEthToUsdcSwapPayload } from "./lib/uniswap-base.js";
+import { buildEthToUsdcSwapPayload, buildUsdcApproveAndSwapToEthPayload } from "./lib/uniswap-base.js";
 
 const RUNNER_INTERVAL_MS = 1000 * 60;
 const BASE_RPC_URL = process.env.BASE_RPC_URL ?? "https://mainnet.base.org";
@@ -142,16 +142,26 @@ async function evaluateDipBuyer(agent: Agent): Promise<EvaluationResult | null> 
   }
 
   const now = new Date().toISOString();
+  const unsignedTxPayload = ticker === "ETH_USD"
+    ? JSON.stringify(buildUsdcApproveAndSwapToEthPayload({
+        recipient: agent.walletAddress,
+        usdcAmount: buyAmount,
+        ethUsdPrice: price,
+      }))
+    : undefined;
+
   return {
     title: `${ticker} dip detected`,
     action: `${ticker} traded at $${price.toFixed(2)}, below the ${dipPercent}% dip trigger from $${highPrice.toFixed(2)}. Review a ${buyAmount} USDC buy proposal.`,
     estimatedGasUsd: "$0.10",
+    unsignedTxPayload,
     details: [
       { label: "asset", value: ticker },
       { label: "current price", value: `$${price.toFixed(2)}` },
       { label: "recorded high", value: `$${highPrice.toFixed(2)}` },
       { label: "trigger", value: `${dipPercent}% dip` },
       { label: "cooldown", value: `${cooldownHours}h` },
+      { label: "wallet action", value: unsignedTxPayload ? "approve USDC, then swap USDC -> ETH" : "review only" },
     ],
     state: { ...state, highPrice: price, lastProposalAt: now },
     lastEvent: `Dip trigger fired for ${ticker} at $${price.toFixed(2)}.`,
@@ -171,14 +181,21 @@ async function evaluateLimitOrder(agent: Agent): Promise<EvaluationResult | null
     return null;
   }
 
-  const ethAmount = ticker === "ETH_USD" && direction === "sell" ? (amount / price).toFixed(8) : undefined;
-  const unsignedTxPayload = ethAmount
-    ? JSON.stringify(buildEthToUsdcSwapPayload({
-        recipient: agent.walletAddress,
-        ethAmount,
-        ethUsdPrice: price,
-      }))
-    : undefined;
+  let unsignedTxPayload: string | undefined;
+  if (ticker === "ETH_USD" && direction === "sell") {
+    unsignedTxPayload = JSON.stringify(buildEthToUsdcSwapPayload({
+      recipient: agent.walletAddress,
+      ethAmount: (amount / price).toFixed(8),
+      ethUsdPrice: price,
+    }));
+  }
+  if (ticker === "ETH_USD" && direction === "buy") {
+    unsignedTxPayload = JSON.stringify(buildUsdcApproveAndSwapToEthPayload({
+      recipient: agent.walletAddress,
+      usdcAmount: amount,
+      ethUsdPrice: price,
+    }));
+  }
 
   return {
     title: `${ticker} limit ${direction} hit`,
@@ -191,7 +208,7 @@ async function evaluateLimitOrder(agent: Agent): Promise<EvaluationResult | null
       { label: "current price", value: `$${price.toFixed(2)}` },
       { label: "target price", value: `$${targetPrice}` },
       { label: "notional", value: `${amount} USDC` },
-      { label: "wallet action", value: unsignedTxPayload ? "sign ETH -> USDC swap" : "review only" },
+      { label: "wallet action", value: direction === "buy" && unsignedTxPayload ? "approve USDC, then swap USDC -> ETH" : unsignedTxPayload ? "sign ETH -> USDC swap" : "review only" },
     ],
     state: { ...agent.runtimeState, ticker, lastPrice: price, lastProposalAt: new Date().toISOString() },
     lastEvent: `Limit ${direction} trigger fired for ${ticker} at $${price.toFixed(2)}.`,

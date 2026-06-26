@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS proposals (
   status              TEXT NOT NULL CHECK (status IN ('pending', 'approved', 'skipped')),
   tx_hash             TEXT,
   unsigned_tx_payload TEXT,
+  execution_state     TEXT NOT NULL DEFAULT '{}',
   created_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -78,6 +79,13 @@ if (DATABASE_URL) {
             WHERE table_name='agents' AND column_name='runtime_state'
           ) THEN
             ALTER TABLE agents ADD COLUMN runtime_state TEXT NOT NULL DEFAULT '{}';
+          END IF;
+
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name='proposals' AND column_name='execution_state'
+          ) THEN
+            ALTER TABLE proposals ADD COLUMN execution_state TEXT NOT NULL DEFAULT '{}';
           END IF;
         END $$;
       `);

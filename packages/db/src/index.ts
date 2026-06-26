@@ -4,6 +4,7 @@ export {
   listProposalsForAgent,
   createProposal,
   approveProposal,
+  recordProposalExecutionStep,
   skipProposal,
   pruneOldProposals,
   type Proposal,

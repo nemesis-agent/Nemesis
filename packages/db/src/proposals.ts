@@ -19,6 +19,7 @@ export interface Proposal {
   status: ProposalStatus;
   txHash: string | null;
   unsignedTxPayload: string | null;
+  executionState: Record<string, unknown>;
   createdAt: string;
 }
 
@@ -32,6 +33,7 @@ interface ProposalRow {
   status: ProposalStatus;
   tx_hash: string | null;
   unsigned_tx_payload: string | null;
+  execution_state: string | null;
   created_at: Date;
 }
 
@@ -46,6 +48,7 @@ function rowToProposal(row: ProposalRow): Proposal {
     status: row.status,
     txHash: row.tx_hash,
     unsignedTxPayload: row.unsigned_tx_payload,
+    executionState: row.execution_state ? JSON.parse(row.execution_state) : {},
     createdAt: row.created_at.toISOString(),
   };
 }
@@ -90,6 +93,20 @@ export async function approveProposal(id: string, txHash?: string): Promise<Prop
     ? "UPDATE proposals SET status = 'approved', tx_hash = $1 WHERE id = $2 AND status IN ('pending', 'approved') AND tx_hash IS NULL"
     : "UPDATE proposals SET status = 'approved', tx_hash = $1 WHERE id = $2 AND status = 'pending'";
   const { rowCount } = await pool.query(query, [txHash ?? null, id]);
+  return rowCount ? getProposal(id) : undefined;
+}
+
+export async function recordProposalExecutionStep(
+  id: string,
+  executionState: Record<string, unknown>,
+  txHash: string,
+  complete: boolean,
+): Promise<Proposal | undefined> {
+  const query = complete
+    ? "UPDATE proposals SET status = 'approved', tx_hash = $1, execution_state = $2 WHERE id = $3 AND status = 'pending'"
+    : "UPDATE proposals SET execution_state = $1 WHERE id = $2 AND status = 'pending'";
+  const params = complete ? [txHash, JSON.stringify(executionState), id] : [JSON.stringify(executionState), id];
+  const { rowCount } = await pool.query(query, params);
   return rowCount ? getProposal(id) : undefined;
 }
 
