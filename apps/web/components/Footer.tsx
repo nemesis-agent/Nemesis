@@ -1,6 +1,6 @@
 import { FragmentDivider } from "@/components/FragmentDivider";
 
-const BADGES = ["built on hermes", "base + solana", "approval-first"];
+const BADGES = ["powered by openrouter", "base + solana", "approval-first"];
 
 export function Footer() {
   return (

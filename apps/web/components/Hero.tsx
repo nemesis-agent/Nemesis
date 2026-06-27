@@ -65,7 +65,7 @@ export function Hero() {
             style={{ animationDelay: "220ms" }}
           >
             Deploy autonomous agents that watch the market and propose action on your behalf.
-            Built on Hermes for Base and Solana. Every wallet action waits for your
+            Powered by OpenRouter for Base and Solana. Every wallet action waits for your
             approval — nothing moves without you.
           </p>
 

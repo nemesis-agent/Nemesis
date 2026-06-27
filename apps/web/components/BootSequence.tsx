@@ -11,7 +11,7 @@ const BOOT_LOGS = [
   "Decrypting local state...",
   "Calibrating Sub-agent neural pathways...",
   "Verifying MCP protocols...",
-  "Hermes intent engine online.",
+  "OpenRouter intelligence online.",
   "Awaiting user input...",
 ];
 

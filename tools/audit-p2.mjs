@@ -57,6 +57,11 @@ check("public docs, brand assets, and product copy are synchronized", () => {
   const navbar = read("apps/web/components/Navbar.tsx");
   const how = read("apps/web/components/HowItWorks.tsx");
   const chat = read("apps/web/components/ChatWithNemesis.tsx");
+  const hero = read("apps/web/components/Hero.tsx");
+  const ticker = read("apps/web/components/HeroTicker.tsx");
+  const footer = read("apps/web/components/Footer.tsx");
+  const logicFlow = read("apps/web/components/LogicFlow.tsx");
+  const boot = read("apps/web/components/BootSequence.tsx");
   assert(readme.includes("./assets/nemesis-banner.png"), "README must use current banner asset");
   assert(layout.includes("/assets/nemesis-social-preview-2026.png"), "metadata must use current social preview asset");
   assert(layout.includes("/assets/nemesis-favicon.png"), "metadata must use current icon asset");
@@ -66,6 +71,9 @@ check("public docs, brand assets, and product copy are synchronized", () => {
   assert(security.includes("Proposal confirmations"), "security docs must cover proposal confirmation checks");
   assert(!chat.includes("platform on Base."), "chat copy must not describe Base-only support");
   assert(!how.includes("Solana actions are review-only for now"), "how-it-works copy must not contain stale Solana copy");
+  const publicBrandCopy = [hero, ticker, footer, logicFlow, boot].join("\n").toLowerCase();
+  assert(!publicBrandCopy.includes("hermes"), "public UI must not claim Hermes attribution");
+  assert(publicBrandCopy.includes("openrouter"), "public UI must include OpenRouter attribution");
   for (const internalDoc of ["docs/OPS_RUNBOOK.md", "docs/PHASE_AUDITS.md", "docs/P2_HARDENING_CHECKLIST.md"]) {
     assert(!existsSync(internalDoc), internalDoc + " should stay out of public docs");
   }

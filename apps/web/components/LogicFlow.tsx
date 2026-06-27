@@ -2,7 +2,7 @@ import { ArrowRight, Cpu, Database, CheckCircle, BrainCircuit } from "lucide-rea
 
 export function LogicFlow() {
   const steps = [
-    { id: 1, title: "Intent Parsing", desc: "Hermes 3", icon: BrainCircuit, color: "text-nm-fragment-blue", border: "border-nm-fragment-blue/30" },
+    { id: 1, title: "Intent Parsing", desc: "OpenRouter", icon: BrainCircuit, color: "text-nm-fragment-blue", border: "border-nm-fragment-blue/30" },
     { id: 2, title: "Oracle Check", desc: "Base Pyth", icon: Database, color: "text-nm-muted", border: "border-nm-border" },
     { id: 3, title: "Smart Contract", desc: "Aerodrome", icon: Cpu, color: "text-nm-muted", border: "border-nm-border" },
     { id: 4, title: "Approval Gate", desc: "User Wallet", icon: CheckCircle, color: "text-nm-resolve", border: "border-nm-resolve/30" },

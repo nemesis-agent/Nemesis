@@ -1,5 +1,5 @@
 /**
- * Simple Price Feed client using Pyth Network Hermes API.
+ * Simple price-feed client using Pyth Network's public price service.
  * 
  * In a full production scenario this would connect via WebSockets
  * or query on-chain Pyth contracts, but for the MVP runner loop,

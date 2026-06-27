@@ -8,7 +8,7 @@ export function HeroTicker() {
   const items = [
     "base mainnet",
     "approval-first",
-    "built on hermes",
+    "powered by openrouter",
     "base + solana",
     "your keys",
     "autonomous agents",
