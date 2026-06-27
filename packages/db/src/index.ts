@@ -12,4 +12,4 @@ export {
   type ProposalStatus,
 } from "./proposals.js";
 export * from "./links.js";
-export { pool } from "./client.js";
+export { checkDatabaseConnection, pool } from "./client.js";

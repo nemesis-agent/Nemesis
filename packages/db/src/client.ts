@@ -99,3 +99,7 @@ if (DATABASE_URL) {
       console.error("Failed to initialize database schema or run migrations:", err);
     });
 }
+
+export async function checkDatabaseConnection(): Promise<void> {
+  await pool.query("SELECT 1");
+}

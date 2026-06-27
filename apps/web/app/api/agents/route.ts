@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 
 import { createAgent } from "@nemesis/db";
 import { getTemplateById, getTemplateChain, getTemplateUnavailableReason, isTemplateProductionReady, type TemplateParameter } from "@nemesis/templates";
-import { rejectCrossOrigin, requireWalletAuthForChain } from "@/lib/auth";
+import { rejectCrossOrigin, requireAnyWalletAuth, requireWalletAuthForChain } from "@/lib/auth";
 import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
 
 
@@ -71,6 +71,9 @@ function validateParameters(
 export async function POST(request: Request) {
   const originError = rejectCrossOrigin(request);
   if (originError) return originError;
+
+  const sessionAuth = await requireAnyWalletAuth();
+  if (sessionAuth.error) return sessionAuth.error;
 
 
   let body: { templateId?: string; name?: string; parameters?: Record<string, string | number | boolean> } | null = null;

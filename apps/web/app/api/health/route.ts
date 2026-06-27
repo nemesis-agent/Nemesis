@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { pool } from "@nemesis/db";
+import { checkDatabaseConnection } from "@nemesis/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
     // Attempt a lightweight query to verify DB connection
-    await pool.query("SELECT 1");
+    await checkDatabaseConnection();
     
     return NextResponse.json({
       status: "healthy",
