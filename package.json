@@ -2,7 +2,7 @@
   "name": "nemesis",
   "version": "0.1.0",
   "private": true,
-  "description": "NEMESIS — deploy autonomous agents on Base. Built on Hermes, executed through Base MCP.",
+  "description": "NEMESIS - approval-first agents on Base and Solana.",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -25,5 +25,8 @@
   "devDependencies": {
     "concurrently": "^10.0.3",
     "pm2": "^7.0.1"
+  },
+  "overrides": {
+    "ws": "8.21.0"
   }
 }

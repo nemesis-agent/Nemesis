@@ -58,6 +58,7 @@ check("sensitive routes include rate limit enforcement", () => {
     ["apps/web/app/api/agents/[id]/pause/route.ts", "agents:pause"],
     ["apps/web/app/api/agents/[id]/resume/route.ts", "agents:resume"],
     ["apps/web/app/api/proposals/[id]/confirm/route.ts", "proposals:confirm"],
+    ["apps/web/app/api/proposals/[id]/confirm-solana/route.ts", "proposals:confirm-solana"],
   ];
 
   for (const [file, scope] of files) {
@@ -84,6 +85,35 @@ check("review-only template boundaries are explicit", () => {
   }
 });
 
+
+check("chain-aware deploy and Telegram linking are enforced", () => {
+  const agentsRoute = readFileSync("apps/web/app/api/agents/route.ts", "utf8");
+  if (!agentsRoute.includes("requireWalletAuthForChain(templateChain)")) {
+    throw new Error("agent creation must authenticate against the selected template chain");
+  }
+
+  const linkRoute = readFileSync("apps/web/app/api/link/generate/route.ts", "utf8");
+  if (!linkRoute.includes("requestedChain") || !linkRoute.includes("requireWalletAuthForChain(chain)")) {
+    throw new Error("Telegram link generation must accept an explicit Base/Solana chain");
+  }
+
+  const telegramCard = readFileSync("apps/web/components/ConnectTelegramCard.tsx", "utf8");
+  if (!telegramCard.includes("Generate ${chain} code") || !telegramCard.includes("JSON.stringify({ chain })")) {
+    throw new Error("Telegram link UI must let dual-wallet users generate a Solana-specific code");
+  }
+});
+
+check("Solana profit taker can prepare a guarded Jupiter sell", () => {
+  const jupiter = readFileSync("apps/telegram-bot/src/lib/jupiter-solana.ts", "utf8");
+  if (!jupiter.includes("buildSolanaSolToUsdcSwapPayload") || !jupiter.includes("SOL_MINT") || !jupiter.includes("USDC_MINT")) {
+    throw new Error("Solana SOL -> USDC Jupiter payload builder is missing");
+  }
+
+  const runner = readFileSync("apps/telegram-bot/src/runner.ts", "utf8");
+  if (!runner.includes("MIN_SOL_RESERVE_LAMPORTS") || !runner.includes("buildSolanaSolToUsdcSwapPayload")) {
+    throw new Error("Solana profit taker must keep a SOL reserve and prepare Jupiter sell payloads");
+  }
+});
 let failed = 0;
 for (const item of checks) {
   try {

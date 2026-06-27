@@ -12,7 +12,7 @@ import { getSession, getSessionWalletKeys } from "@/lib/auth";
 import { getTemplateById } from "@nemesis/templates";
 
 interface AgentDetailPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // Reads live from Postgres â€” pause/resume mutate this row, and a scheduler
@@ -40,11 +40,12 @@ const STATUS_LABELS = {
 } as const;
 
 export default async function AgentDetailPage({ params }: AgentDetailPageProps) {
+  const { id } = await params;
   const session = await getSession();
   const walletKeys = getSessionWalletKeys(session);
   if (walletKeys.length === 0) redirect("/");
 
-  const agent = await getAgent(params.id);
+  const agent = await getAgent(id);
   if (!agent) notFound();
   if (!walletKeys.some((walletKey) => walletKey.toLowerCase() === agent.walletAddress.toLowerCase())) notFound();
 

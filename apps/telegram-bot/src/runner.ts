@@ -1,4 +1,5 @@
 import type { Telegraf } from "telegraf";
+import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import {
   createProposal,
   getTelegramChatIdForWallet,
@@ -15,10 +16,13 @@ import { sendProposal } from "./handlers/approval.js";
 import { logger } from "./lib/logger.js";
 import { sendOpsAlert } from "./lib/alerts.js";
 import { buildEthToUsdcSwapPayload, buildUsdcApproveAndSwapToEthPayload } from "./lib/uniswap-base.js";
-import { buildSolanaUsdcToSolSwapPayload } from "./lib/jupiter-solana.js";
+import { buildSolanaSolToUsdcSwapPayload, buildSolanaUsdcToSolSwapPayload } from "./lib/jupiter-solana.js";
 
 const RUNNER_INTERVAL_MS = 1000 * 60;
 const BASE_RPC_URL = process.env.BASE_RPC_URL ?? "https://mainnet.base.org";
+const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL ?? process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com";
+const solanaConnection = new Connection(SOLANA_RPC_URL, "confirmed");
+const MIN_SOL_RESERVE_LAMPORTS = BigInt(Math.floor(0.02 * LAMPORTS_PER_SOL));
 const PRODUCTION_TEMPLATES = new Set([
   "ape-agent",
   "pool-sniper",
@@ -560,10 +564,45 @@ async function evaluateSolanaProfitTaker(agent: Agent): Promise<EvaluationResult
     return null;
   }
 
+  let unsignedTxPayload: string | undefined;
+  let walletAction = "review only - no transaction payload generated";
+  let sellAmountSol: string | undefined;
+  const solanaWallet = solanaAddressFromWalletKey(agent.walletAddress);
+  if (solanaWallet) {
+    try {
+      const balanceLamports = BigInt(await solanaConnection.getBalance(new PublicKey(solanaWallet), "confirmed"));
+      const spendableLamports = balanceLamports > MIN_SOL_RESERVE_LAMPORTS ? balanceLamports - MIN_SOL_RESERVE_LAMPORTS : 0n;
+      const portionBps = BigInt(Math.max(1, Math.min(10_000, Math.round(sellPortionPercent * 100))));
+      const sellLamports = (spendableLamports * portionBps) / 10_000n;
+
+      if (sellLamports > 0n) {
+        unsignedTxPayload = JSON.stringify(await buildSolanaSolToUsdcSwapPayload({
+          walletAddress: solanaWallet,
+          lamportsAmount: sellLamports,
+        }));
+        sellAmountSol = (Number(sellLamports) / LAMPORTS_PER_SOL).toFixed(6);
+        walletAction = "sign Jupiter SOL -> USDC swap in Solflare";
+      } else {
+        walletAction = "review only - SOL balance is below the protected reserve";
+      }
+    } catch (err) {
+      logger.warn({ msg: "Solana Jupiter sell payload unavailable", agentId: agent.id, error: String(err) });
+      void sendOpsAlert({
+        event: "solana_jupiter_sell_payload_unavailable",
+        severity: "warning",
+        message: "Solana profit proposal created without executable Jupiter payload",
+        context: { agentId: agent.id, error: String(err) },
+      });
+    }
+  }
+
   return {
     title: "SOL profit review ready",
-    action: `SOL is up ${gainPercent.toFixed(2)}% from your $${entryPrice} entry. Review selling ${sellPortionPercent}% through Jupiter before signing anything in Solflare.`,
-    estimatedGasUsd: "Solana review only",
+    action: unsignedTxPayload
+      ? `SOL is up ${gainPercent.toFixed(2)}% from your $${entryPrice} entry. Sign the prepared ${sellAmountSol} SOL Jupiter sell only if the wallet preview still matches this proposal.`
+      : `SOL is up ${gainPercent.toFixed(2)}% from your $${entryPrice} entry. Review selling ${sellPortionPercent}% through Jupiter before signing anything in Solflare.`,
+    estimatedGasUsd: unsignedTxPayload ? "Solana network fee" : "Solana review only",
+    unsignedTxPayload,
     details: [
       { label: "chain", value: "Solana" },
       { label: "asset", value: ticker },
@@ -571,7 +610,9 @@ async function evaluateSolanaProfitTaker(agent: Agent): Promise<EvaluationResult
       { label: "entry price", value: `$${entryPrice}` },
       { label: "gain", value: `${gainPercent.toFixed(2)}%` },
       { label: "portion", value: `${sellPortionPercent}%` },
-      { label: "wallet action", value: "review only - no transaction payload generated" },
+      ...(sellAmountSol ? [{ label: "prepared sell", value: `${sellAmountSol} SOL` }] : []),
+      { label: "protected reserve", value: "0.02 SOL" },
+      { label: "wallet action", value: walletAction },
     ],
     state: { ...agent.runtimeState, ticker, chain: "solana", lastPrice: price, gainPercent, lastProposalAt: new Date().toISOString() },
     lastEvent: `Solana profit review triggered for SOL at ${gainPercent.toFixed(2)}% gain.`,

@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 
 import { createAgent } from "@nemesis/db";
 import { getTemplateById, getTemplateChain, getTemplateUnavailableReason, isTemplateProductionReady, type TemplateParameter } from "@nemesis/templates";
-import { rejectCrossOrigin, requireAnyWalletAuth } from "@/lib/auth";
+import { rejectCrossOrigin, requireWalletAuthForChain } from "@/lib/auth";
 import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
 
 
@@ -62,13 +62,9 @@ function validateParameters(
 /**
  * POST /api/agents
  *
- * Creates a new agent for the authenticated wallet. This is the Phase 1
- * replacement for the DeployChat simulation â€” instead of a setTimeout,
- * the "Approve & deploy" button now calls this endpoint, which:
- *   1. Verifies the session (SIWE) â€” 401 if not signed in.
- *   2. Validates the template ID is a real template.
- *   3. Writes the agent to the database.
- *   4. Returns the created agent so the client can redirect to /agents/[id].
+ * Creates a new agent for the authenticated wallet. The route validates the
+ * template first, then authenticates against that template's chain so dual
+ * Base/Solana sessions deploy to the intended wallet.
  *
  * Body: { templateId: string; name?: string; parameters?: Record<string, unknown> }
  */
@@ -76,11 +72,6 @@ export async function POST(request: Request) {
   const originError = rejectCrossOrigin(request);
   if (originError) return originError;
 
-  const auth = await requireAnyWalletAuth();
-  if (auth.error) return auth.error;
-
-  const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "agents:create", auth.wallet.walletKey), limit: 20, windowMs: 60_000 });
-  if (rateLimit) return rateLimit;
 
   let body: { templateId?: string; name?: string; parameters?: Record<string, string | number | boolean> } | null = null;
   try {
@@ -108,12 +99,11 @@ export async function POST(request: Request) {
   }
 
   const templateChain = getTemplateChain(template);
-  if (templateChain !== auth.wallet.chain) {
-    return NextResponse.json(
-      { error: `Connect and sign in with a ${templateChain === "solana" ? "Solana" : "Base"} wallet before deploying this template.` },
-      { status: 409 },
-    );
-  }
+  const auth = await requireWalletAuthForChain(templateChain);
+  if (auth.error) return auth.error;
+
+  const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "agents:create", auth.wallet.walletKey), limit: 20, windowMs: 60_000 });
+  if (rateLimit) return rateLimit;
 
   // Use provided name or auto-generate from template.
   const name = (body?.name?.trim()) || `${template.name} #${randomUUID().slice(0, 4).toUpperCase()}`;

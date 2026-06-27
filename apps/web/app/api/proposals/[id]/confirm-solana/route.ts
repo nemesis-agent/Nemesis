@@ -43,8 +43,9 @@ function transactionIncludesSigner(tx: VersionedTransactionResponse, publicKey: 
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id: proposalId } = await params;
   const originError = rejectCrossOrigin(request);
   if (originError) return originError;
 
@@ -66,7 +67,7 @@ export async function POST(
     return NextResponse.json({ error: "Valid Solana signature is required." }, { status: 400 });
   }
 
-  const proposal = await getProposal(params.id);
+  const proposal = await getProposal(proposalId);
   if (!proposal) {
     return NextResponse.json({ error: "Proposal not found." }, { status: 404 });
   }
@@ -116,7 +117,7 @@ export async function POST(
     return NextResponse.json({ error: "Solana transaction does not match the approved proposal payload." }, { status: 400 });
   }
 
-  const updated = await approveProposal(params.id, signature);
+  const updated = await approveProposal(proposalId, signature);
   if (!updated) {
     return NextResponse.json({ error: "Failed to update database." }, { status: 500 });
   }

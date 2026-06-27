@@ -491,7 +491,7 @@ export const TEMPLATES: AgentTemplate[] = [
     runtimeStatus: "production",
     summary: "Review SOL exits once your gain target is reached",
     condition: "SOL price rises by your configured gain percentage from your reference entry price.",
-    action: "Propose reviewing a Jupiter sell. No Solana transaction is generated or broadcast automatically.",
+    action: "Propose a Jupiter SOL sell for final wallet signature in Solflare when balance is available. Nothing signs or broadcasts automatically.",
     protocols: ["jupiter", "solana-rpc", "solflare"],
     parameters: [
       {
@@ -528,7 +528,7 @@ export const TEMPLATES: AgentTemplate[] = [
       },
     ],
     approvalSummary:
-      "This Solana agent tracks SOL from an entry price of {entryPrice} USDC. Once SOL is up {gainTargetPercent}%, it proposes reviewing a Jupiter sell for {sellPortionPercent}% of the position. You still make the final decision in your own wallet.",
+      "This Solana agent tracks SOL from an entry price of {entryPrice} USDC. Once SOL is up {gainTargetPercent}%, it prepares a Jupiter sell review for {sellPortionPercent}% of spendable SOL while keeping a fee reserve. You still make the final decision in your own Solflare wallet.",
   },];
 
 export const isTemplateProductionReady = (template: AgentTemplate): boolean =>

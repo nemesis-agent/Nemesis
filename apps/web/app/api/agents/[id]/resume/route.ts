@@ -5,7 +5,8 @@ import { getAgent, setAgentStatus } from "@nemesis/db";
 import { rejectCrossOrigin, requireAnyWalletAuth, walletOwnsAgent } from "@/lib/auth";
 import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const originError = rejectCrossOrigin(request);
   if (originError) return originError;
 
@@ -15,7 +16,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
   const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "agents:resume", auth.wallet.walletKey), limit: 30, windowMs: 60_000 });
   if (rateLimit) return rateLimit;
 
-  const existing = await getAgent(params.id);
+  const existing = await getAgent(id);
   if (!existing) {
     return NextResponse.json({ error: "Agent not found" }, { status: 404 });
   }
@@ -24,9 +25,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
     return NextResponse.json({ error: "Forbidden. You do not own this agent." }, { status: 403 });
   }
 
-  const updated = await setAgentStatus(params.id, "active");
+  const updated = await setAgentStatus(id, "active");
 
-  revalidatePath(`/agents/${params.id}`);
+  revalidatePath(`/agents/${id}`);
   revalidatePath("/dashboard");
 
   return NextResponse.json({ agent: updated });

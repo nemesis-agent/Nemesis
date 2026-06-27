@@ -30,8 +30,9 @@ function getCompletedStepHashes(executionState: Record<string, unknown>): string
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: proposalId } = await params;
   const originError = rejectCrossOrigin(request);
   if (originError) return originError;
 
@@ -41,7 +42,6 @@ export async function POST(
   const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "proposals:confirm", auth.wallet.walletKey), limit: 10, windowMs: 60_000 });
   if (rateLimit) return rateLimit;
 
-  const proposalId = params.id;
   if (!proposalId) {
     return NextResponse.json({ error: "Proposal ID is required." }, { status: 400 });
   }

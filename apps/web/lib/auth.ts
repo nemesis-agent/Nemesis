@@ -13,7 +13,7 @@ export type AuthenticatedWallet =
  * unless you call session.save() afterwards.
  */
 export async function getSession() {
-  return getIronSession<SessionData>(cookies(), SESSION_OPTIONS);
+  return getIronSession<SessionData>(await cookies(), SESSION_OPTIONS);
 }
 
 /**
@@ -73,6 +73,33 @@ export async function requireAnyWalletAuth(): Promise<
   };
 }
 
+
+export async function requireWalletAuthForChain(chain: "base" | "solana"): Promise<
+  { wallet: AuthenticatedWallet; error?: never } | { wallet?: never; error: NextResponse }
+> {
+  const session = await getSession();
+  if (chain === "base") {
+    if (!session.address) {
+      return {
+        error: NextResponse.json(
+          { error: "Unauthorized. Sign in with your Base wallet first." },
+          { status: 401 },
+        ),
+      };
+    }
+    return { wallet: { chain: "base", address: session.address, walletKey: session.address } };
+  }
+
+  if (!session.solanaAddress) {
+    return {
+      error: NextResponse.json(
+        { error: "Unauthorized. Sign in with your Solana wallet first." },
+        { status: 401 },
+      ),
+    };
+  }
+  return { wallet: { chain: "solana", solanaAddress: session.solanaAddress, walletKey: solanaWalletKey(session.solanaAddress) } };
+}
 export async function requireSolanaAuth(): Promise<
   { wallet: Extract<AuthenticatedWallet, { chain: "solana" }>; error?: never } | { wallet?: never; error: NextResponse }
 > {

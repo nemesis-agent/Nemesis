@@ -11,7 +11,7 @@ import { fillApprovalSummary } from "@/lib/format-template";
 import { RISK_LABELS, TEMPLATE_CATEGORIES, TEMPLATES, getTemplateById, getTemplateChain, getTemplateUnavailableReason, isTemplateProductionReady } from "@nemesis/templates";
 
 interface TemplateDetailPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export const dynamicParams = false;
@@ -20,13 +20,15 @@ export function generateStaticParams() {
   return TEMPLATES.map((template) => ({ id: template.id }));
 }
 
-export function generateMetadata({ params }: TemplateDetailPageProps) {
-  const template = getTemplateById(params.id);
+export async function generateMetadata({ params }: TemplateDetailPageProps) {
+  const { id } = await params;
+  const template = getTemplateById(id);
   return { title: template ? `${template.name} â€” NEMESIS` : "Template not found â€” NEMESIS" };
 }
 
-export default function TemplateDetailPage({ params }: TemplateDetailPageProps) {
-  const template = getTemplateById(params.id);
+export default async function TemplateDetailPage({ params }: TemplateDetailPageProps) {
+  const { id } = await params;
+  const template = getTemplateById(id);
   if (!template) notFound();
   const isProductionReady = isTemplateProductionReady(template);
 

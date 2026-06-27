@@ -82,3 +82,14 @@ Status: implemented for the current release.
 - Telegram bot and runner emit structured logs plus optional `NEMESIS_ALERT_WEBHOOK_URL` alerts for polling conflicts, lock waits, lock wait timeouts, runner errors, evaluation failures, prune failures, and proposal dispatch failures.
 - Production smoke script `npm run smoke:prod` checks health, public pages, protected API rejection, nonce generation, static route rate-limit coverage, and review-only calldata boundaries.
 - `docs/OPS_RUNBOOK.md` documents deploy verification, mobile/cross-browser smoke checklists, rollback, secret rotation, rate limits, alerts, and calldata boundaries.
+## P0 Launch Hardening - 2026-06-27
+
+Status: implemented and verified for the current release.
+
+- Agent creation is now template-chain aware, so dual Base/Solana sessions deploy Solana templates to the authenticated Solana wallet instead of silently defaulting to Base.
+- Telegram link-code generation accepts an explicit Base/Solana chain and the dashboard exposes chain-specific link buttons for dual-wallet users.
+- Solana profit-taker proposals can prepare a guarded Jupiter SOL -> USDC payload when spendable SOL is available, while keeping a 0.02 SOL fee reserve and falling back to review-only if RPC/Jupiter is unavailable.
+- Solana proposal confirmation still verifies signer ownership and exact transaction message hash before marking a proposal approved.
+- Next.js was upgraded to 16.2.9 and the websocket dependency is pinned to the patched ws 8.21.0 release.
+- P0 verification passed: full production build, production smoke/static checks, and npm audit high/critical gate.
+- Remaining npm audit findings are moderate upstream postcss/uuid advisories; npm's automated fix path requires breaking/downgrade installs, so they remain tracked rather than force-applied.

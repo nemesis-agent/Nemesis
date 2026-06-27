@@ -46,6 +46,11 @@ function toUsdcAtomicAmount(usdcAmount: number): string {
   return Math.round(usdcAmount * 10 ** USDC_DECIMALS).toString();
 }
 
+function toPositiveAtomicString(amount: bigint, label: string): string {
+  if (amount <= 0n) throw new Error(`${label} amount must be greater than zero`);
+  return amount.toString();
+}
+
 function hashJson(value: unknown): string {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
@@ -66,21 +71,26 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return data;
 }
 
-export async function buildSolanaUsdcToSolSwapPayload(input: {
+async function buildJupiterSwapPayload(input: {
   walletAddress: string;
-  usdcAmount: number;
-  slippageBps?: number;
+  inputMint: string;
+  outputMint: string;
+  inputAmount: string;
+  slippageBps: number;
+  label: string;
 }): Promise<SolanaJupiterSwapPayload> {
-  const slippageBps = Math.max(1, Math.min(500, Math.round(input.slippageBps ?? 75)));
-  const amount = toUsdcAtomicAmount(input.usdcAmount);
   const quoteUrl = new URL(`${JUPITER_SWAP_API_URL}/quote`);
-  quoteUrl.searchParams.set("inputMint", USDC_MINT);
-  quoteUrl.searchParams.set("outputMint", SOL_MINT);
-  quoteUrl.searchParams.set("amount", amount);
-  quoteUrl.searchParams.set("slippageBps", String(slippageBps));
+  quoteUrl.searchParams.set("inputMint", input.inputMint);
+  quoteUrl.searchParams.set("outputMint", input.outputMint);
+  quoteUrl.searchParams.set("amount", input.inputAmount);
+  quoteUrl.searchParams.set("slippageBps", String(input.slippageBps));
   quoteUrl.searchParams.set("swapMode", "ExactIn");
 
   const quote = await fetchJson<JupiterQuoteResponse>(quoteUrl.toString());
+  if (quote.inputMint !== input.inputMint || quote.outputMint !== input.outputMint || quote.inAmount !== input.inputAmount) {
+    throw new Error("Jupiter quote did not match requested swap parameters");
+  }
+
   const swap = await fetchJson<JupiterSwapResponse>(`${JUPITER_SWAP_API_URL}/swap`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -105,10 +115,42 @@ export async function buildSolanaUsdcToSolSwapPayload(input: {
     inputAmount: quote.inAmount,
     expectedOutputAmount: quote.outAmount,
     otherAmountThreshold: quote.otherAmountThreshold,
-    slippageBps,
+    slippageBps: input.slippageBps,
     serializedTransaction: swap.swapTransaction,
     messageHash: hashSolanaMessage(swap.swapTransaction),
     quoteHash: hashJson(quote),
-    label: "Sign Jupiter swap in Solflare",
+    label: input.label,
   };
+}
+
+export async function buildSolanaUsdcToSolSwapPayload(input: {
+  walletAddress: string;
+  usdcAmount: number;
+  slippageBps?: number;
+}): Promise<SolanaJupiterSwapPayload> {
+  const slippageBps = Math.max(1, Math.min(500, Math.round(input.slippageBps ?? 75)));
+  return buildJupiterSwapPayload({
+    walletAddress: input.walletAddress,
+    inputMint: USDC_MINT,
+    outputMint: SOL_MINT,
+    inputAmount: toUsdcAtomicAmount(input.usdcAmount),
+    slippageBps,
+    label: "Sign Jupiter USDC -> SOL swap in Solflare",
+  });
+}
+
+export async function buildSolanaSolToUsdcSwapPayload(input: {
+  walletAddress: string;
+  lamportsAmount: bigint;
+  slippageBps?: number;
+}): Promise<SolanaJupiterSwapPayload> {
+  const slippageBps = Math.max(1, Math.min(500, Math.round(input.slippageBps ?? 75)));
+  return buildJupiterSwapPayload({
+    walletAddress: input.walletAddress,
+    inputMint: SOL_MINT,
+    outputMint: USDC_MINT,
+    inputAmount: toPositiveAtomicString(input.lamportsAmount, "SOL"),
+    slippageBps,
+    label: "Sign Jupiter SOL -> USDC swap in Solflare",
+  });
 }
