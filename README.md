@@ -1,87 +1,50 @@
 # NEMESIS
 
-NEMESIS is an approval-first automation platform for Base and Solana wallets. Users describe intent in plain language, the Master Agent proposes one or more single-condition agent plans, and every transaction remains user-approved from the user's own wallet.
+![NEMESIS](./assets/nemesis-banner-dark.png)
 
-![NEMESIS](/assets/nemesis-banner-dark.png)
+NEMESIS is an approval-first agent platform for Base and Solana wallets. Connect your wallet, describe an intent, review a plain-language plan, deploy a single-condition agent, and receive proposals in the dashboard and Telegram.
 
-## Product Rules
+NEMESIS never custodies funds and never auto-executes transactions. Agents can prepare proposals; your own wallet is always the final signer.
 
-- NEMESIS never custodies user funds.
-- Agents propose actions; users approve before any wallet signature.
-- Deployment plans must show a plain-language approval summary with real parameter values.
-- Each template stays one condition, one action.
-- High-risk and degen templates require explicit risk acknowledgement.
+## What You Can Do
 
-## Current Implementation
+- Deploy Base and Solana monitoring agents from production-ready templates.
+- Connect Base wallets through RainbowKit/WalletConnect.
+- Connect Solana wallets through Solflare-compatible wallet flows.
+- Link Telegram to receive proposal alerts.
+- Review every proposal before signing anything.
+- Pause or resume agents from the dashboard or Telegram.
 
-- Web app: Next.js 14, RainbowKit, Wagmi, SIWE, Solana wallet adapter, iron-session.
-- Bot: Telegraf with linked-wallet command authorization.
-- Database: Supabase/Postgres through `pg`, shared by web and bot.
-- Templates: `@nemesis/templates`, 10 Base v1 templates plus 2 Solana proposal-only templates.
-- Master Agent API: SIWE-protected `/api/intent`, OpenRouter-backed structured output.
-- Runner: production evaluators are enabled for Base v1 templates and Solana proposal-only templates, with review-only proposals where arbitrary calldata is not yet safe to generate.
+## Live Product
 
-## Important Reality Check
+- App: [nemesis-agent.xyz](https://nemesis-agent.xyz)
+- X: [@Nemesis_agent](https://x.com/Nemesis_agent)
+- GitHub: [nemesis-agent/Nemesis](https://github.com/nemesis-agent/Nemesis)
 
-NEMESIS is approval-first and non-custodial. Some Base production templates generate executable ETH/USDC swap payloads after exact proposal review; templates that involve arbitrary new tokens, pools, yield claims, protocol interactions, or Solana/Jupiter actions remain review-only until a dedicated encoder is wired and tested. The `/demo` command is limited to smoke testing the proposal handoff.
+## Core Principles
 
-## Required Production Environment
+- Non-custodial: NEMESIS never asks for seed phrases or private keys.
+- Approval-first: no wallet action happens without explicit user review and signature.
+- One condition, one action: templates stay narrow and auditable.
+- Risk-aware: high-risk and degen templates require acknowledgement before deployment.
+- Privacy-minimized: operational data is used only to run agents, sessions, Telegram links, and proposals.
 
-Set these in Railway or your deploy provider:
+## User Flow
 
-```bash
-DATABASE_URL=
-SESSION_SECRET=
-OPENROUTER_API_KEY=
-OPENROUTER_MODEL=xiaomi/mimo-v2.5
-TELEGRAM_BOT_TOKEN=
-NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
-NEXT_PUBLIC_SITE_URL=
-NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=
-NEXT_PUBLIC_SOLANA_RPC_URL= # optional, defaults to Solana mainnet-beta
-```
+1. Connect a Base or Solana wallet.
+2. Sign in to create a wallet-scoped session.
+3. Pick a template or describe an intent to the Master Agent.
+4. Review the filled approval summary and parameters.
+5. Deploy the agent.
+6. Link Telegram if you want alerts outside the dashboard.
+7. Review, approve, or skip proposals as they arrive.
 
-`SESSION_SECRET` must be unique and at least 32 characters. `NEXT_PUBLIC_SITE_URL` must be the canonical HTTPS URL. `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` must belong to the NEMESIS WalletConnect project.
+## Documentation
 
-## Railway Deployment
+- [Product Guide](./docs/PRODUCT_GUIDE.md)
+- [Security Model](./docs/SECURITY.md)
+- [Privacy Notes](./docs/PRIVACY.md)
 
-Railway uses the repository `Dockerfile` for production builds and `railway.toml` starts the monolith with `npm start`, which launches both PM2 processes:
+## Status
 
-- `nemesis-web`
-- `nemesis-bot`
-
-The health endpoint is `/api/health`. Run `npm run smoke:prod` after production deploys. See `docs/OPS_RUNBOOK.md` for launch operations, rate limits, alerts, rollback, and manual device smoke checks.
-
-## Local Development
-
-```bash
-npm install
-npm run build:db
-npm run build:web
-npm run build:bot
-```
-
-For full local runtime, create local env files from:
-
-- `apps/web/.env.example`
-- `apps/telegram-bot/.env.example`
-
-## Telegram Commands
-
-- `/start` - link-aware welcome
-- `/link <code>` - link this chat to the SIWE-authenticated wallet code
-- `/unlink` - remove Telegram link
-- `/agents` - list only linked wallet agents
-- `/status [agent_id]` - show linked wallet status only
-- `/pause <agent_id>` - pause linked wallet agent
-- `/resume <agent_id>` - resume linked wallet agent
-- `/demo` - create a demo proposal for the linked wallet
-
-## Launch Status
-
-- Legal/privacy/terms internal product compliance review: completed for the current release.
-- External legal counsel review: not claimed by this repository.
-- Production env variables: configured under the NEMESIS project identity.
-- Production deploy: live on Railway at `https://nemesis-agent.xyz`.
-- P1 API rate limits, ops alert hooks, production smoke script, and launch runbook: completed.
-- Real mobile-device and cross-browser smoke test checklist: documented in `docs/OPS_RUNBOOK.md` and must be executed on actual target devices before broad marketing rollout.
+NEMESIS is live in production with Base and Solana template support. The current release is focused on approval-first wallet automation, Telegram proposal alerts, and guarded proposal review.

@@ -23,7 +23,7 @@ const INTRO_MESSAGE: ChatMessage = {
 const KNOWLEDGE_BASE = [
   {
     keywords: ["what", "nemesis", "explain", "who"],
-    reply: "NEMESIS is an autonomous agent platform on Base. You describe your intent, and I deploy specialized sub-agents to monitor the market and propose actions on your behalf. We orchestrate chaos into order.",
+    reply: "NEMESIS is an autonomous agent platform on Base and Solana. You describe your intent, and I deploy specialized sub-agents to monitor the market and propose actions on your behalf. We orchestrate chaos into order.",
   },
   {
     keywords: ["safe", "funds", "wallet", "custody", "steal", "hack", "private"],
@@ -39,7 +39,7 @@ const KNOWLEDGE_BASE = [
   },
   {
     keywords: ["base", "mcp", "chain", "network", "coinbase"],
-    reply: "NEMESIS supports Base and Solana. Base templates can include verified payloads where safe; Solana templates are review-only for now, with final approval staying in your wallet.",
+    reply: "NEMESIS supports Base and Solana. Base templates can include verified payloads where safe; Solana templates can prepare guarded Jupiter proposals where available. Final approval always stays in your wallet.",
   },
 ];
 

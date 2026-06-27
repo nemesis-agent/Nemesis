@@ -8,7 +8,7 @@ export default function TermsPage() {
         <FragmentDivider />
       </div>
       <div className="prose prose-invert mt-12 text-sm leading-relaxed text-nm-muted">
-        <p><strong>Last updated: June 26, 2026</strong></p>
+        <p><strong>Last updated: June 28, 2026</strong></p>
         <p>
           These terms describe how NEMESIS works and the responsibilities you accept when using it. By using the
           platform, connecting a wallet, deploying an agent, linking Telegram, or approving a proposal, you agree to
@@ -17,7 +17,7 @@ export default function TermsPage() {
 
         <h2 className="text-nm-fg">1. Nature of the service</h2>
         <p>
-          NEMESIS is an approval-first, non-custodial automation interface for Base wallets. Users configure
+          NEMESIS is an approval-first, non-custodial automation interface for Base and Solana wallets. Users configure
           single-condition agents that monitor data sources and generate proposals. NEMESIS does not provide a
           custodial account, brokerage account, investment advisory account, or managed trading service.
         </p>
@@ -55,8 +55,8 @@ export default function TermsPage() {
         <p>
           NEMESIS depends on third-party infrastructure and services including wallet providers, WalletConnect,
           Telegram, OpenRouter/model providers, Railway, Supabase/Postgres, RPC providers, price feeds, DexScreener,
-          decentralized exchanges, and Base network infrastructure. Their availability, terms, privacy practices, and
-          behavior are outside NEMESIS control.
+          decentralized exchanges, and Base and Solana network infrastructure. Their availability, terms, privacy
+          practices, and behavior are outside NEMESIS control.
         </p>
 
         <h2 className="text-nm-fg">7. Prohibited use</h2>
@@ -79,12 +79,6 @@ export default function TermsPage() {
           losses, missed opportunities, failed transactions, wrong approvals, market movements, protocol failures,
           lost keys, wallet compromise, third-party outages, or any indirect, incidental, special, consequential, or
           punitive damages arising from your use of the platform.
-        </p>
-
-        <h2 className="text-nm-fg">10. Review status</h2>
-        <p>
-          NEMESIS legal, privacy, and terms content has completed an internal product compliance review for the current
-          release. This is not a statement that external legal counsel has reviewed or approved the product.
         </p>
       </div>
     </div>

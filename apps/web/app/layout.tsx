@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: "NEMESIS - autonomous agents on Base and Solana",
   description:
-    "Deploy approval-first agents on Base and Solana. Built on Hermes, review-first by design.",
+    "Deploy approval-first agents on Base and Solana. Chaos in, order out.",
   icons: {
     icon: "/assets/nemesis-icon.png",
   },

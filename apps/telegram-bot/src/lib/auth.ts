@@ -5,9 +5,9 @@ let warnedOpenAccess = false;
 /**
  * Restricts the bot to a known set of Telegram user IDs, read from
  * NEMESIS_ALLOWED_USER_IDS (comma-separated). If unset, the bot warns
- * once and allows everyone - fine for local development, not for a
- * deployed bot. Replace with a real per-user account mapping before
- * launch - see ARCHITECTURE.md, "Telegram bot - user mapping".
+ * once and allows anyone to start the bot. Wallet-scoped commands still
+ * require a valid dashboard-generated link code before they can access
+ * wallet data.
  */
 export function createAccessControl(): MiddlewareFn<Context> {
   const allowList = (process.env.NEMESIS_ALLOWED_USER_IDS ?? "")

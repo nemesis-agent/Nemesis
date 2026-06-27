@@ -16,8 +16,7 @@ import { escapeHtml, formatProposalMessage } from "../lib/format.js";
 /**
  * Sends a proposal to a chat with Approve / Skip buttons. Call this from
  * your agent runtime when a sub-agent's condition is met, passing the
- * Telegram chat ID retrieved via await getTelegramChatIdForWallet(). See
- * ARCHITECTURE.md, "Sub-agents - propose via Base MCP".
+ * Telegram chat ID retrieved via await getTelegramChatIdForWallet().
  */
 export async function sendProposal(
   bot: Telegraf,
@@ -38,7 +37,7 @@ export async function sendProposal(
  * /demo - creates a REAL pending proposal in the database against the
  * first available agent, then sends it here. This lets you verify the
  * full flow (Telegram message -> approve/skip -> DB updated) without a
- * running Hermes instance.
+ * running agent runner.
  */
 export async function demoCommand(ctx: Context): Promise<void> {
   const wallet = await getWalletForTelegramChatId(String(ctx.chat?.id ?? ""));

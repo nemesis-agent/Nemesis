@@ -5,17 +5,17 @@ const STEPS = [
   {
     label: "01",
     title: "Tell it what you want",
-    body: "Describe your goal in plain language — what you're holding, what you want to happen, how much risk you're comfortable with. The Master Agent reads your wallet to understand your starting position.",
+    body: "Describe your goal in plain language - what you're holding, what you want to happen, how much risk you're comfortable with. The Master Agent reads your wallet to understand your starting position.",
   },
   {
     label: "02",
     title: "Review the plan",
-    body: "Before anything is created, the Master Agent explains which agents it wants to deploy and why, in plain language — not template names or parameters you'd need to decode.",
+    body: "Before anything is created, the Master Agent explains which agents it wants to deploy and why, in plain language - not template names or parameters you'd need to decode.",
   },
   {
     label: "03",
     title: "Approve every action",
-    body: "Deployed agents monitor their conditions and create approval-first proposals. Base actions may include verified payloads; Solana actions are review-only for now. Nothing moves until your wallet approves it.",
+    body: "Deployed agents monitor their conditions and create approval-first proposals. Base and Solana actions use guarded payloads where available. Nothing moves until your wallet approves it.",
   },
 ];
 

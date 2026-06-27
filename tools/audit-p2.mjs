@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const checks = [];
 function check(name, fn) { checks.push({ name, fn }); }
@@ -48,13 +48,27 @@ check("production smoke covers every template detail route", () => {
   assert(smoke.includes("All ${checks.length} smoke checks passed"), "smoke should report dynamic check count");
 });
 
-check("P2 docs and runbook are synchronized", () => {
-  const runbook = read("docs/OPS_RUNBOOK.md");
-  const p2 = read("docs/P2_HARDENING_CHECKLIST.md");
-  assert(runbook.includes("every template detail route return 200"), "runbook smoke description must mention every template route");
-  assert(runbook.includes("## P2 Manual QA"), "runbook missing P2 manual QA section");
-  assert(p2.includes("npm run audit:p2"), "P2 checklist must document audit:p2");
-  assert(p2.includes("Solana retry"), "P2 checklist must document Solana retry behavior");
+check("public docs, brand assets, and product copy are synchronized", () => {
+  const readme = read("README.md");
+  const guide = read("docs/PRODUCT_GUIDE.md");
+  const security = read("docs/SECURITY.md");
+  const layout = read("apps/web/app/layout.tsx");
+  const wagmi = read("apps/web/lib/wagmi.ts");
+  const navbar = read("apps/web/components/Navbar.tsx");
+  const how = read("apps/web/components/HowItWorks.tsx");
+  const chat = read("apps/web/components/ChatWithNemesis.tsx");
+  assert(readme.includes("./assets/nemesis-banner-dark.png"), "README must use current banner asset");
+  assert(layout.includes("/assets/nemesis-banner-dark.png"), "metadata must use current banner asset");
+  assert(layout.includes("/assets/nemesis-icon.png"), "metadata must use current icon asset");
+  assert(wagmi.includes("/assets/nemesis-icon.png"), "WalletConnect metadata must use current icon asset");
+  assert(navbar.includes("/assets/nemesis-avatar-dark.png"), "navbar must use current avatar asset");
+  assert(guide.includes("Open the Telegram bot from the dashboard"), "product guide must explain Telegram bot entry point");
+  assert(security.includes("Proposal confirmations"), "security docs must cover proposal confirmation checks");
+  assert(!chat.includes("platform on Base."), "chat copy must not describe Base-only support");
+  assert(!how.includes("Solana actions are review-only for now"), "how-it-works copy must not contain stale Solana copy");
+  for (const internalDoc of ["docs/OPS_RUNBOOK.md", "docs/PHASE_AUDITS.md", "docs/P2_HARDENING_CHECKLIST.md"]) {
+    assert(!existsSync(internalDoc), internalDoc + " should stay out of public docs");
+  }
 });
 
 check("package scripts expose P1 and P2 gates", () => {

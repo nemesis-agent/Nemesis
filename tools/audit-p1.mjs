@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const checks = [];
 function check(name, fn) {
@@ -170,14 +170,28 @@ check("proposal execution checks Base and Solana confirmation paths", () => {
   assert(confirmSolana.includes("transactionIncludesSigner"), "Solana confirmation must verify signer inclusion");
 });
 
-check("docs include launch, env, and P1 hardening references", () => {
-  for (const file of ["docs/OPS_RUNBOOK.md", "docs/PHASE_AUDITS.md", "docs/P1_HARDENING_CHECKLIST.md"]) {
-    const content = read(file);
-    assert(content.includes("NEMESIS"), `${file} must mention NEMESIS`);
-  }
-  const runbook = read("docs/OPS_RUNBOOK.md");
-  for (const envName of ["DATABASE_URL", "SESSION_SECRET", "OPENROUTER_API_KEY", "TELEGRAM_BOT_TOKEN", "NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID", "NEXT_PUBLIC_SITE_URL"]) {
-    assert(runbook.includes(envName), `OPS_RUNBOOK missing ${envName}`);
+check("public docs are product-facing and current", () => {
+  const readme = read("README.md");
+  const productGuide = read("docs/PRODUCT_GUIDE.md");
+  const security = read("docs/SECURITY.md");
+  const privacy = read("docs/PRIVACY.md");
+  assert(readme.includes("./assets/nemesis-banner-dark.png"), "README must use the current NEMESIS banner asset");
+  assert(readme.includes("https://nemesis-agent.xyz"), "README must link the live app");
+  assert(readme.includes("Base and Solana"), "README must describe Base and Solana support");
+  assert(readme.includes("approval-first"), "README must state approval-first positioning");
+  assert(productGuide.includes("Base and Solana"), "product guide must describe both supported networks");
+  assert(productGuide.includes("Telegram"), "product guide must describe Telegram proposal alerts");
+  assert(security.includes("Non-custodial") || security.includes("non-custodial"), "security docs must state non-custodial model");
+  assert(security.includes("approval-first"), "security docs must state approval-first model");
+  assert(privacy.includes("Telegram"), "privacy docs must cover Telegram link data");
+  for (const internalDoc of [
+    "docs/OPS_RUNBOOK.md",
+    "docs/PHASE_AUDITS.md",
+    "docs/P1_HARDENING_CHECKLIST.md",
+    "docs/P2_HARDENING_CHECKLIST.md",
+    "docs/LEGAL_PRIVACY_TERMS_REVIEW.md",
+  ]) {
+    assert(!existsSync(internalDoc), internalDoc + " should not be part of the public product docs");
   }
 });
 

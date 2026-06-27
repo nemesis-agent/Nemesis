@@ -6,7 +6,7 @@ import { base, baseSepolia } from "wagmi/chains";
  *
  * NEMESIS never holds user funds — this config only powers wallet
  * connection and read calls / unsigned transaction proposals from the
- * client. See ARCHITECTURE.md, "Custody model".
+ * client. See public security docs for the custody model.
  *
  * Get a project ID at https://cloud.walletconnect.com and set it as
  * NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID. The placeholder below is enough
@@ -23,7 +23,7 @@ if (process.env.NODE_ENV === "production") {
 
 export const wagmiConfig = getDefaultConfig({
   appName: "NEMESIS",
-  appDescription: "Autonomous agents on Base. Chaos in, order out.",
+  appDescription: "Approval-first agents on Base and Solana. Chaos in, order out.",
   appUrl: siteUrl,
   appIcon: `${siteUrl}/assets/nemesis-icon.png`,
   projectId: walletConnectProjectId ?? "00000000000000000000000000000000",

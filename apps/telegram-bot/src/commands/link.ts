@@ -8,9 +8,7 @@ import { consumeLinkCode, getTelegramChatIdForWallet } from "@nemesis/db";
  *
  * On success, stores the Telegram chat ID against the wallet address in
  * the database - from that point on, all proposals for agents belonging
- * to that wallet are delivered to this chat. This is the real, working
- * implementation of the wallet<->Telegram linking flow that was previously
- * only described in ARCHITECTURE.md and listed as a TODO.
+ * to that wallet are delivered to this chat. This is the production wallet<->Telegram linking flow.
  */
 export async function linkCommand(ctx: Context): Promise<void> {
   const text = "text" in ctx.message! ? ctx.message.text : "";

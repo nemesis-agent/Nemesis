@@ -15,8 +15,7 @@ interface RiskAcknowledgmentModalProps {
 /**
  * Blocking modal shown before a "high" or "degen" risk template can be
  * deployed. The user must tick the checkbox before "Deploy anyway"
- * becomes enabled — this is the interactive counterpart to RiskBanner,
- * and is required by ARCHITECTURE.md, "Degen template risk disclosure".
+ * becomes enabled - this is the interactive counterpart to RiskBanner.
  *
  * Caller is responsible for rendering this conditionally (i.e. only when
  * template.risk is "high" or "degen") and for restoring focus to a
