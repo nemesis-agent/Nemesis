@@ -33,7 +33,7 @@ export async function statusCommand(ctx: Context): Promise<void> {
   const summary = [
     "<code>[ NEMESIS / status ]</code>",
     `${agents.length} agent${agents.length === 1 ? "" : "s"} total`,
-    `${active} active · ${paused} paused · ${awaiting} awaiting approval`,
+    `${active} active . ${paused} paused . ${awaiting} awaiting approval`,
   ].join("\n");
 
   await ctx.reply(summary, { parse_mode: "HTML" });

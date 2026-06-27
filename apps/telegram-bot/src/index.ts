@@ -4,6 +4,7 @@ import { Telegraf } from "telegraf";
 import { pool } from "@nemesis/db";
 
 import { agentsCommand } from "./commands/agents.js";
+import { helpCommand } from "./commands/help.js";
 import { linkCommand, unlinkCommand } from "./commands/link.js";
 import { pauseCommand, resumeCommand } from "./commands/pause.js";
 import { startCommand } from "./commands/start.js";
@@ -117,6 +118,7 @@ const bot = new Telegraf(token);
 bot.use(createAccessControl());
 
 bot.command("start", startCommand);
+bot.command("help", helpCommand);
 bot.command("link", linkCommand);
 bot.command("unlink", unlinkCommand);
 bot.command("agents", agentsCommand);

@@ -6,7 +6,7 @@ const WELCOME_UNLINKED = [
   "<code>[ NEMESIS ]</code>",
   "<b>the market's reckoning</b>",
   "",
-  "I deliver agent proposals here. Approve or skip each one — nothing moves without your approval.",
+  "I deliver agent proposals here. Approve or skip each one - nothing moves without your approval.",
   "",
   "<b>First, link your wallet:</b>",
   "1. Open the NEMESIS dashboard",
@@ -15,12 +15,13 @@ const WELCOME_UNLINKED = [
   "4. Send <code>/link YOUR-CODE</code> here",
   "",
   "<b>commands</b>",
-  "/link &lt;code&gt; — link your wallet to this chat",
-  "/agents — list your deployed agents",
-  "/status — overall status",
-  "/pause &lt;id&gt; — pause an agent",
-  "/resume &lt;id&gt; — resume an agent",
-  "/demo — send a sample proposal (testing only)",
+  "/link &lt;code&gt; - link your wallet to this chat",
+  "/help - show command guide",
+  "/agents - list your deployed agents",
+  "/status - overall status",
+  "/pause &lt;id&gt; - pause an agent",
+  "/resume &lt;id&gt; - resume an agent",
+  "/demo - send a sample proposal (testing only)",
 ].join("\n");
 
 const WELCOME_LINKED = (short: string) => [
@@ -31,12 +32,13 @@ const WELCOME_LINKED = (short: string) => [
   "Proposals for your agents will arrive here.",
   "",
   "<b>commands</b>",
-  "/agents — list your deployed agents",
-  "/status — overall status",
-  "/pause &lt;id&gt; — pause an agent",
-  "/resume &lt;id&gt; — resume an agent",
-  "/unlink — remove this chat from your wallet",
-  "/demo — send a sample proposal (testing only)",
+  "/help - show command guide",
+  "/agents - list your deployed agents",
+  "/status - overall status",
+  "/pause &lt;id&gt; - pause an agent",
+  "/resume &lt;id&gt; - resume an agent",
+  "/unlink - remove this chat from your wallet",
+  "/demo - send a sample proposal (testing only)",
 ].join("\n");
 
 export async function startCommand(ctx: Context): Promise<void> {

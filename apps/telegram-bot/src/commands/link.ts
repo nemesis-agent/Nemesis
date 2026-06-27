@@ -7,9 +7,9 @@ import { consumeLinkCode, getTelegramChatIdForWallet } from "@nemesis/db";
  * web dashboard. Usage: /link <CODE>
  *
  * On success, stores the Telegram chat ID against the wallet address in
- * the database — from that point on, all proposals for agents belonging
+ * the database - from that point on, all proposals for agents belonging
  * to that wallet are delivered to this chat. This is the real, working
- * implementation of the wallet↔Telegram linking flow that was previously
+ * implementation of the wallet<->Telegram linking flow that was previously
  * only described in ARCHITECTURE.md and listed as a TODO.
  */
 export async function linkCommand(ctx: Context): Promise<void> {
@@ -52,13 +52,13 @@ export async function linkCommand(ctx: Context): Promise<void> {
 }
 
 /**
- * /unlink — removes the wallet↔chat mapping so proposals stop arriving.
+ * /unlink - removes the wallet<->chat mapping so proposals stop arriving.
  */
 export async function unlinkCommand(ctx: Context): Promise<void> {
   const chatId = String(ctx.chat?.id ?? "");
 
   // consumeLinkCode doesn't know the wallet from a chatId; we need the
-  // reverse lookup. getTelegramChatIdForWallet needs the wallet — so we
+  // reverse lookup. getTelegramChatIdForWallet needs the wallet - so we
   // need getWalletForTelegramChatId which is exported from @nemesis/db.
   const { getWalletForTelegramChatId, pool } = await import("@nemesis/db");
   const wallet = await getWalletForTelegramChatId(chatId);

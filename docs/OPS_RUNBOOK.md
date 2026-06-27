@@ -45,7 +45,7 @@ npm run smoke:prod
 The smoke test verifies:
 
 - `/api/health` returns healthy and database connected.
-- `/`, `/templates`, `/terms`, `/privacy`, `/templates/ape-agent`, and `/templates/solana-dip-buyer` return 200.
+- `/`, `/templates`, `/terms`, `/privacy`, and every template detail route return 200.
 - Protected POST APIs reject unauthenticated requests.
 - SIWE nonce endpoint returns a nonce.
 - Sensitive routes have rate-limit enforcement.
@@ -66,6 +66,13 @@ Complete on at least one iOS wallet and one Android wallet before broad rollout:
 - Pause and resume the agent from Telegram.
 - If a proposal exists, verify approve routes the user to the dashboard for final wallet signing.
 - Confirm terms/privacy links are visible in the footer.
+
+## P2 Manual QA
+
+- Run /help in Telegram before and after linking a wallet.
+- Submit a Solana proposal and retry verification if confirmation is still pending.
+- Confirm all template detail pages render on mobile and desktop.
+- Confirm dashboard and proposal rows do not overflow on mobile.
 
 ## Cross-Browser Smoke Checklist
 

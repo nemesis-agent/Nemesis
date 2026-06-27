@@ -60,6 +60,7 @@ function getButtonLabel(rawPayload: string, proposal: Proposal): string {
 export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSolanaSigning, setIsSolanaSigning] = useState(false);
+  const [solanaPendingSignature, setSolanaPendingSignature] = useState<string | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const { connection } = useConnection();
   const solanaWallet = useWallet();
@@ -104,6 +105,27 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
     }
   }, [isConfirmed, hash, proposal.id]);
 
+  const confirmSolanaSignature = async (signature: string) => {
+    const response = await fetch(`/api/proposals/${proposal.id}/confirm-solana`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ signature }),
+    });
+
+    if (response.status === 425) {
+      setSolanaPendingSignature(signature);
+      throw new Error("Solana transaction was submitted, but confirmation is still pending. Wait a few seconds, then retry verification.");
+    }
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || "Failed to verify Solana transaction");
+    }
+
+    setSolanaPendingSignature(null);
+    window.location.reload();
+  };
+
   const handleSolanaExecute = async (payload: SolanaJupiterSwapPayload) => {
     if (!solanaWallet.publicKey) throw new Error("Connect Solflare first");
     if (solanaWallet.publicKey.toBase58() !== payload.walletAddress) {
@@ -114,24 +136,19 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
     const transaction = VersionedTransaction.deserialize(base64ToBytes(payload.serializedTransaction));
     const signature = await solanaWallet.sendTransaction(transaction, connection, { skipPreflight: false });
 
-    const response = await fetch(`/api/proposals/${proposal.id}/confirm-solana`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ signature }),
-    });
-
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error || "Failed to verify Solana transaction");
-    }
-
-    window.location.reload();
+    await confirmSolanaSignature(signature);
   };
 
   const handleExecute = async () => {
     if (!proposal.unsignedTxPayload) return;
     try {
       setVerificationError(null);
+      if (solanaPendingSignature) {
+        setIsSolanaSigning(true);
+        await confirmSolanaSignature(solanaPendingSignature);
+        return;
+      }
+
       const parsed = parsePayload(proposal.unsignedTxPayload);
       if (isSolanaPayload(parsed)) {
         setIsSolanaSigning(true);
@@ -183,13 +200,15 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
 
   const isLoading = isSigning || isConfirming || isVerifying || isSolanaSigning;
   const buttonText = isSolanaSigning
-    ? "Signing in Solflare..."
+    ? solanaPendingSignature ? "Verifying Solana..." : "Signing in Solflare..."
     : isSigning
     ? "Signing in Wallet..."
     : isConfirming
     ? "Broadcasting..."
     : isVerifying
     ? "Verifying..."
+    : solanaPendingSignature
+    ? "Retry Solana verification"
     : stepLabel;
 
   return (

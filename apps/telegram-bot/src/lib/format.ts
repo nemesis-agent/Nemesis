@@ -31,7 +31,7 @@ export function formatProposalMessage(proposal: Proposal, agentName: string): st
 
 export function formatAgentLine(agent: Agent): string {
   return [
-    `<b>${escapeHtml(agent.name)}</b> — ${STATUS_LABELS[agent.status]}`,
+    `<b>${escapeHtml(agent.name)}</b> - ${STATUS_LABELS[agent.status]}`,
     `<code>${escapeHtml(agent.id)}</code>`,
     escapeHtml(agent.lastEvent ?? "Not checked yet"),
     `last checked ${escapeHtml(agent.lastCheckedAt ?? "never")}`,
