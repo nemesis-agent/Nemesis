@@ -21,7 +21,21 @@ export const metadata: Metadata = {
   openGraph: {
     title: "NEMESIS - autonomous agents on Base and Solana",
     description: "Chaos in. Order out. Deploy approval-first agents on Base and Solana.",
-    images: ["/assets/nemesis-banner.png"],
+    siteName: "NEMESIS",
+    type: "website",
+    url: "/",
+    images: [{
+      url: "/assets/nemesis-social-preview-2026.png",
+      width: 1200,
+      height: 675,
+      alt: "NEMESIS approval-first agents on Base and Solana",
+    }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "NEMESIS - approval-first agents",
+    description: "Deploy guarded agents on Base and Solana. Your wallet remains the final signer.",
+    images: ["/assets/nemesis-social-preview-2026.png"],
   },
 };
 

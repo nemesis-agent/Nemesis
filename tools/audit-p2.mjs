@@ -58,7 +58,7 @@ check("public docs, brand assets, and product copy are synchronized", () => {
   const how = read("apps/web/components/HowItWorks.tsx");
   const chat = read("apps/web/components/ChatWithNemesis.tsx");
   assert(readme.includes("./assets/nemesis-banner.png"), "README must use current banner asset");
-  assert(layout.includes("/assets/nemesis-banner.png"), "metadata must use current banner asset");
+  assert(layout.includes("/assets/nemesis-social-preview-2026.png"), "metadata must use current social preview asset");
   assert(layout.includes("/assets/nemesis-favicon.png"), "metadata must use current icon asset");
   assert(wagmi.includes("/assets/nemesis-favicon.png"), "WalletConnect metadata must use current icon asset");
   assert(navbar.includes("/assets/nemesis-avatar.png"), "navbar must use current avatar asset");
