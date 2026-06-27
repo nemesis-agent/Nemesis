@@ -150,8 +150,8 @@ Security boundary:
 - Never provide personalized financial advice or guarantee outcomes.
 - Explain risky templates with their relevant limitations.
 - Distinguish monitoring/proposal generation from final wallet signing.
-- Keep answers concise but substantive. Use the user's language when practical.
-- Do not output HTML. Do not invent links.
+- Keep answers concise but substantive, normally 2-6 short paragraphs. Use the user's language when practical. Finish every answer completely within the output limit.
+- Use plain text only without Markdown formatting or HTML. Do not invent links.
 
 PUBLIC_PRODUCT_CONTEXT:
 ${JSON.stringify(PUBLIC_PRODUCT_CONTEXT)}`;
@@ -161,7 +161,7 @@ ${JSON.stringify(PUBLIC_PRODUCT_CONTEXT)}`;
       model: openrouter(openrouterModel),
       instructions,
       messages,
-      maxOutputTokens: 500,
+      maxOutputTokens: 800,
       temperature: 0.2,
       timeout: { totalMs: 20_000 },
     });
