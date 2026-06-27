@@ -1,12 +1,33 @@
 import { NextResponse } from "next/server";
-import { getAgent } from "@nemesis/db";
+import { Pool } from "pg";
 
 export const dynamic = "force-dynamic";
 
+const DATABASE_URL = process.env.DATABASE_URL;
+
+declare global {
+  // eslint-disable-next-line no-var
+  var nemesisHealthPool: Pool | undefined;
+}
+
+function getHealthPool() {
+  if (!DATABASE_URL) {
+    throw new Error("DATABASE_URL must be set.");
+  }
+
+  globalThis.nemesisHealthPool ??= new Pool({
+    connectionString: DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  });
+
+  return globalThis.nemesisHealthPool;
+}
+
 export async function GET() {
   try {
-    // Attempt a lightweight query through the same public DB API used by app routes.
-    await getAgent("__healthcheck__");
+    await getHealthPool().query("SELECT 1");
 
     return NextResponse.json({
       status: "healthy",
