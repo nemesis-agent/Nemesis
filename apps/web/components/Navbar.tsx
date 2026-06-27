@@ -49,7 +49,7 @@ export function Navbar() {
         >
           <div className="relative overflow-hidden rounded-sm border border-transparent transition-colors duration-300 group-hover:border-nm-fragment-red/30">
             <Image
-              src="/assets/nemesis-avatar-dark.png"
+              src="/assets/nemesis-avatar.png"
               alt="NEMESIS"
               width={28}
               height={28}

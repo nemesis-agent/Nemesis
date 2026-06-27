@@ -175,7 +175,7 @@ check("public docs are product-facing and current", () => {
   const productGuide = read("docs/PRODUCT_GUIDE.md");
   const security = read("docs/SECURITY.md");
   const privacy = read("docs/PRIVACY.md");
-  assert(readme.includes("./assets/nemesis-banner-dark.png"), "README must use the current NEMESIS banner asset");
+  assert(readme.includes("./assets/nemesis-banner.png"), "README must use the current NEMESIS banner asset");
   assert(readme.includes("https://nemesis-agent.xyz"), "README must link the live app");
   assert(readme.includes("Base and Solana"), "README must describe Base and Solana support");
   assert(readme.includes("approval-first"), "README must state approval-first positioning");

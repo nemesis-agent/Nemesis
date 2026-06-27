@@ -57,11 +57,11 @@ check("public docs, brand assets, and product copy are synchronized", () => {
   const navbar = read("apps/web/components/Navbar.tsx");
   const how = read("apps/web/components/HowItWorks.tsx");
   const chat = read("apps/web/components/ChatWithNemesis.tsx");
-  assert(readme.includes("./assets/nemesis-banner-dark.png"), "README must use current banner asset");
-  assert(layout.includes("/assets/nemesis-banner-dark.png"), "metadata must use current banner asset");
-  assert(layout.includes("/assets/nemesis-icon.png"), "metadata must use current icon asset");
-  assert(wagmi.includes("/assets/nemesis-icon.png"), "WalletConnect metadata must use current icon asset");
-  assert(navbar.includes("/assets/nemesis-avatar-dark.png"), "navbar must use current avatar asset");
+  assert(readme.includes("./assets/nemesis-banner.png"), "README must use current banner asset");
+  assert(layout.includes("/assets/nemesis-banner.png"), "metadata must use current banner asset");
+  assert(layout.includes("/assets/nemesis-favicon.png"), "metadata must use current icon asset");
+  assert(wagmi.includes("/assets/nemesis-favicon.png"), "WalletConnect metadata must use current icon asset");
+  assert(navbar.includes("/assets/nemesis-avatar.png"), "navbar must use current avatar asset");
   assert(guide.includes("Open the Telegram bot from the dashboard"), "product guide must explain Telegram bot entry point");
   assert(security.includes("Proposal confirmations"), "security docs must cover proposal confirmation checks");
   assert(!chat.includes("platform on Base."), "chat copy must not describe Base-only support");

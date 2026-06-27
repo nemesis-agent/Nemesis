@@ -1,6 +1,6 @@
 # NEMESIS
 
-![NEMESIS](./assets/nemesis-banner-dark.png)
+![NEMESIS](./assets/nemesis-banner.png)
 
 NEMESIS is an approval-first agent platform for Base and Solana wallets. Connect your wallet, describe an intent, review a plain-language plan, deploy a single-condition agent, and receive proposals in the dashboard and Telegram.
 

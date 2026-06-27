@@ -25,7 +25,7 @@ export const wagmiConfig = getDefaultConfig({
   appName: "NEMESIS",
   appDescription: "Approval-first agents on Base and Solana. Chaos in, order out.",
   appUrl: siteUrl,
-  appIcon: `${siteUrl}/assets/nemesis-icon.png`,
+  appIcon: `${siteUrl}/assets/nemesis-favicon.png`,
   projectId: walletConnectProjectId ?? "00000000000000000000000000000000",
   chains: [base, baseSepolia],
   ssr: true,

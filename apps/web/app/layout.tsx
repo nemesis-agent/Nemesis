@@ -16,12 +16,12 @@ export const metadata: Metadata = {
   description:
     "Deploy approval-first agents on Base and Solana. Chaos in, order out.",
   icons: {
-    icon: "/assets/nemesis-icon.png",
+    icon: "/assets/nemesis-favicon.png",
   },
   openGraph: {
     title: "NEMESIS - autonomous agents on Base and Solana",
     description: "Chaos in. Order out. Deploy approval-first agents on Base and Solana.",
-    images: ["/assets/nemesis-banner-dark.png"],
+    images: ["/assets/nemesis-banner.png"],
   },
 };
 
