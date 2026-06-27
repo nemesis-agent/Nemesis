@@ -17,7 +17,8 @@
     "build:bot": "npm run prebuild:bot && npm run build --workspace=@nemesis/telegram-bot",
     "prebuild:bot": "npm run build:db",
     "start": "pm2-runtime ecosystem.config.js",
-    "smoke:prod": "node tools/smoke-production.mjs"
+    "smoke:prod": "node tools/smoke-production.mjs",
+    "audit:p1": "node tools/audit-p1.mjs"
   },
   "engines": {
     "node": ">=22.5.0"

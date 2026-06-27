@@ -23,7 +23,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: TemplateDetailPageProps) {
   const { id } = await params;
   const template = getTemplateById(id);
-  return { title: template ? `${template.name} â€” NEMESIS` : "Template not found â€” NEMESIS" };
+  return { title: template ? `${template.name} - NEMESIS` : "Template not found - NEMESIS" };
 }
 
 export default async function TemplateDetailPage({ params }: TemplateDetailPageProps) {
@@ -35,7 +35,7 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
       <Link href="/templates" className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-        â† templates
+        &lt;- templates
       </Link>
 
       <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
@@ -127,7 +127,7 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
         <div className="mt-3 border border-nm-border bg-nm-surface p-4">
           <p className="text-sm leading-relaxed text-nm-muted">{fillApprovalSummary(template)}</p>
           <p className="mt-3 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-            shown with default parameter values â€” adjust before deploying
+            shown with default parameter values - adjust before deploying
           </p>
         </div>
       </section>

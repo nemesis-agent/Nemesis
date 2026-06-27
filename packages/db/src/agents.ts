@@ -78,7 +78,7 @@ export async function createAgent(input: CreateAgentInput): Promise<Agent> {
   const id = `agent_${randomUUID().slice(0, 8)}`;
   await pool.query(
     `INSERT INTO agents (id, wallet_address, template_id, name, status, parameters, last_event)
-     VALUES ($1, $2, $3, $4, 'active', $5, 'Deployed â€” waiting for first monitoring cycle')`,
+     VALUES ($1, $2, $3, $4, 'active', $5, 'Deployed - waiting for first monitoring cycle')`,
     [id, input.walletAddress, input.templateId, input.name, JSON.stringify(input.parameters ?? {})]
   );
 

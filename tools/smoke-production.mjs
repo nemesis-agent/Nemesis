@@ -8,6 +8,13 @@ function check(name, fn) {
   checks.push({ name, fn });
 }
 
+
+function templateIds() {
+  const source = readFileSync("packages/templates/index.ts", "utf8");
+  const idPattern = new RegExp("\n\\s*id:\\s*\"([^\"]+)\"", "g");
+  return [...source.matchAll(idPattern)].map((match) => match[1]);
+}
+
 async function expectStatus(path, expected, init) {
   const response = await fetch(`${baseUrl}${path}`, init);
   if (response.status !== expected) {
@@ -24,7 +31,7 @@ check("health endpoint is healthy and database-connected", async () => {
   }
 });
 
-for (const path of ["/", "/templates", "/terms", "/privacy", "/templates/ape-agent"]) {
+for (const path of ["/", "/templates", "/terms", "/privacy", ...templateIds().map((id) => `/templates/${id}`)]) {
   check(`${path} returns 200`, async () => {
     await expectStatus(path, 200);
   });

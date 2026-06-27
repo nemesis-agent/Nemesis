@@ -9,7 +9,7 @@ import { ScrollReveal } from "@/components/ScrollReveal";
 import { listAgentsForWallets } from "@nemesis/db";
 import { getSession, getSessionWalletKeys } from "@/lib/auth";
 
-// Reads live from Postgres on every request â€” agents can be paused/resumed
+// Reads live from Postgres on every request - agents can be paused/resumed
 // and new proposals can land at any time, so this page must never be
 // statically cached. See CONTEXT.md, "What changed in the database pass".
 export const dynamic = "force-dynamic";
@@ -27,7 +27,7 @@ export default async function DashboardPage() {
         <div>
           <h1 className="font-mono text-2xl font-bold uppercase tracking-widest2 text-nm-fg">agents</h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-nm-muted">
-            Agents deployed to your wallet. Proposals are sent to Telegram and listed here â€”
+            Agents deployed to your wallet. Proposals are sent to Telegram and listed here -
             nothing moves without your approval.
           </p>
         </div>
@@ -86,7 +86,7 @@ export default async function DashboardPage() {
                       href="/agents/new"
                       className="mt-3 inline-block font-mono text-xs uppercase tracking-widest2 text-nm-fg border border-nm-border px-4 py-2 hover:bg-nm-surface transition-colors"
                     >
-                      Deploy your first agent â†’
+                      Deploy your first agent -&gt;
                     </Link>
                   </div>
                 </div>

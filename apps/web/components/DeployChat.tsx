@@ -33,7 +33,7 @@ const INTRO_MESSAGE: ChatMessage = {
   id: "intro",
   role: "agent",
   content:
-    "Tell me what you want to do â€” what you're holding, what you want to happen, and how much risk you're comfortable with. I'll read your wallet and propose which agents to deploy.",
+    "Tell me what you want to do - what you're holding, what you want to happen, and how much risk you're comfortable with. I'll read your wallet and propose which agents to deploy.",
 };
 
 interface DeployChatProps {
@@ -229,7 +229,7 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
     const declineMessage: ChatMessage = {
       id: `declined-${Date.now()}`,
       role: "agent",
-      content: "Got it â€” I've discarded that plan.",
+      content: "Got it - I've discarded that plan.",
     };
     setMessages((prev) => [...prev, declineMessage]);
     
@@ -260,7 +260,7 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
         )}
         {signInError && (
           <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red">
-            {signInError} â€” reload to try again.
+            {signInError} - reload to try again.
           </p>
         )}
 
@@ -301,7 +301,7 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
             </div>
             {stage === "deploying" && (
               <p className="mt-2 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-                creating agentâ€¦
+                creating agent...
               </p>
             )}
           </div>

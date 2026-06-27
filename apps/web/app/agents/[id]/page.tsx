@@ -15,7 +15,7 @@ interface AgentDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-// Reads live from Postgres â€” pause/resume mutate this row, and a scheduler
+// Reads live from Postgres - pause/resume mutate this row, and a scheduler
 // can add new proposals at any time, so this can never be statically
 // cached. See CONTEXT.md, "What changed in the database pass".
 export const dynamic = "force-dynamic";
@@ -62,7 +62,7 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
         href="/dashboard"
         className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted"
       >
-        â† agents
+        &lt;- agents
       </Link>
 
       {/* Header */}
@@ -72,7 +72,7 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
             {agent.name}
           </h1>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-            {agent.id} Â· {agent.walletAddress.slice(0, 6)}...{agent.walletAddress.slice(-4)}
+            {agent.id} . {agent.walletAddress.slice(0, 6)}...{agent.walletAddress.slice(-4)}
           </p>
         </div>
         <span
@@ -117,7 +117,7 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
               href={`/templates/${template.id}`}
               className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red"
             >
-              view full spec â†’
+              view full spec -&gt;
             </Link>
           </div>
 

@@ -5,7 +5,7 @@ import type { AgentTemplate } from "./types";
  *
  * Every template follows the same shape: one condition, one proposed action,
  * proposed through Base MCP, always pending user approval. Templates are
- * intentionally scoped to single-condition logic â€” see ARCHITECTURE.md for
+ * intentionally scoped to single-condition logic - see ARCHITECTURE.md for
  * why compound strategies (looping, delta-neutral, perps) were cut from v1.
  */
 export const TEMPLATES: AgentTemplate[] = [
@@ -86,7 +86,7 @@ export const TEMPLATES: AgentTemplate[] = [
     approvalSummary:
       "This agent watches DexScreener Base pools. When a recently created pool matching {tokenWhitelist} has at least {minInitialLiquidity} USDC liquidity, it proposes reviewing a {allocationPerPool} USDC entry. You approve each entry before anything moves.",
     riskNote:
-      "Brand-new pools have no price history â€” the price you enter at can be wildly different from where it settles seconds later, and liquidity can be pulled entirely. Initial liquidity above your threshold does not mean the pool is safe, only that it passed one filter.",
+      "Brand-new pools have no price history - the price you enter at can be wildly different from where it settles seconds later, and liquidity can be pulled entirely. Initial liquidity above your threshold does not mean the pool is safe, only that it passed one filter.",
   },
   {
     id: "launch-flipper",
@@ -144,7 +144,7 @@ export const TEMPLATES: AgentTemplate[] = [
     approvalSummary:
       "This agent tracks {asset} from an entry price of {entryPrice} USDC. If it gains {takeProfitPercent}% it proposes taking profit; if it loses {stopLossPercent}% it proposes cutting the loss; if neither happens within {maxHoldHours} hours it proposes reviewing the position. Every exit needs your approval.",
     riskNote:
-      "Stop-loss and take-profit levels are proposals, not guarantees â€” by the time you approve an exit, the price may have moved further against you, especially in thin liquidity. A {stopLossPercent}% stop loss can still result in a larger realized loss if the price gaps past it.",
+      "Stop-loss and take-profit levels are proposals, not guarantees - by the time you approve an exit, the price may have moved further against you, especially in thin liquidity. A {stopLossPercent}% stop loss can still result in a larger realized loss if the price gaps past it.",
   },
 
   // ---------------------------------------------------------------------
@@ -195,7 +195,7 @@ export const TEMPLATES: AgentTemplate[] = [
       },
     ],
     approvalSummary:
-      "This agent waits until the price hits {targetPrice} USDC, then proposes a {direction} order for {amount} USDC. Neither Uniswap nor Aerodrome support native limit orders â€” this agent fills that gap, with your approval on every trade.",
+      "This agent waits until the price hits {targetPrice} USDC, then proposes a {direction} order for {amount} USDC. Neither Uniswap nor Aerodrome support native limit orders - this agent fills that gap, with your approval on every trade.",
   },
   {
     id: "dip-buyer",
@@ -370,7 +370,7 @@ export const TEMPLATES: AgentTemplate[] = [
       },
     ],
     approvalSummary:
-      "This agent holds a queued transaction until Base gas drops to {maxGasGwei} gwei or below, or {maxWaitHours} hours pass â€” whichever comes first. It then proposes executing the transaction for your approval.",
+      "This agent holds a queued transaction until Base gas drops to {maxGasGwei} gwei or below, or {maxWaitHours} hours pass - whichever comes first. It then proposes executing the transaction for your approval.",
   },
   {
     id: "airdrop-farmer",
@@ -401,7 +401,7 @@ export const TEMPLATES: AgentTemplate[] = [
       },
     ],
     approvalSummary:
-      "This agent proposes a small interaction with your selected protocols on a weekly schedule, staying within a {weeklyBudget} USDC gas budget. Nemesis memory tracks which protocols you've already interacted with â€” you approve each interaction.",
+      "This agent proposes a small interaction with your selected protocols on a weekly schedule, staying within a {weeklyBudget} USDC gas budget. Nemesis memory tracks which protocols you've already interacted with - you approve each interaction.",
   },
   {
     id: "portfolio-rebalancer",
