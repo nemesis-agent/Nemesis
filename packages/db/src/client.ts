@@ -100,6 +100,3 @@ if (DATABASE_URL) {
     });
 }
 
-export async function checkDatabaseConnection(): Promise<void> {
-  await pool.query("SELECT 1");
-}
