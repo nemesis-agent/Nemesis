@@ -1,4 +1,16 @@
-export * from "./agents.js";
+export {
+  listAgents,
+  listAgentsForWallet,
+  listAgentsForWallets,
+  getAgent,
+  createAgent,
+  setAgentStatus,
+  recordAgentCheck,
+  updateAgentRuntimeState,
+  type Agent,
+  type AgentStatus,
+  type CreateAgentInput,
+} from "./agents.js";
 export {
   getProposal,
   listProposalsForAgent,
@@ -11,5 +23,12 @@ export {
   type ProposalDetail,
   type ProposalStatus,
 } from "./proposals.js";
-export * from "./links.js";
+export {
+  generateLinkCode,
+  consumeLinkCode,
+  getWalletForTelegramChatId,
+  getTelegramChatIdForWallet,
+  isWalletLinked,
+  type ConsumeLinkResult,
+} from "./links.js";
 export { pool } from "./client.js";
