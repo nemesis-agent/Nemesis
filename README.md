@@ -2,49 +2,99 @@
 
 ![NEMESIS](./assets/nemesis-banner.png)
 
-NEMESIS is an approval-first agent platform for Base and Solana wallets. Connect your wallet, describe an intent, review a plain-language plan, deploy a single-condition agent, and receive proposals in the dashboard and Telegram.
+NEMESIS is an approval-first agent platform for Base and Solana wallets.
+Connect a wallet, describe intent, review a plain-language plan, deploy a
+single-condition agent, and receive proposals in the dashboard or Telegram.
 
-NEMESIS never custodies funds and never auto-executes transactions. Agents can prepare proposals; your own wallet is always the final signer.
-
-## What You Can Do
-
-- Deploy Base and Solana monitoring agents from production-ready templates.
-- Connect Base wallets through RainbowKit/WalletConnect.
-- Connect Solana wallets through Solflare-compatible wallet flows.
-- Link Telegram to receive proposal alerts.
-- Review every proposal before signing anything.
-- Pause or resume agents from the dashboard or Telegram.
+Agents monitor. Users approve. Your wallet remains the final signer.
 
 ## Live Product
 
 - App: [nemesis-agent.xyz](https://nemesis-agent.xyz)
+- Telegram: [@NemesisAgentAppBot](https://t.me/NemesisAgentAppBot)
 - X: [@Nemesis_agent](https://x.com/Nemesis_agent)
 - GitHub: [nemesis-agent/Nemesis](https://github.com/nemesis-agent/Nemesis)
 
-## Core Principles
+## What NEMESIS Does
 
-- Non-custodial: NEMESIS never asks for seed phrases or private keys.
-- Approval-first: no wallet action happens without explicit user review and signature.
-- One condition, one action: templates stay narrow and auditable.
-- Risk-aware: high-risk and degen templates require acknowledgement before deployment.
-- Privacy-minimized: operational data is used only to run agents, sessions, Telegram links, and proposals.
+- Deploy approval-first monitoring agents for Base and Solana wallets.
+- Turn natural-language intent into template-backed agent plans.
+- Deliver proposals through the web dashboard and Telegram.
+- Keep every template narrow: one monitored condition, one proposed action.
+- Require user review before any transaction leaves the wallet.
+- Support Base wallets through RainbowKit, Wagmi, and WalletConnect.
+- Support Solana wallet flows including Solflare-compatible connections.
+- Use OpenRouter-powered intelligence for planning and product Q&A.
+
+## Why It Exists
+
+Crypto automation often asks users to trust too much. NEMESIS keeps the
+automation layer separate from custody and signing. The system can watch,
+prepare, and notify, but the user's own wallet must approve the final action.
+
+That model keeps the product useful without turning agents into unchecked
+executors.
 
 ## User Flow
 
 1. Connect a Base or Solana wallet.
 2. Sign in to create a wallet-scoped session.
-3. Pick a template or describe an intent to the Master Agent.
+3. Pick a template or describe intent to NEMESIS.
 4. Review the filled approval summary and parameters.
 5. Deploy the agent.
-6. Link Telegram if you want alerts outside the dashboard.
-7. Review, approve, or skip proposals as they arrive.
+6. Link Telegram for proposal alerts.
+7. Review, approve, skip, pause, or resume as proposals arrive.
+
+## Template Coverage
+
+NEMESIS ships with 12 production templates:
+
+- Ape agent
+- Pool sniper
+- Launch flipper
+- Limit order agent
+- Dip buyer
+- Profit taker
+- Auto compound
+- Gas optimizer
+- Airdrop farmer
+- Portfolio rebalancer
+- Solana dip buyer
+- Solana profit taker
+
+High-risk and degen templates require explicit acknowledgement before deploy.
+
+## Security Model
+
+- Non-custodial: NEMESIS never asks for seed phrases or private keys.
+- Approval-first: agents create proposals, not forced transactions.
+- Wallet-scoped: dashboard, Telegram, agents, and proposals are scoped to the
+  authenticated or linked wallet.
+- Parameterized: templates use structured parameters and plain-language
+  summaries before deployment.
+- Guarded: proposal confirmation validates ownership and submitted transaction
+  details where executable payloads are available.
+- Privacy-minimized: operational data is used only to run sessions, agents,
+  Telegram linking, proposals, and product support flows.
+
+## Stack
+
+- Web: Next.js 14, React, RainbowKit, Wagmi, SIWE, iron-session.
+- Bot: Telegraf.
+- Database: Supabase/Postgres through `@nemesis/db`.
+- Intelligence: OpenRouter.
+- Deploy: Railway monolith with PM2 processes for web and bot.
 
 ## Documentation
 
 - [Product Guide](./docs/PRODUCT_GUIDE.md)
 - [Security Model](./docs/SECURITY.md)
 - [Privacy Notes](./docs/PRIVACY.md)
+- [Architecture](./ARCHITECTURE.md)
+- [Project Context](./CONTEXT.md)
 
-## Status
+## Release Status
 
-NEMESIS is live in production with Base and Solana template support. The current release is focused on approval-first wallet automation, Telegram proposal alerts, and guarded proposal review.
+NEMESIS is live in production for approval-first Base and Solana wallet
+automation. The current release is focused on template-backed agents, Telegram
+proposal alerts, wallet-scoped privacy, and guarded proposal review.

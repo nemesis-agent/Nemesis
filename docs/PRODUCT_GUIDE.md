@@ -1,18 +1,73 @@
-# Product Guide
+# NEMESIS Product Guide
 
-NEMESIS turns wallet intent into approval-first agent proposals.
+NEMESIS turns wallet intent into approval-first agent proposals. The product is
+designed for users who want automated monitoring without handing custody or
+final signing authority to a third party.
 
 ## Dashboard
 
-The dashboard shows agents linked to the currently signed-in wallet session. Users can inspect agent status, proposal history, template details, and Telegram linking state.
+The dashboard shows only the agents linked to the currently signed-in wallet
+session. Users can inspect active agents, proposal history, template details,
+wallet state, and Telegram linking status.
+
+Primary dashboard actions:
+
+- deploy a new agent
+- inspect active agents
+- view template details
+- link or refresh Telegram code
+- pause and resume agents
+- review proposals before wallet signing
+
+## Wallets And Networks
+
+NEMESIS supports Base and Solana product flows.
+
+Base wallets connect through RainbowKit, Wagmi, and WalletConnect-compatible
+wallets. Solana wallet flows include Solflare-compatible connections.
+
+The security model stays the same across networks: NEMESIS can monitor and
+prepare proposals, but the user's own wallet remains the final signer.
 
 ## Templates
 
-Templates are narrow by design. Each template has one monitored condition and one proposed action. NEMESIS supports Base and Solana templates. Base templates can prepare verified payloads where the product can validate the transaction. Solana templates use guarded Jupiter proposal flows where available and keep final signing in the user's wallet.
+Templates are narrow by design. Each template has one monitored condition and
+one proposed action. This keeps plans understandable, reviewable, and safer to
+operate.
+
+Current templates:
+
+- Ape agent
+- Pool sniper
+- Launch flipper
+- Limit order agent
+- Dip buyer
+- Profit taker
+- Auto compound
+- Gas optimizer
+- Airdrop farmer
+- Portfolio rebalancer
+- Solana dip buyer
+- Solana profit taker
+
+High-risk and degen templates include risk acknowledgement gates before deploy.
+
+## Talk With NEMESIS
+
+The public NEMESIS chat is powered by OpenRouter. It answers product,
+architecture, security, and usage questions from public NEMESIS context.
+
+It is intentionally restricted. It should not expose private environment
+variables, secrets, database records, internal logs, unpublished operational
+details, or user-specific data.
 
 ## Telegram
 
-Telegram is used for proposal delivery and command convenience. Open the Telegram bot from the dashboard, generate a short-lived link code, and send it to the bot. Commands only operate on the wallet linked to that chat.
+Telegram is used for proposal delivery and command convenience. Users generate a
+short-lived link code from the dashboard, open the NEMESIS bot, and send the
+code with `/link`.
+
+Official bot: [@NemesisAgentAppBot](https://t.me/NemesisAgentAppBot)
 
 Available commands:
 
@@ -25,6 +80,20 @@ Available commands:
 - `/pause <agent_id>`
 - `/resume <agent_id>`
 
+Commands only operate on the wallet linked to that Telegram chat.
+
 ## Proposal Review
 
-Every proposal should be reviewed before signing. Users should verify the chain, token, amount, destination, fee, and wallet preview. If a proposal looks wrong or stale, skip it.
+Every proposal should be reviewed before signing. Users should verify the
+network, token, amount, destination, fee, wallet preview, and current market
+context.
+
+If a proposal looks wrong, stale, unexpected, or too risky, skip it.
+
+## User Safety Rules
+
+- NEMESIS never needs seed phrases or private keys.
+- NEMESIS does not custody funds.
+- NEMESIS does not guarantee profit.
+- NEMESIS does not auto-execute wallet transactions.
+- The user's wallet must approve the final transaction.
