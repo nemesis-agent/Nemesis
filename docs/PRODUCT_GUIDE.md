@@ -64,7 +64,7 @@ details, or user-specific data.
 ## Telegram
 
 Telegram is used for proposal delivery and command convenience. Users generate a
-short-lived link code from the dashboard, open the NEMESIS bot, and send the
+short-lived link code from the dashboard. Open the Telegram bot from the dashboard, then send the
 code with `/link`.
 
 Official bot: [@NemesisAgentAppBot](https://t.me/NemesisAgentAppBot)

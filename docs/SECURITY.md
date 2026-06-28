@@ -38,7 +38,7 @@ Mutating web routes reject unexpected cross-origin requests when an `Origin`
 header is present. This reduces accidental or malicious cross-site mutation
 paths.
 
-## Proposal Confirmation
+## Proposal confirmations
 
 Where executable payloads are prepared, confirmation endpoints compare the
 submitted transaction against stored proposal data before marking a proposal
