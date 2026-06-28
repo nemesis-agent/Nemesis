@@ -6,6 +6,7 @@ import { Button } from "@/components/Button";
 import { ConnectTelegramCard } from "@/components/ConnectTelegramCard";
 import { FragmentDivider } from "@/components/FragmentDivider";
 import { ScrollReveal } from "@/components/ScrollReveal";
+import { WalletSessionGate } from "@/components/WalletSessionGate";
 import { Pool } from "pg";
 import { getSession, getSessionWalletKeys } from "@/lib/auth";
 import type { Agent, AgentStatus } from "@nemesis/db";
@@ -61,7 +62,8 @@ export default async function DashboardPage() {
   const agents = await listDashboardAgents(walletKeys);
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-16">
+    <WalletSessionGate walletKeys={walletKeys}>
+      <div className="mx-auto max-w-6xl px-6 py-16">
       <div className="flex flex-wrap items-baseline justify-between gap-4">
         <div>
           <h1 className="font-mono text-2xl font-bold uppercase tracking-widest2 text-nm-fg">agents</h1>
@@ -138,6 +140,7 @@ export default async function DashboardPage() {
           <ConnectTelegramCard />
         </ScrollReveal>
       </div>
-    </div>
+      </div>
+    </WalletSessionGate>
   );
 }

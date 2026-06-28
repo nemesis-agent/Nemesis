@@ -7,7 +7,9 @@ import { Button } from "@/components/Button";
 import { FragmentDivider } from "@/components/FragmentDivider";
 import { ProposalRecordRow } from "@/components/ProposalRecordRow";
 import { ScrollReveal } from "@/components/ScrollReveal";
-import { getAgent, listProposalsForAgent } from "@nemesis/db";
+import { WalletSessionGate } from "@/components/WalletSessionGate";
+import { Pool } from "pg";
+import type { Agent, AgentStatus, Proposal, ProposalStatus } from "@nemesis/db";
 import { getSession, getSessionWalletKeys } from "@/lib/auth";
 import { getTemplateById } from "@nemesis/templates";
 
@@ -19,6 +21,76 @@ interface AgentDetailPageProps {
 // can add new proposals at any time, so this can never be statically
 // cached. See CONTEXT.md, "What changed in the database pass".
 export const dynamic = "force-dynamic";
+interface AgentRow {
+  id: string;
+  wallet_address: string;
+  template_id: string;
+  name: string;
+  status: AgentStatus;
+  parameters: string;
+  last_checked_at: Date | null;
+  last_event: string | null;
+  runtime_state: string | null;
+  created_at: Date;
+}
+
+interface ProposalRow {
+  id: string;
+  agent_id: string;
+  title: string;
+  details: string;
+  proposed_action: string;
+  estimated_gas_usd: string;
+  status: ProposalStatus;
+  tx_hash: string | null;
+  unsigned_tx_payload: string | null;
+  execution_state: string | null;
+  created_at: Date;
+}
+
+const agentDetailPool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+function rowToAgent(row: AgentRow): Agent {
+  return {
+    id: row.id,
+    walletAddress: row.wallet_address,
+    templateId: row.template_id,
+    name: row.name,
+    status: row.status,
+    parameters: JSON.parse(row.parameters),
+    lastCheckedAt: row.last_checked_at ? row.last_checked_at.toISOString() : null,
+    lastEvent: row.last_event,
+    runtimeState: row.runtime_state ? JSON.parse(row.runtime_state) : {},
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
+function rowToProposal(row: ProposalRow): Proposal {
+  return {
+    id: row.id,
+    agentId: row.agent_id,
+    title: row.title,
+    details: JSON.parse(row.details),
+    proposedAction: row.proposed_action,
+    estimatedGasUsd: row.estimated_gas_usd,
+    status: row.status,
+    txHash: row.tx_hash,
+    unsignedTxPayload: row.unsigned_tx_payload,
+    executionState: row.execution_state ? JSON.parse(row.execution_state) : {},
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
+async function getAgentDetail(id: string): Promise<Agent | undefined> {
+  const { rows } = await agentDetailPool.query("SELECT * FROM agents WHERE id = $1", [id]);
+  const row = rows[0] as AgentRow | undefined;
+  return row ? rowToAgent(row) : undefined;
+}
+
+async function listAgentProposals(agentId: string): Promise<Proposal[]> {
+  const { rows } = await agentDetailPool.query("SELECT * FROM proposals WHERE agent_id = $1 ORDER BY created_at DESC", [agentId]);
+  return (rows as ProposalRow[]).map(rowToProposal);
+}
 
 export async function generateMetadata() {
   return {
@@ -45,18 +117,19 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
   const walletKeys = getSessionWalletKeys(session);
   if (walletKeys.length === 0) redirect("/");
 
-  const agent = await getAgent(id);
+  const agent = await getAgentDetail(id);
   if (!agent) notFound();
   if (!walletKeys.some((walletKey) => walletKey.toLowerCase() === agent.walletAddress.toLowerCase())) notFound();
 
   const template = getTemplateById(agent.templateId);
-  const proposals = await listProposalsForAgent(agent.id);
+  const proposals = await listAgentProposals(agent.id);
 
   const approvedCount = proposals.filter((p) => p.status === "approved").length;
   const pendingCount = proposals.filter((p) => p.status === "pending").length;
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-16">
+    <WalletSessionGate walletKeys={walletKeys}>
+      <div className="mx-auto max-w-3xl px-6 py-16">
       {/* Back */}
       <Link
         href="/dashboard"
@@ -227,6 +300,7 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
           </Button>
         </div>
       </section>
-    </div>
+      </div>
+    </WalletSessionGate>
   );
 }
