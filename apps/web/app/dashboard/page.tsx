@@ -6,20 +6,59 @@ import { Button } from "@/components/Button";
 import { ConnectTelegramCard } from "@/components/ConnectTelegramCard";
 import { FragmentDivider } from "@/components/FragmentDivider";
 import { ScrollReveal } from "@/components/ScrollReveal";
-import { listAgentsForWallet } from "@nemesis/db";
+import { Pool } from "pg";
 import { getSession, getSessionWalletKeys } from "@/lib/auth";
+import type { Agent, AgentStatus } from "@nemesis/db";
 
 // Reads live from Postgres on every request - agents can be paused/resumed
 // and new proposals can land at any time, so this page must never be
 // statically cached. See CONTEXT.md, "What changed in the database pass".
 export const dynamic = "force-dynamic";
+interface AgentRow {
+  id: string;
+  wallet_address: string;
+  template_id: string;
+  name: string;
+  status: AgentStatus;
+  parameters: string;
+  last_checked_at: Date | null;
+  last_event: string | null;
+  runtime_state: string | null;
+  created_at: Date;
+}
+
+const dashboardPool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+function rowToAgent(row: AgentRow): Agent {
+  return {
+    id: row.id,
+    walletAddress: row.wallet_address,
+    templateId: row.template_id,
+    name: row.name,
+    status: row.status,
+    parameters: JSON.parse(row.parameters),
+    lastCheckedAt: row.last_checked_at ? row.last_checked_at.toISOString() : null,
+    lastEvent: row.last_event,
+    runtimeState: row.runtime_state ? JSON.parse(row.runtime_state) : {},
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
+async function listDashboardAgents(walletKeys: string[]): Promise<Agent[]> {
+  if (walletKeys.length === 0) return [];
+  const { rows } = await dashboardPool.query(
+    "SELECT * FROM agents WHERE wallet_address = ANY($1::text[]) ORDER BY created_at DESC",
+    [walletKeys],
+  );
+  return (rows as AgentRow[]).map(rowToAgent);
+}
 
 export default async function DashboardPage() {
   const session = await getSession();
   const walletKeys = getSessionWalletKeys(session);
   if (walletKeys.length === 0) redirect("/");
 
-  const agents = (await Promise.all(walletKeys.map((walletKey) => listAgentsForWallet(walletKey)))).flat();
+  const agents = await listDashboardAgents(walletKeys);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-16">
