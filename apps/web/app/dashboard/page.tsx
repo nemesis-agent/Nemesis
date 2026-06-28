@@ -6,7 +6,7 @@ import { Button } from "@/components/Button";
 import { ConnectTelegramCard } from "@/components/ConnectTelegramCard";
 import { FragmentDivider } from "@/components/FragmentDivider";
 import { ScrollReveal } from "@/components/ScrollReveal";
-import { listAgentsForWallets } from "@nemesis/db";
+import { listAgentsForWallet } from "@nemesis/db";
 import { getSession, getSessionWalletKeys } from "@/lib/auth";
 
 // Reads live from Postgres on every request - agents can be paused/resumed
@@ -19,7 +19,7 @@ export default async function DashboardPage() {
   const walletKeys = getSessionWalletKeys(session);
   if (walletKeys.length === 0) redirect("/");
 
-  const agents = await listAgentsForWallets(walletKeys);
+  const agents = (await Promise.all(walletKeys.map((walletKey) => listAgentsForWallet(walletKey)))).flat();
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-16">
