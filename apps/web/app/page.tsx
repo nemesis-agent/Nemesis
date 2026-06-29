@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ChatWithNemesis } from "@/components/ChatWithNemesis";
+import { FAQSection } from "@/components/FAQSection";
 import { GrowthLoop } from "@/components/GrowthLoop";
 import { Hero } from "@/components/Hero";
 import { HowItWorks } from "@/components/HowItWorks";
@@ -45,7 +46,7 @@ export default function HomePage() {
         <div className="flex items-baseline justify-between gap-4">
           <h2 className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">templates</h2>
           <Link href="/templates" className="font-mono text-xs uppercase tracking-widest2 text-nm-fragment-red">
-            view all {TEMPLATES.length} →
+            view all {TEMPLATES.length} {"->"}
           </Link>
         </div>
 
@@ -58,6 +59,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      <FAQSection />
       <GrowthLoop />
     </>
   );

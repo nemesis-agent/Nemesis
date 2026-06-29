@@ -1,4 +1,4 @@
-﻿import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const checks = [];
 function check(name, fn) {
@@ -16,6 +16,7 @@ const home = read("apps/web/app/page.tsx");
 const hero = read("apps/web/components/Hero.tsx");
 const footer = read("apps/web/components/Footer.tsx");
 const growth = read("apps/web/components/GrowthLoop.tsx");
+const faq = read("apps/web/components/FAQSection.tsx");
 const templateDetail = read("apps/web/app/templates/[id]/page.tsx");
 const packageJson = read("package.json");
 
@@ -36,12 +37,17 @@ check("sitemap and robots are present with safe boundaries", () => {
   assert(robots.includes("disallow: [\"/dashboard\", \"/agents/\", \"/api/\"]"), "robots must keep private surfaces out of indexing");
 });
 
-check("home page has growth loop without custody or profit claims", () => {
+check("home page has growth loop and FAQ without unsafe claims", () => {
   assert(home.includes("GrowthLoop"), "home page must render growth loop");
+  assert(home.includes("FAQSection"), "home page must render FAQ section");
   assert(growth.includes("x.com/intent/tweet"), "growth loop must include share intent");
   assert(growth.includes("https://t.me/NemesisAgentAppBot"), "growth loop must include Telegram bot CTA");
   assert(growth.includes("String(TEMPLATES.length)"), "growth loop template count must use registry");
+  assert(faq.includes("does NEMESIS custody my funds?"), "FAQ must explain custody boundary");
+  assert(faq.includes("can an agent execute automatically?"), "FAQ must explain approval-first boundary");
+  assert(faq.includes("is NEMESIS free to use?"), "FAQ must explain free access");
   assert(!/guaranteed|risk-free|profit|earn/i.test(growth), "growth copy must avoid unsafe financial claims");
+  assert(!/guaranteed|risk-free|profit|earn/i.test(faq), "FAQ copy must avoid unsafe financial claims");
 });
 
 check("product-facing source is free from mojibake", () => {
@@ -51,6 +57,7 @@ check("product-facing source is free from mojibake", () => {
     ["apps/web/components/Hero.tsx", hero],
     ["apps/web/components/Footer.tsx", footer],
     ["apps/web/components/GrowthLoop.tsx", growth],
+    ["apps/web/components/FAQSection.tsx", faq],
   ]) {
     assert(!bad.test(content), `${file} contains mojibake`);
   }
