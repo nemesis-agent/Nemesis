@@ -8,9 +8,11 @@ export function Footer() {
       <FragmentDivider />
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-8 font-mono text-xs uppercase tracking-widest2 text-nm-muted sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
-          <span>nemesis — the market&apos;s reckoning</span>
+          <span>nemesis - the market&apos;s reckoning</span>
           <div className="hidden h-3 w-px bg-nm-border sm:block" aria-hidden="true" />
           <div className="flex items-center gap-5">
+            <a href="/docs" className="text-nm-muted transition-colors hover:text-nm-fg">docs</a>
+            <a href="/changelog" className="text-nm-muted transition-colors hover:text-nm-fg">changelog</a>
             <a href="/terms" className="text-nm-muted transition-colors hover:text-nm-fg">terms</a>
             <a href="/privacy" className="text-nm-muted transition-colors hover:text-nm-fg">privacy</a>
             <a href="https://x.com/Nemesis_agent" target="_blank" rel="noopener noreferrer" className="text-nm-muted transition-colors hover:text-nm-fg" aria-label="X (Twitter)">

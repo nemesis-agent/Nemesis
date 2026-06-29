@@ -11,6 +11,7 @@ const NAV_LINKS = [
   { href: "/agents/new", label: "deploy" },
   { href: "/dashboard", label: "agents" },
   { href: "/templates", label: "templates" },
+  { href: "/docs", label: "docs" },
   { href: "/#network", label: "network" },
 ];
 

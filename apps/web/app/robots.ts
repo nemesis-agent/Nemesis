@@ -1,4 +1,4 @@
-﻿import type { MetadataRoute } from "next";
+import type { MetadataRoute } from "next";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nemesis-agent.xyz";
 
@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/templates", "/templates/", "/terms", "/privacy"],
+        allow: ["/", "/templates", "/templates/", "/docs", "/changelog", "/terms", "/privacy"],
         disallow: ["/dashboard", "/agents/", "/api/"],
       },
     ],
