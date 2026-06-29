@@ -31,7 +31,7 @@ export function AgentStatusToggle({ agentId, status }: AgentStatusToggleProps) {
       }
       router.refresh();
     } catch (error) {
-      console.error(`[AgentStatusToggle] failed to ${nextAction} agent ${agentId}`, error);
+      console.error(`[AgentStatusToggle] failed to ${nextAction} agent`, error instanceof Error ? error.message : "unknown");
     } finally {
       setPending(false);
     }

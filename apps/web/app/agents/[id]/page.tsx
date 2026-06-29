@@ -11,6 +11,7 @@ import { WalletSessionGate } from "@/components/WalletSessionGate";
 import { Pool } from "pg";
 import type { Agent, AgentStatus, Proposal, ProposalStatus } from "@nemesis/db";
 import { getSession, getSessionWalletKeys } from "@/lib/auth";
+import { maskIdentifier } from "@/lib/privacy";
 import { getTemplateById } from "@nemesis/templates";
 
 interface AgentDetailPageProps {
@@ -145,7 +146,7 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
             {agent.name}
           </h1>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-            {agent.id} . {agent.walletAddress.slice(0, 6)}...{agent.walletAddress.slice(-4)}
+            {agent.id} . {maskIdentifier(agent.walletAddress)}
           </p>
         </div>
         <span

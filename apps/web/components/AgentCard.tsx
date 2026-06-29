@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import type { Agent, AgentStatus } from "@nemesis/db";
+import type { AgentStatus } from "@nemesis/db";
 import { getTemplateById } from "@nemesis/templates";
 
 const STATUS_STYLES: Record<AgentStatus, string> = {
@@ -15,8 +15,18 @@ const STATUS_LABELS: Record<AgentStatus, string> = {
   "awaiting-approval": "awaiting approval",
 };
 
+export interface AgentCardViewModel {
+  id: string;
+  walletLabel: string;
+  templateId: string;
+  name: string;
+  status: AgentStatus;
+  lastEvent: string | null;
+  lastCheckedAt: string | null;
+}
+
 interface AgentCardProps {
-  agent: Agent;
+  agent: AgentCardViewModel;
 }
 
 export function AgentCard({ agent }: AgentCardProps) {
@@ -33,7 +43,7 @@ export function AgentCard({ agent }: AgentCardProps) {
             {agent.name}
           </h3>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-            {agent.id} · {agent.walletAddress.slice(0, 6)}...{agent.walletAddress.slice(-4)}
+            {agent.id} - {agent.walletLabel}
           </p>
         </div>
         <span

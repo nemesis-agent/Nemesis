@@ -128,5 +128,5 @@ export async function POST(request: Request) {
 
   revalidatePath("/dashboard");
 
-  return NextResponse.json({ agent }, { status: 201 });
+  return NextResponse.json({ agent: { id: agent.id, name: agent.name } }, { status: 201 });
 }

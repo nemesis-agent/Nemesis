@@ -5,6 +5,7 @@ import { createPublicClient, http, formatEther } from "viem";
 import { baseChain } from "@/lib/base-chain";
 
 import { requireAnyWalletAuth } from "@/lib/auth";
+import { balancePrivacyBucket, redactForLog, redactText } from "@/lib/privacy";
 import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { TEMPLATES, getTemplateChain, isTemplateProductionReady } from "@nemesis/templates";
 import { intentSchema } from "@/lib/intent-schema";
@@ -21,6 +22,14 @@ const openrouter = createOpenRouter({
   apiKey: openrouterApiKey || "missing-openrouter-api-key",
 });
 
+type IntentMessageInput = { role: "user" | "agent" | "assistant"; content: string };
+
+function isIntentMessageInput(value: unknown): value is IntentMessageInput {
+  if (!value || typeof value !== "object") return false;
+  const maybe = value as { role?: unknown; content?: unknown };
+  return (maybe.role === "user" || maybe.role === "agent" || maybe.role === "assistant") && typeof maybe.content === "string";
+}
+
 export async function POST(request: Request) {
   const auth = await requireAnyWalletAuth();
   if (auth.error) return auth.error;
@@ -28,7 +37,7 @@ export async function POST(request: Request) {
   const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "intent", auth.wallet.walletKey), limit: 12, windowMs: 60_000 });
   if (rateLimit) return rateLimit;
 
-  let body: { messages?: any[] } | null = null;
+  let body: { messages?: unknown[] } | null = null;
   try {
     body = await request.json();
   } catch {
@@ -53,18 +62,13 @@ export async function POST(request: Request) {
   }
 
   const safeMessages = messages.map((message) => {
-    if (
-      !message ||
-      (message.role !== "user" && message.role !== "agent" && message.role !== "assistant") ||
-      typeof message.content !== "string" ||
-      message.content.length > 2_000
-    ) {
+    if (!isIntentMessageInput(message) || message.content.length > 2_000) {
       return null;
     }
 
     return {
       role: message.role === "agent" ? "assistant" : message.role,
-      content: message.content,
+      content: redactText(message.content.trim()),
     } as const;
   });
 
@@ -73,8 +77,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const ethBalance = auth.wallet.chain === "base"
-      ? formatEther(await publicClient.getBalance({ address: auth.wallet.address as `0x${string}` }))
+    const balanceBucket = auth.wallet.chain === "base"
+      ? balancePrivacyBucket(Number(formatEther(await publicClient.getBalance({ address: auth.wallet.address as `0x${string}` }))))
       : "not connected";
 
     const templatesContext = productionTemplates.map((template) => ({
@@ -90,7 +94,7 @@ export async function POST(request: Request) {
 The user wants to deploy new automated strategies or modify existing pending ones.
 
 AUTHENTICATED WALLET CHAIN: ${auth.wallet.chain}
-USER'S BASE ETH BALANCE: ${ethBalance} ETH
+USER BASE BALANCE RANGE: ${balanceBucket}
 
 AVAILABLE TEMPLATES:
 ${JSON.stringify(templatesContext, null, 2)}
@@ -115,7 +119,7 @@ Task: Analyze the conversation history. Select only from the production-ready te
 
     return NextResponse.json({ intent: object }, { status: 200 });
   } catch (error: any) {
-    console.error("[Master Agent] Inference Error:", error);
+    console.error("[Master Agent] Inference Error:", redactForLog(error));
     return NextResponse.json(
       { error: "Failed to process intent. The AI model may be unavailable." },
       { status: 500 },

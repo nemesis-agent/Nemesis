@@ -9,7 +9,9 @@ import { ScrollReveal } from "@/components/ScrollReveal";
 import { WalletSessionGate } from "@/components/WalletSessionGate";
 import { Pool } from "pg";
 import { getSession, getSessionWalletKeys } from "@/lib/auth";
-import type { Agent, AgentStatus } from "@nemesis/db";
+import { maskIdentifier } from "@/lib/privacy";
+import type { AgentStatus } from "@nemesis/db";
+import type { AgentCardViewModel } from "@/components/AgentCard";
 
 // Reads live from Postgres on every request - agents can be paused/resumed
 // and new proposals can land at any time, so this page must never be
@@ -51,22 +53,19 @@ const dashboardPool = new Pool({
 const RUNNER_HEALTH_KEY = "telegram-runner";
 const RUNNER_STALE_AFTER_MS = 5 * 60 * 1000;
 
-function rowToAgent(row: AgentRow): Agent {
+function rowToAgent(row: AgentRow): AgentCardViewModel {
   return {
     id: row.id,
-    walletAddress: row.wallet_address,
+    walletLabel: maskIdentifier(row.wallet_address),
     templateId: row.template_id,
     name: row.name,
     status: row.status,
-    parameters: JSON.parse(row.parameters),
     lastCheckedAt: row.last_checked_at ? row.last_checked_at.toISOString() : null,
     lastEvent: row.last_event,
-    runtimeState: row.runtime_state ? JSON.parse(row.runtime_state) : {},
-    createdAt: row.created_at.toISOString(),
   };
 }
 
-async function listDashboardAgents(walletKeys: string[]): Promise<Agent[]> {
+async function listDashboardAgents(walletKeys: string[]): Promise<AgentCardViewModel[]> {
   if (walletKeys.length === 0) return [];
   const { rows } = await dashboardPool.query(
     "SELECT * FROM agents WHERE wallet_address = ANY($1::text[]) ORDER BY created_at DESC",

@@ -3,6 +3,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 
 import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { redactForLog } from "@/lib/privacy";
 import { TEMPLATES, getTemplateChain, isTemplateProductionReady } from "@nemesis/templates";
 
 const openrouterApiKey = process.env.OPENROUTER_API_KEY;
@@ -170,7 +171,7 @@ ${JSON.stringify(PUBLIC_PRODUCT_CONTEXT)}`;
     if (!reply) throw new Error("Model returned an empty response.");
     return NextResponse.json({ reply });
   } catch (error) {
-    console.error("[Public NEMESIS Chat] inference failed", error instanceof Error ? error.message : "unknown");
+    console.error("[Public NEMESIS Chat] inference failed", redactForLog(error));
     return NextResponse.json(
       { error: "NEMESIS could not answer right now. Please try again shortly." },
       { status: 502 },

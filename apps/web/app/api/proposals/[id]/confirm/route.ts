@@ -5,6 +5,7 @@ import { baseChain } from "@/lib/base-chain";
 
 import { rejectCrossOrigin, requireAnyWalletAuth, walletOwnsAgent } from "@/lib/auth";
 import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { redactForLog } from "@/lib/privacy";
 import { approveProposal, getProposal, getAgent, recordProposalExecutionStep } from "@nemesis/db";
 
 const publicClient = createPublicClient({
@@ -145,7 +146,7 @@ export async function POST(
 
     return NextResponse.json({ success: true, proposal: updated }, { status: 200 });
   } catch (error: any) {
-    console.error(`[Phase 4] Viem confirmation failed for ${txHash}:`, error);
+    console.error(`[Proposal Confirm] Base verification failed for ${txHash.slice(0, 10)}...${txHash.slice(-6)}:`, redactForLog(error));
     return NextResponse.json(
       { error: "Failed to verify transaction receipt. It may not be mined yet." },
       { status: 500 }
