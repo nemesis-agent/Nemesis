@@ -1,4 +1,5 @@
 import { logger } from "./logger.js";
+import { redactForOps } from "./privacy.js";
 
 type AlertSeverity = "info" | "warning" | "critical";
 
@@ -12,11 +13,12 @@ interface AlertPayload {
 const webhookUrl = process.env.NEMESIS_ALERT_WEBHOOK_URL;
 
 export async function sendOpsAlert(payload: AlertPayload): Promise<void> {
-  logger[payload.severity === "critical" ? "error" : payload.severity === "warning" ? "warn" : "info"]({
-    msg: payload.message,
-    event: payload.event,
-    severity: payload.severity,
-    context: payload.context,
+  const safePayload = redactForOps(payload);
+  logger[safePayload.severity === "critical" ? "error" : safePayload.severity === "warning" ? "warn" : "info"]({
+    msg: safePayload.message,
+    event: safePayload.event,
+    severity: safePayload.severity,
+    context: safePayload.context,
   });
 
   if (!webhookUrl) return;
@@ -28,10 +30,10 @@ export async function sendOpsAlert(payload: AlertPayload): Promise<void> {
       body: JSON.stringify({
         source: "nemesis",
         timestamp: new Date().toISOString(),
-        ...payload,
+        ...safePayload,
       }),
     });
   } catch (error) {
-    logger.warn({ msg: "failed to send ops alert", err: error, event: payload.event });
+    logger.warn({ msg: "failed to send ops alert", err: redactForOps(error), event: safePayload.event });
   }
 }

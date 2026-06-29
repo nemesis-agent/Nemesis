@@ -16,6 +16,7 @@ import { getBaseTokenPairs, getLatestBaseTokenProfiles, type DexScreenerPair } f
 import { sendProposal } from "./handlers/approval.js";
 import { logger } from "./lib/logger.js";
 import { sendOpsAlert } from "./lib/alerts.js";
+import { maskIdentifier, redactForOps } from "./lib/privacy.js";
 import { buildEthToUsdcSwapPayload, buildUsdcApproveAndSwapToEthPayload } from "./lib/uniswap-base.js";
 import { buildSolanaSolToUsdcSwapPayload, buildSolanaUsdcToSolSwapPayload } from "./lib/jupiter-solana.js";
 
@@ -139,7 +140,7 @@ async function runCycle(bot: Telegraf) {
     const chatId = await getTelegramChatIdForWallet(agent.walletAddress);
     if (!chatId) {
       await updateAgentRuntimeState(agent.id, agent.runtimeState, "Proposal trigger detected, but Telegram is not linked yet.");
-      logger.warn({ msg: "skip proposal dispatch: no Telegram linked", walletAddress: agent.walletAddress });
+      logger.warn({ msg: "skip proposal dispatch: no Telegram linked", walletAddress: maskIdentifier(agent.walletAddress) });
       continue;
     }
 
@@ -561,7 +562,7 @@ async function evaluateSolanaDipBuyer(agent: Agent): Promise<EvaluationResult | 
       }));
       walletAction = "sign Jupiter USDC -> SOL swap in Solflare";
     } catch (err) {
-      logger.warn({ msg: "Solana Jupiter payload unavailable", agentId: agent.id, error: String(err) });
+      logger.warn({ msg: "Solana Jupiter payload unavailable", agentId: agent.id, error: redactForOps(String(err)) });
       void sendOpsAlert({
         event: "solana_jupiter_payload_unavailable",
         severity: "warning",
@@ -631,7 +632,7 @@ async function evaluateSolanaProfitTaker(agent: Agent): Promise<EvaluationResult
         walletAction = "review only - SOL balance is below the protected reserve";
       }
     } catch (err) {
-      logger.warn({ msg: "Solana Jupiter sell payload unavailable", agentId: agent.id, error: String(err) });
+      logger.warn({ msg: "Solana Jupiter sell payload unavailable", agentId: agent.id, error: redactForOps(String(err)) });
       void sendOpsAlert({
         event: "solana_jupiter_sell_payload_unavailable",
         severity: "warning",
