@@ -2,11 +2,12 @@ import { Button } from "@/components/Button";
 import { FragmentDivider } from "@/components/FragmentDivider";
 import { HeroParticles } from "@/components/HeroParticles";
 import { HeroTicker } from "@/components/HeroTicker";
+import { TEMPLATES } from "@nemesis/templates";
 
 export function Hero() {
   return (
     <section className="relative overflow-hidden">
-      {/* ── Backgrounds ──────────────────────────────────────────────── */}
+      {/* Backgrounds */}
       <HeroParticles />
 
       {/* Ambient radial glow behind the wordmark */}
@@ -19,7 +20,7 @@ export function Hero() {
         }}
       />
 
-      {/* ── Main hero content ─────────────────────────────────────────── */}
+      {/* Main hero content */}
       <div className="relative z-10 mx-auto max-w-6xl px-6 pt-24 pb-8 sm:pt-36 sm:pb-12">
         {/* Tech Corner Markers */}
         <div className="absolute left-6 top-24 hidden h-4 w-4 border-l border-t border-nm-muted/50 sm:block" aria-hidden="true" />
@@ -88,7 +89,7 @@ export function Hero() {
             style={{ animationDelay: "420ms" }}
           >
             {[
-              { value: "10", label: "templates" },
+              { value: String(TEMPLATES.length), label: "templates" },
               { value: "0", label: "funds custodied" },
               { value: "100%", label: "approval-first" },
             ].map((stat) => (
@@ -103,12 +104,12 @@ export function Hero() {
         </div>
       </div>
 
-      {/* ── Scrolling ticker ─────────────────────────────────────────── */}
+      {/* Scrolling ticker */}
       <div className="relative z-10 mt-12">
         <HeroTicker />
       </div>
 
-      {/* ── Bottom divider ────────────────────────────────────────────── */}
+      {/* Bottom divider */}
       <div className="relative z-10 mx-auto max-w-6xl px-6 mt-0">
         <FragmentDivider />
       </div>

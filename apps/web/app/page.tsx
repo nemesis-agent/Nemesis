@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ChatWithNemesis } from "@/components/ChatWithNemesis";
+import { GrowthLoop } from "@/components/GrowthLoop";
 import { Hero } from "@/components/Hero";
 import { HowItWorks } from "@/components/HowItWorks";
 import { LiveActivityFeed } from "@/components/LiveActivityFeed";
@@ -56,6 +57,8 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      <GrowthLoop />
     </>
   );
 }

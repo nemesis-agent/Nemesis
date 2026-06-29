@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -20,10 +21,36 @@ export function generateStaticParams() {
   return TEMPLATES.map((template) => ({ id: template.id }));
 }
 
-export async function generateMetadata({ params }: TemplateDetailPageProps) {
+export async function generateMetadata({ params }: TemplateDetailPageProps): Promise<Metadata> {
   const { id } = await params;
   const template = getTemplateById(id);
-  return { title: template ? `${template.name} - NEMESIS` : "Template not found - NEMESIS" };
+  if (!template) return { title: "Template not found - NEMESIS" };
+
+  const title = `${template.name} - NEMESIS template`;
+  const description = `${template.summary} Approval-first, non-custodial, and wallet-signed.`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: `/templates/${template.id}` },
+    openGraph: {
+      title,
+      description,
+      url: `/templates/${template.id}`,
+      images: [{
+        url: "/assets/nemesis-social-preview-2026.png",
+        width: 1200,
+        height: 675,
+        alt: `NEMESIS ${template.name} template`,
+      }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/assets/nemesis-social-preview-2026.png"],
+    },
+  };
 }
 
 export default async function TemplateDetailPage({ params }: TemplateDetailPageProps) {

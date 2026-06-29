@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 import { BootSequence } from "@/components/BootSequence";
 import { CommandMenu } from "@/components/CommandMenu";
@@ -10,11 +11,40 @@ import { Providers } from "./providers";
 
 import "./globals.css";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nemesis-agent.xyz";
+
+const productJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "NEMESIS",
+  applicationCategory: "FinanceApplication",
+  operatingSystem: "Web",
+  url: siteUrl,
+  description: "Approval-first agents for Base and Solana wallets.",
+  sameAs: [
+    "https://x.com/Nemesis_agent",
+    "https://github.com/nemesis-agent/Nemesis",
+    "https://t.me/NemesisAgentAppBot",
+  ],
+};
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(siteUrl),
   title: "NEMESIS - autonomous agents on Base and Solana",
   description:
     "Deploy approval-first agents on Base and Solana. Chaos in, order out.",
+  keywords: [
+    "NEMESIS",
+    "Base agents",
+    "Solana agents",
+    "approval-first automation",
+    "wallet automation",
+    "Telegram crypto agent",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  category: "technology",
   icons: {
     icon: "/assets/nemesis-favicon.png",
   },
@@ -43,6 +73,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="dark">
       <body className="flex min-h-screen flex-col">
+        <Script id="nemesis-product-jsonld" type="application/ld+json" strategy="beforeInteractive">
+          {JSON.stringify(productJsonLd)}
+        </Script>
         <BootSequence />
         <CustomCursor />
         <CommandMenu />
