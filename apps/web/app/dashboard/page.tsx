@@ -28,7 +28,28 @@ interface AgentRow {
   created_at: Date;
 }
 
-const dashboardPool = new Pool({ connectionString: process.env.DATABASE_URL });
+interface RuntimeHealthRow {
+  status: "starting" | "healthy" | "degraded" | "error";
+  details: string | null;
+  last_heartbeat_at: Date;
+}
+
+interface DashboardRuntimeHealth {
+  status: "starting" | "healthy" | "degraded" | "error" | "unknown" | "unavailable";
+  stale: boolean;
+  lastHeartbeatAt: string | null;
+  ageSeconds: number | null;
+  details: Record<string, unknown>;
+}
+
+const dashboardPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
+const RUNNER_HEALTH_KEY = "telegram-runner";
+const RUNNER_STALE_AFTER_MS = 5 * 60 * 1000;
 
 function rowToAgent(row: AgentRow): Agent {
   return {
@@ -54,12 +75,96 @@ async function listDashboardAgents(walletKeys: string[]): Promise<Agent[]> {
   return (rows as AgentRow[]).map(rowToAgent);
 }
 
+function parseRuntimeDetails(value: string | null): Record<string, unknown> {
+  if (!value) return {};
+  try {
+    return JSON.parse(value) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+async function getDashboardRuntimeHealth(): Promise<DashboardRuntimeHealth> {
+  try {
+    const { rows } = await dashboardPool.query(
+      "SELECT status, details, last_heartbeat_at FROM runtime_health WHERE key = $1",
+      [RUNNER_HEALTH_KEY],
+    );
+    const row = rows[0] as RuntimeHealthRow | undefined;
+    if (!row) {
+      return { status: "unknown", stale: true, lastHeartbeatAt: null, ageSeconds: null, details: {} };
+    }
+
+    const ageMs = Date.now() - row.last_heartbeat_at.getTime();
+    return {
+      status: row.status,
+      stale: ageMs > RUNNER_STALE_AFTER_MS,
+      lastHeartbeatAt: row.last_heartbeat_at.toISOString(),
+      ageSeconds: Math.max(0, Math.round(ageMs / 1000)),
+      details: parseRuntimeDetails(row.details),
+    };
+  } catch {
+    return { status: "unavailable", stale: true, lastHeartbeatAt: null, ageSeconds: null, details: {} };
+  }
+}
+
+function formatAge(seconds: number | null) {
+  if (seconds === null) return "never";
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  return `${Math.floor(minutes / 60)}h ago`;
+}
+
+function RunnerHealthCard({ health }: { health: DashboardRuntimeHealth }) {
+  const healthy = health.status === "healthy" && !health.stale;
+  const event = typeof health.details.event === "string" ? health.details.event.replaceAll("_", " ") : "waiting for heartbeat";
+  const activeAgents = typeof health.details.activeAgents === "number" ? health.details.activeAgents : null;
+
+  return (
+    <div className="border border-nm-border bg-nm-bg p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-mono text-xs font-bold uppercase tracking-widest2 text-nm-fg">runner health</h2>
+          <p className="mt-2 text-sm text-nm-muted">Agent evaluation heartbeat and last cycle state.</p>
+        </div>
+        <span className={`border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 ${healthy ? "border-nm-resolve text-nm-resolve" : "border-nm-fragment-red text-nm-fragment-red"}`}>
+          {healthy ? "online" : "check"}
+        </span>
+      </div>
+      <dl className="mt-5 grid gap-3 text-xs">
+        <div className="flex justify-between gap-4 border-t border-nm-border pt-3">
+          <dt className="font-mono uppercase tracking-widest2 text-nm-muted">status</dt>
+          <dd className="text-right text-nm-fg">{health.stale ? `${health.status} / stale` : health.status}</dd>
+        </div>
+        <div className="flex justify-between gap-4 border-t border-nm-border pt-3">
+          <dt className="font-mono uppercase tracking-widest2 text-nm-muted">last beat</dt>
+          <dd className="text-right text-nm-fg">{formatAge(health.ageSeconds)}</dd>
+        </div>
+        <div className="flex justify-between gap-4 border-t border-nm-border pt-3">
+          <dt className="font-mono uppercase tracking-widest2 text-nm-muted">cycle</dt>
+          <dd className="text-right text-nm-fg">{event}</dd>
+        </div>
+        {activeAgents !== null && (
+          <div className="flex justify-between gap-4 border-t border-nm-border pt-3">
+            <dt className="font-mono uppercase tracking-widest2 text-nm-muted">active</dt>
+            <dd className="text-right text-nm-fg">{activeAgents}</dd>
+          </div>
+        )}
+      </dl>
+    </div>
+  );
+}
+
 export default async function DashboardPage() {
   const session = await getSession();
   const walletKeys = getSessionWalletKeys(session);
   if (walletKeys.length === 0) redirect("/");
 
-  const agents = await listDashboardAgents(walletKeys);
+  const [agents, runnerHealth] = await Promise.all([
+    listDashboardAgents(walletKeys),
+    getDashboardRuntimeHealth(),
+  ]);
 
   return (
     <WalletSessionGate walletKeys={walletKeys}>
@@ -136,9 +241,14 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        <ScrollReveal delayMs={120}>
-          <ConnectTelegramCard />
-        </ScrollReveal>
+        <div className="grid gap-4">
+          <ScrollReveal delayMs={120}>
+            <RunnerHealthCard health={runnerHealth} />
+          </ScrollReveal>
+          <ScrollReveal delayMs={170}>
+            <ConnectTelegramCard />
+          </ScrollReveal>
+        </div>
       </div>
       </div>
     </WalletSessionGate>
