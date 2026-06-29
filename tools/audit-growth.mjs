@@ -43,7 +43,9 @@ check("sitemap and robots are present with safe boundaries", () => {
 check("home network copy reflects Base and Solana support", () => {
   assert(hero.includes("live on base + solana"), "hero badge must not be Base-only");
   assert(networkPulse.includes("base + solana"), "navbar network pill must show both supported networks");
-  assert(liveActivityFeed.includes("live feed / base + solana"), "network activity feed must show both supported networks");
+  assert(liveActivityFeed.includes('simulation / no user data'), 'activity preview must be explicitly labeled as a simulation');
+  assert(liveActivityFeed.includes('chain: "base"') && liveActivityFeed.includes('chain: "solana"'), 'activity simulation must show both supported networks');
+  assert(!liveActivityFeed.includes('Math.random'), 'activity simulation must be deterministic and must not imitate live user events');
   assert(ticker.includes("base + solana live"), "hero ticker must show Base + Solana support");
   assert(![hero, ticker, networkPulse, liveActivityFeed].join("\n").toLowerCase().includes("base mainnet"), "public network copy must not imply Base-only support");
 });
