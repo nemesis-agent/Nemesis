@@ -74,6 +74,7 @@ export default function DocsPage() {
         <div className="flex gap-4 font-mono text-xs uppercase tracking-widest2 text-nm-fragment-red">
           <Link href="/changelog">changelog {"->"}</Link>
           <Link href="/roadmap">roadmap {"->"}</Link>
+          <Link href="/updates">updates {"->"}</Link>
         </div>
       </div>
 

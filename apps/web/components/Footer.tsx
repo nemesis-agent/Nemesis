@@ -14,6 +14,7 @@ export function Footer() {
             <a href="/docs" className="text-nm-muted transition-colors hover:text-nm-fg">docs</a>
             <a href="/changelog" className="text-nm-muted transition-colors hover:text-nm-fg">changelog</a>
             <a href="/roadmap" className="text-nm-muted transition-colors hover:text-nm-fg">roadmap</a>
+            <a href="/updates" className="text-nm-muted transition-colors hover:text-nm-fg">updates</a>
             <a href="/terms" className="text-nm-muted transition-colors hover:text-nm-fg">terms</a>
             <a href="/privacy" className="text-nm-muted transition-colors hover:text-nm-fg">privacy</a>
             <a href="https://x.com/Nemesis_agent" target="_blank" rel="noopener noreferrer" className="text-nm-muted transition-colors hover:text-nm-fg" aria-label="X (Twitter)">

@@ -8,21 +8,25 @@ function assert(condition, message) { if (!condition) throw new Error(message); 
 const docsPath = "apps/web/app/docs/page.tsx";
 const changelogPath = "apps/web/app/changelog/page.tsx";
 const roadmapPath = "apps/web/app/roadmap/page.tsx";
+const updatesPath = "apps/web/app/updates/page.tsx";
 const docs = existsSync(docsPath) ? read(docsPath) : "";
 const changelog = existsSync(changelogPath) ? read(changelogPath) : "";
 const roadmap = existsSync(roadmapPath) ? read(roadmapPath) : "";
+const updates = existsSync(updatesPath) ? read(updatesPath) : "";
 const footer = read("apps/web/components/Footer.tsx");
 const navbar = read("apps/web/components/Navbar.tsx");
 const sitemap = read("apps/web/app/sitemap.ts");
 const robots = read("apps/web/app/robots.ts");
 
-check("docs, changelog, and roadmap routes exist", () => {
+check("docs, changelog, roadmap, and updates routes exist", () => {
   assert(existsSync(docsPath), "docs page route missing");
   assert(existsSync(changelogPath), "changelog page route missing");
   assert(docs.includes("export const metadata"), "docs page should define metadata");
   assert(changelog.includes("export const metadata"), "changelog page should define metadata");
   assert(existsSync(roadmapPath), "roadmap page route missing");
   assert(roadmap.includes("export const metadata"), "roadmap page should define metadata");
+  assert(existsSync(updatesPath), "updates page route missing");
+  assert(updates.includes("export const metadata"), "updates page should define metadata");
 });
 
 check("docs cover public product essentials", () => {
@@ -64,19 +68,34 @@ check("roadmap is directional and boundary-focused", () => {
     assert(roadmap.includes(phrase), `roadmap missing phrase: ${phrase}`);
   }
 });
-check("docs, changelog, and roadmap are discoverable", () => {
+check("updates page is Medium-backed and privacy-safe", () => {
+  for (const phrase of [
+    "https://medium.com/@nemesisagent1",
+    "why approval-first agents",
+    "what NEMESIS can and cannot access",
+    "how Telegram proposal linking works",
+    "Base and Solana support notes",
+    "should not reveal secrets",
+  ]) {
+    assert(updates.includes(phrase), `updates missing phrase: ${phrase}`);
+  }
+});
+
+check("docs, changelog, roadmap, and updates are discoverable", () => {
   assert(navbar.includes('{ href: "/docs", label: "docs" }'), "navbar should link docs");
   assert(footer.includes('href="/docs"'), "footer should link docs");
   assert(footer.includes('href="/changelog"'), "footer should link changelog");
   assert(footer.includes('href="/roadmap"'), "footer should link roadmap");
+  assert(footer.includes('href="/updates"'), "footer should link updates");
   assert(sitemap.includes('`${SITE_URL}/docs`'), "sitemap should include docs");
   assert(sitemap.includes('`${SITE_URL}/changelog`'), "sitemap should include changelog");
   assert(sitemap.includes('`${SITE_URL}/roadmap`'), "sitemap should include roadmap");
-  assert(robots.includes('"/docs"') && robots.includes('"/changelog"') && robots.includes('"/roadmap"'), "robots should allow docs, changelog, and roadmap");
+  assert(sitemap.includes('`${SITE_URL}/updates`'), "sitemap should include updates");
+  assert(robots.includes('"/docs"') && robots.includes('"/changelog"') && robots.includes('"/roadmap"') && robots.includes('"/updates"'), "robots should allow docs, changelog, roadmap, and updates");
 });
 
 check("public docs avoid unsafe claims and mojibake", () => {
-  const combined = `${docs}\n${changelog}\n${roadmap}\n${footer}`;
+  const combined = `${docs}\n${changelog}\n${roadmap}\n${updates}\n${footer}`;
   assert(!/[\u00c2\u00c3\u00e2\u20ac]/.test(combined), "docs-facing source contains mojibake");
   assert(!/risk-free|guaranteed|guarantees|guarantee outcome|passive income/i.test(combined), "docs-facing copy contains unsafe claims");
 });

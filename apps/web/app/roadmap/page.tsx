@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { FragmentDivider } from "@/components/FragmentDivider";
@@ -67,9 +67,10 @@ export default function RoadmapPage() {
             NEMESIS ships in public around one principle: automation can prepare proposals, but the user's wallet remains the final authority.
           </p>
         </div>
-        <Link href="/changelog" className="font-mono text-xs uppercase tracking-widest2 text-nm-fragment-red">
-          changelog {"->"}
-        </Link>
+        <div className="flex gap-4 font-mono text-xs uppercase tracking-widest2 text-nm-fragment-red">
+          <Link href="/changelog">changelog {"->"}</Link>
+          <Link href="/updates">updates {"->"}</Link>
+        </div>
       </div>
 
       <div className="mt-8">
