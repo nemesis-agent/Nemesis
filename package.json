@@ -21,7 +21,8 @@
     "audit:p1": "node tools/audit-p1.mjs",
     "audit:p2": "node tools/audit-p2.mjs",
     "audit:privacy": "node tools/audit-privacy.mjs",
-    "audit:agent-quality": "node tools/audit-agent-quality.mjs"
+    "audit:agent-quality": "node tools/audit-agent-quality.mjs",
+    "audit:real-execution": "node tools/audit-real-execution.mjs"
   },
   "engines": {
     "node": ">=22.5.0"

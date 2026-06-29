@@ -45,7 +45,12 @@ submitted transaction against stored proposal data before marking a proposal
 approved.
 
 Validation includes ownership and transaction-shape checks such as signer,
-network, target, value, and calldata where applicable.
+network, target, value, and calldata where applicable. Multi-step Base proposals
+track completed hashes so approvals advance one stored step at a time.
+
+Executable payloads are only prepared for workflows with dedicated encoders and
+clear input bounds. Unsupported workflows remain proposal review-only rather than
+generating arbitrary calldata.
 
 ## Template Controls
 

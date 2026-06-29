@@ -74,6 +74,8 @@ High-risk and degen templates require explicit acknowledgement before deploy.
   summaries before deployment.
 - Guarded: proposal confirmation validates ownership and submitted transaction
   details where executable payloads are available.
+- Execution-expanded: selected Base ETH/USDC and Solana Jupiter proposals can
+  prepare wallet-signable payloads while unsupported templates remain review-only.
 - Privacy-minimized: operational data is used only to run sessions, agents,
   Telegram linking, proposals, and product support flows.
 - Privacy-polished: wallet labels, logs, model context, link codes, and mutation

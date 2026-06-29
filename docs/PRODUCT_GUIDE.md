@@ -90,6 +90,8 @@ context.
 
 If a proposal looks wrong, stale, unexpected, or too risky, skip it.
 
+Executable payload coverage is intentionally narrow. Base ETH/USDC limit, dip, profit-taking, and portfolio rebalance proposals can prepare wallet-signable payloads when parameters and balances are clear. Solana dip and profit proposals can prepare Jupiter transactions. Launch discovery, pool discovery, yield review, gas review, airdrop review, and launch-flipper exits stay review-only until dedicated encoders and checks are added for those exact workflows.
+
 ## User Safety Rules
 
 - NEMESIS never needs seed phrases or private keys.
