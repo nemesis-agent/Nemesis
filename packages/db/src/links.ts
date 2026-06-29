@@ -97,3 +97,14 @@ export async function getWalletForTelegramChatId(telegramChatId: string): Promis
 export async function isWalletLinked(walletAddress: string): Promise<boolean> {
   return (await getTelegramChatIdForWallet(walletAddress)) !== undefined;
 }
+
+
+export async function pruneExpiredLinkCodes(daysOld: number = 1): Promise<number> {
+  const { rowCount } = await pool.query(
+    `DELETE FROM link_codes
+     WHERE used_at IS NOT NULL
+        OR expires_at < CURRENT_TIMESTAMP - ($1::int * INTERVAL '1 day')`,
+    [daysOld],
+  );
+  return rowCount ?? 0;
+}

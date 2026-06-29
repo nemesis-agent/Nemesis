@@ -5,6 +5,7 @@ import {
   getTelegramChatIdForWallet,
   listAgents,
   listProposalsForAgent,
+  pruneExpiredLinkCodes,
   pruneOldProposals,
   recordRuntimeHealth,
   updateAgentRuntimeState,
@@ -77,11 +78,12 @@ export function startRunner(bot: Telegraf) {
     });
 
     if (cycleCount % 1440 === 0) {
-      pruneOldProposals(7)
-        .then((count) => {
-          if (count > 0) logger.info({ msg: `pruned ${count} old skipped proposals` });
+      Promise.all([pruneOldProposals(7), pruneExpiredLinkCodes(1)])
+        .then(([proposalCount, linkCodeCount]) => {
+          if (proposalCount > 0) logger.info({ msg: `pruned ${proposalCount} old skipped proposals` });
+          if (linkCodeCount > 0) logger.info({ msg: `pruned ${linkCodeCount} expired or used link codes` });
         })
-        .catch((err) => { void sendOpsAlert({ event: "proposal_prune_error", severity: "warning", message: "error pruning old proposals", context: { error: String(err) } }); });
+        .catch((err) => { void sendOpsAlert({ event: "retention_prune_error", severity: "warning", message: "error pruning retained operational records", context: { error: cleanErrorMessage(err) } }); });
     }
   }, RUNNER_INTERVAL_MS);
 

@@ -26,6 +26,7 @@ export {
 export {
   generateLinkCode,
   consumeLinkCode,
+  pruneExpiredLinkCodes,
   getWalletForTelegramChatId,
   getTelegramChatIdForWallet,
   isWalletLinked,
