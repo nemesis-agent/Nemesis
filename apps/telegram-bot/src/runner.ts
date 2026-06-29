@@ -28,6 +28,7 @@ const RUNNER_HEALTH_KEY = "telegram-runner";
 const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL ?? process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com";
 const solanaConnection = new Connection(SOLANA_RPC_URL, "confirmed");
 const MIN_SOL_RESERVE_LAMPORTS = BigInt(Math.floor(0.02 * LAMPORTS_PER_SOL));
+const MIN_BASE_ETH_RESERVE = 0.002;
 const PRODUCTION_TEMPLATES = new Set([
   "ape-agent",
   "pool-sniper",
@@ -630,16 +631,44 @@ async function evaluateProfitTaker(agent: Agent): Promise<EvaluationResult | nul
     return null;
   }
 
+  let unsignedTxPayload: string | undefined;
+  let walletAction = "review only";
+  let preparedSellEth: string | undefined;
+
+  if (ticker === "ETH_USD") {
+    const ethBalance = await getEthBalance(agent.walletAddress);
+    const spendableEth = Math.max(0, ethBalance - MIN_BASE_ETH_RESERVE);
+    const sellEth = spendableEth * Math.min(100, Math.max(1, sellPortionPercent)) / 100;
+
+    if (sellEth > 0) {
+      preparedSellEth = sellEth.toFixed(8);
+      unsignedTxPayload = JSON.stringify(buildEthToUsdcSwapPayload({
+        recipient: agent.walletAddress,
+        ethAmount: preparedSellEth,
+        ethUsdPrice: price,
+      }));
+      walletAction = "sign ETH -> USDC swap";
+    } else {
+      walletAction = "review only - ETH balance is below protected reserve";
+    }
+  }
+
   return {
     title: `${ticker} profit target hit`,
-    action: `${ticker} is up ${gainPercent.toFixed(2)}% from your $${entryPrice} entry. Review selling ${sellPortionPercent}% of the position.`,
+    action: unsignedTxPayload
+      ? `${ticker} is up ${gainPercent.toFixed(2)}% from your $${entryPrice} entry. Review the prepared ${preparedSellEth} ETH sell before signing.`
+      : `${ticker} is up ${gainPercent.toFixed(2)}% from your $${entryPrice} entry. Review selling ${sellPortionPercent}% of the position.`,
     estimatedGasUsd: "$0.10",
+    unsignedTxPayload,
     details: [
       { label: "asset", value: ticker },
       { label: "current price", value: `$${price.toFixed(2)}` },
       { label: "entry price", value: `$${entryPrice}` },
       { label: "gain", value: `${gainPercent.toFixed(2)}%` },
       { label: "portion", value: `${sellPortionPercent}%` },
+      ...(preparedSellEth ? [{ label: "prepared sell", value: `${preparedSellEth} ETH` }] : []),
+      { label: "protected reserve", value: `${MIN_BASE_ETH_RESERVE} ETH` },
+      { label: "wallet action", value: walletAction },
     ],
     state: {
       ...agent.runtimeState,
@@ -652,8 +681,6 @@ async function evaluateProfitTaker(agent: Agent): Promise<EvaluationResult | nul
     lastEvent: `Profit target fired for ${ticker} at ${gainPercent.toFixed(2)}%.`,
   };
 }
-
-
 async function evaluateSolanaDipBuyer(agent: Agent): Promise<EvaluationResult | null> {
   const ticker: SupportedTicker = "SOL_USD";
   const price = await getLivePrice(ticker);
@@ -864,14 +891,22 @@ async function evaluatePortfolioRebalancer(agent: Agent): Promise<EvaluationResu
   const direction = drift > 0 ? "sell ETH for USDC" : "buy ETH with USDC";
   const targetEthValue = totalValue * (targetEthPercent / 100);
   const excessEthValue = Math.max(0, ethValue - targetEthValue);
+  const missingEthValue = Math.max(0, targetEthValue - ethValue);
   const ethAmount = excessEthValue > 0 ? (excessEthValue / ethPrice).toFixed(8) : undefined;
+  const usdcBuyAmount = missingEthValue > 0 ? Math.min(usdcBalance, missingEthValue) : 0;
   const unsignedTxPayload = ethAmount
     ? JSON.stringify(buildEthToUsdcSwapPayload({
         recipient: agent.walletAddress,
         ethAmount,
         ethUsdPrice: ethPrice,
       }))
-    : undefined;
+    : usdcBuyAmount > 0
+      ? JSON.stringify(buildUsdcApproveAndSwapToEthPayload({
+          recipient: agent.walletAddress,
+          usdcAmount: usdcBuyAmount,
+          ethUsdPrice: ethPrice,
+        }))
+      : undefined;
 
   return {
     title: "Portfolio drift detected",
@@ -881,16 +916,17 @@ async function evaluatePortfolioRebalancer(agent: Agent): Promise<EvaluationResu
     details: [
       { label: "ETH value", value: `$${ethValue.toFixed(2)}` },
       { label: "USDC balance", value: `$${usdcBalance.toFixed(2)}` },
+      ...(usdcBuyAmount > 0 ? [{ label: "prepared buy", value: `${usdcBuyAmount.toFixed(2)} USDC` }] : []),
+      ...(ethAmount ? [{ label: "prepared sell", value: `${ethAmount} ETH` }] : []),
       { label: "current ETH allocation", value: `${currentEthPercent.toFixed(2)}%` },
       { label: "target", value: `${targetEthPercent}% ETH` },
       { label: "drift", value: `${drift.toFixed(2)}%` },
-      { label: "wallet action", value: unsignedTxPayload ? "sign ETH -> USDC swap" : "review only" },
+      { label: "wallet action", value: ethAmount && unsignedTxPayload ? "sign ETH -> USDC swap" : unsignedTxPayload ? "approve USDC, then swap USDC -> ETH" : "review only" },
     ],
     state: { ...agent.runtimeState, ethBalance, usdcBalance, ethValue, currentEthPercent, lastProposalAt: new Date().toISOString() },
     lastEvent: `Portfolio drift fired at ${currentEthPercent.toFixed(2)}% ETH allocation.`,
   };
 }
-
 async function getBaseGasGwei(): Promise<number> {
   const result = await callBaseRpc("eth_gasPrice", []);
   return Number(BigInt(result)) / 1e9;
