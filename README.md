@@ -76,6 +76,8 @@ High-risk and degen templates require explicit acknowledgement before deploy.
   details where executable payloads are available.
 - Privacy-minimized: operational data is used only to run sessions, agents,
   Telegram linking, proposals, and product support flows.
+- Privacy-polished: wallet labels, logs, model context, link codes, and mutation
+  responses are minimized or redacted where practical.
 
 ## Stack
 

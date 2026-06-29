@@ -43,6 +43,16 @@ not from private database dumps or secret runtime configuration.
 Users should avoid entering seed phrases, private keys, or unrelated sensitive
 personal information into any chat or intent field.
 
+## Minimization And Retention
+
+NEMESIS minimizes user data sent across surfaces:
+
+- Dashboard cards use masked wallet labels and avoid serializing agent parameters or runtime state unless needed for the view.
+- Agent creation responses return only the created agent ID and name.
+- Intent planning sends a coarse Base balance range to OpenRouter instead of an exact wallet balance.
+- Operational logs and alerts redact wallet addresses, transaction hashes, Telegram tokens, API-key-like strings, and Telegram chat identifiers where practical.
+- Used Telegram link codes and stale expired link codes are pruned by the runner retention cycle.
+
 ## Third-Party Services
 
 The product depends on wallet providers, WalletConnect/Reown, Telegram,

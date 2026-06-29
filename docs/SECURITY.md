@@ -57,6 +57,12 @@ Templates are intentionally constrained:
 - plain-language approval summary
 - risk acknowledgement for high-risk and degen templates
 
+## Wallet/User Privacy Controls
+
+Wallet-private surfaces remain wallet-scoped server-side. Client-facing dashboard cards receive masked wallet labels rather than full wallet rows, and mutation responses avoid returning full database records when the UI only needs identifiers.
+
+OpenRouter planning receives redacted user messages and coarse balance ranges instead of exact wallet balances. Operational logs and alert webhooks use redaction helpers for wallet addresses, transaction hashes, Telegram token patterns, API-key-like strings, and Telegram chat identifiers.
+
 ## Operational Reliability
 
 The runner writes heartbeat data to `runtime_health` without storing secrets. The web health endpoint and wallet dashboard expose only coarse service state, last heartbeat age, and cycle metadata.
