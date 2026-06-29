@@ -181,19 +181,136 @@ async function runCycle(bot: Telegraf) {
 }
 
 async function evaluateAgent(agent: Agent): Promise<EvaluationResult | null> {
-  if (agent.templateId === "ape-agent") return evaluateApeAgent(agent);
-  if (agent.templateId === "pool-sniper") return evaluatePoolSniper(agent);
-  if (agent.templateId === "dip-buyer") return evaluateDipBuyer(agent);
-  if (agent.templateId === "limit-order") return evaluateLimitOrder(agent);
-  if (agent.templateId === "launch-flipper") return evaluateLaunchFlipper(agent);
-  if (agent.templateId === "profit-taker") return evaluateProfitTaker(agent);
-  if (agent.templateId === "auto-compound") return evaluateAutoCompound(agent);
-  if (agent.templateId === "gas-optimizer") return evaluateGasOptimizer(agent);
-  if (agent.templateId === "airdrop-farmer") return evaluateAirdropFarmer(agent);
-  if (agent.templateId === "portfolio-rebalancer") return evaluatePortfolioRebalancer(agent);
-  if (agent.templateId === "solana-dip-buyer") return evaluateSolanaDipBuyer(agent);
-  if (agent.templateId === "solana-profit-taker") return evaluateSolanaProfitTaker(agent);
+  const validated = validateRuntimeParameters(agent);
+  if (!validated.ok) {
+    await updateAgentRuntimeState(agent.id, { ...agent.runtimeState, parameterError: validated.error, checkedAt: new Date().toISOString() }, "Skipped check: agent parameters need review.");
+    void sendOpsAlert({
+      event: "agent_parameter_validation_failed",
+      severity: "warning",
+      message: "agent parameter validation failed",
+      context: { agentId: agent.id, templateId: agent.templateId, error: validated.error },
+    });
+    return null;
+  }
+
+  const normalizedAgent: Agent = { ...agent, parameters: validated.parameters };
+
+  if (normalizedAgent.templateId === "ape-agent") return evaluateApeAgent(normalizedAgent);
+  if (normalizedAgent.templateId === "pool-sniper") return evaluatePoolSniper(normalizedAgent);
+  if (normalizedAgent.templateId === "dip-buyer") return evaluateDipBuyer(normalizedAgent);
+  if (normalizedAgent.templateId === "limit-order") return evaluateLimitOrder(normalizedAgent);
+  if (normalizedAgent.templateId === "launch-flipper") return evaluateLaunchFlipper(normalizedAgent);
+  if (normalizedAgent.templateId === "profit-taker") return evaluateProfitTaker(normalizedAgent);
+  if (normalizedAgent.templateId === "auto-compound") return evaluateAutoCompound(normalizedAgent);
+  if (normalizedAgent.templateId === "gas-optimizer") return evaluateGasOptimizer(normalizedAgent);
+  if (normalizedAgent.templateId === "airdrop-farmer") return evaluateAirdropFarmer(normalizedAgent);
+  if (normalizedAgent.templateId === "portfolio-rebalancer") return evaluatePortfolioRebalancer(normalizedAgent);
+  if (normalizedAgent.templateId === "solana-dip-buyer") return evaluateSolanaDipBuyer(normalizedAgent);
+  if (normalizedAgent.templateId === "solana-profit-taker") return evaluateSolanaProfitTaker(normalizedAgent);
   return null;
+}
+
+type RuntimeParameterValue = string | number | boolean;
+type RuntimeParameterRule =
+  | { type: "number" | "percent" | "currency"; min: number; max: number }
+  | { type: "select"; options: string[] }
+  | { type: "boolean" };
+
+const RUNTIME_PARAMETER_RULES: Record<string, Record<string, RuntimeParameterRule>> = {
+  "ape-agent": {
+    maxApeAmount: { type: "currency", min: 1, max: 10000 },
+    minLiquidity: { type: "currency", min: 1000, max: 100000000 },
+  },
+  "pool-sniper": {
+    minInitialLiquidity: { type: "currency", min: 1000, max: 100000000 },
+    allocationPerPool: { type: "currency", min: 1, max: 10000 },
+    tokenWhitelist: { type: "select", options: ["any-base-pair", "eth-pairs-only", "stable-pairs-only"] },
+  },
+  "launch-flipper": {
+    asset: { type: "select", options: ["ETH_USD", "BTC_USD", "SOL_USD"] },
+    entryPrice: { type: "currency", min: 0.01, max: 10000000 },
+    takeProfitPercent: { type: "percent", min: 0.01, max: 10000 },
+    stopLossPercent: { type: "percent", min: 0.01, max: 100 },
+    maxHoldHours: { type: "number", min: 1, max: 8760 },
+  },
+  "limit-order": {
+    asset: { type: "select", options: ["ETH_USD", "BTC_USD", "SOL_USD"] },
+    targetPrice: { type: "currency", min: 0.01, max: 10000000 },
+    direction: { type: "select", options: ["buy", "sell"] },
+    amount: { type: "currency", min: 1, max: 1000000 },
+  },
+  "dip-buyer": {
+    asset: { type: "select", options: ["ETH_USD", "BTC_USD", "SOL_USD"] },
+    dipPercent: { type: "percent", min: 0.01, max: 95 },
+    buyAmount: { type: "currency", min: 1, max: 1000000 },
+    cooldownHours: { type: "number", min: 1, max: 8760 },
+  },
+  "profit-taker": {
+    asset: { type: "select", options: ["ETH_USD", "BTC_USD", "SOL_USD"] },
+    entryPrice: { type: "currency", min: 0.01, max: 10000000 },
+    gainTargetPercent: { type: "percent", min: 0.01, max: 10000 },
+    sellPortionPercent: { type: "percent", min: 1, max: 100 },
+    repeatAfterReset: { type: "boolean" },
+  },
+  "auto-compound": {
+    minClaimAmount: { type: "currency", min: 0.01, max: 1000000 },
+    source: { type: "select", options: ["morpho-lending", "aerodrome-lp-fees"] },
+    reviewIntervalHours: { type: "number", min: 1, max: 8760 },
+  },
+  "gas-optimizer": {
+    maxGasGwei: { type: "number", min: 0.001, max: 1000 },
+    maxWaitHours: { type: "number", min: 1, max: 8760 },
+  },
+  "airdrop-farmer": {
+    targetProtocols: { type: "select", options: ["all-supported", "morpho-and-moonwell", "aerodrome-and-uniswap"] },
+    weeklyBudget: { type: "currency", min: 0.01, max: 1000 },
+  },
+  "portfolio-rebalancer": {
+    targetAllocation: { type: "select", options: ["50-50", "60-40", "70-30", "80-20"] },
+    driftTolerancePercent: { type: "percent", min: 0.01, max: 95 },
+  },
+  "solana-dip-buyer": {
+    asset: { type: "select", options: ["SOL_USD"] },
+    dipPercent: { type: "percent", min: 0.01, max: 95 },
+    buyAmount: { type: "currency", min: 1, max: 1000000 },
+    cooldownHours: { type: "number", min: 1, max: 8760 },
+  },
+  "solana-profit-taker": {
+    asset: { type: "select", options: ["SOL_USD"] },
+    entryPrice: { type: "currency", min: 0.01, max: 10000000 },
+    gainTargetPercent: { type: "percent", min: 0.01, max: 10000 },
+    sellPortionPercent: { type: "percent", min: 1, max: 100 },
+  },
+};
+
+function validateRuntimeParameters(agent: Agent): { ok: true; parameters: Record<string, RuntimeParameterValue> } | { ok: false; error: string } {
+  const rules = RUNTIME_PARAMETER_RULES[agent.templateId];
+  if (!rules) return { ok: false, error: "unknown template" };
+
+  const parameters: Record<string, RuntimeParameterValue> = {};
+  for (const [key, rule] of Object.entries(rules)) {
+    const value = agent.parameters[key];
+    if (value === undefined) continue;
+
+    if (rule.type === "boolean") {
+      if (typeof value !== "boolean") return { ok: false, error: `${key} must be a boolean` };
+      parameters[key] = value;
+      continue;
+    }
+
+    if (rule.type === "select") {
+      if (typeof value !== "string" || !rule.options.includes(value)) return { ok: false, error: `${key} is not an allowed option` };
+      parameters[key] = value;
+      continue;
+    }
+
+    if (typeof value !== "number" || !Number.isFinite(value) || value < rule.min || value > rule.max) {
+      return { ok: false, error: `${key} must be between ${rule.min} and ${rule.max}` };
+    }
+    parameters[key] = value;
+  }
+
+  return { ok: true, parameters };
 }
 
 function tickerParam(agent: Agent): SupportedTicker {
