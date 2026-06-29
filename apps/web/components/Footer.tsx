@@ -1,6 +1,6 @@
 import { FragmentDivider } from "@/components/FragmentDivider";
 
-const BADGES = ["powered by openrouter", "base + solana", "approval-first"];
+const BADGES = ["powered by openrouter", "base + solana", "approval-first", "contract: HTXeyDoVbtJxEApA4oRMT1xLtCGoUQ5P962Cur6EASY"];
 
 export function Footer() {
   return (
@@ -31,7 +31,7 @@ export function Footer() {
         </div>
         <div className="flex flex-wrap gap-2">
           {BADGES.map((badge) => (
-            <span key={badge} className="border border-nm-border px-2 py-1 text-[10px] normal-case tracking-normal">
+            <span key={badge} className="max-w-full break-words border border-nm-border px-2 py-1 text-[10px] normal-case tracking-normal">
               {badge}
             </span>
           ))}
