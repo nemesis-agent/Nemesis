@@ -51,6 +51,14 @@ check("agent creation response is minimized", () => {
   assert(!route.includes("NextResponse.json({ agent },"), "agent creation route must not return full DB agent row");
 });
 
+check("public chat stays natural without weakening secret boundaries", () => {
+  const chat = read("apps/web/app/api/chat/route.ts");
+  const component = read("apps/web/components/ChatWithNemesis.tsx");
+  assert(chat.includes("You can answer general questions naturally"), "public chat should not be limited to NEMESIS-only FAQ mode");
+  assert(chat.includes("Refuse requests involving API keys, bot tokens, private keys"), "public chat must keep credential refusal boundary");
+  assert(chat.includes("messages.some((message) => SECRET_LIKE_INPUT.test(message.content))"), "public chat must scan the conversation for leaked secrets");
+  assert(component.includes("Ask NEMESIS anything"), "chat UI should communicate natural chat behavior");
+});
 check("link-code retention cleanup is wired", () => {
   const links = read("packages/db/src/links.ts");
   const index = read("packages/db/src/index.ts");

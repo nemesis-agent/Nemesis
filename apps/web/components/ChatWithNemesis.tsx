@@ -17,7 +17,7 @@ const INTRO_MESSAGE: ChatMessage = {
   id: "intro",
   role: "agent",
   content:
-    "I am the NEMESIS Master Agent. Ask me about the product, agents, templates, Base, Solana, Telegram, security, privacy, or the approval-first model. Never share credentials or private information.",
+    "I am the NEMESIS Master Agent. Ask naturally about NEMESIS, crypto automation, Base, Solana, or anything else. I will not handle secrets, private keys, tokens, or private user data.",
 };
 
 export function ChatWithNemesis() {
@@ -123,7 +123,7 @@ export function ChatWithNemesis() {
           onChange={(event) => setInput(event.target.value)}
           maxLength={1_000}
           autoComplete="off"
-          placeholder="Ask about NEMESIS, its agents, security, or privacy"
+          placeholder="Ask NEMESIS anything. Do not paste secrets or private keys."
           className="flex-1 border border-nm-border bg-nm-bg px-4 py-3 text-sm text-nm-fg placeholder:text-nm-muted focus:border-nm-fg focus:outline-none"
         />
         <Button type="submit" variant="primary" magnetic disabled={stage === "thinking" || !input.trim()}>
