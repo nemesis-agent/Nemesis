@@ -6,7 +6,7 @@ import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 
 const BOOT_LOGS = [
   "NEMESIS_OS v1.0.4 initializing...",
-  "Establishing secure connection to Base mainnet...",
+  "Establishing secure Base and Solana network context...",
   "Loading Master Agent parameters...",
   "Decrypting local state...",
   "Calibrating Sub-agent neural pathways...",

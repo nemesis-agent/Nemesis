@@ -1,19 +1,19 @@
 /**
- * Scrolling marquee ticker — continuous horizontal scroll of brand/tech
+ * Scrolling marquee ticker - continuous horizontal scroll of brand/tech
  * keywords below the hero CTAs. Pure CSS animation, no JS. Uses three
  * copies of the item list so the loop is always seamless regardless of
  * screen width.
  */
 export function HeroTicker() {
   const items = [
-    "base mainnet",
+    "base + solana live",
     "approval-first",
     "powered by openrouter",
     "base + solana",
     "your keys",
     "autonomous agents",
-    "propose · not execute",
-    "chaos in · order out",
+    "propose / not execute",
+    "chaos in / order out",
     "on-chain execution",
   ];
 
@@ -31,7 +31,7 @@ export function HeroTicker() {
             key={i}
             className="inline-flex items-center gap-4 px-6 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted"
           >
-            <span className="text-nm-fragment-red opacity-60">◆</span>
+            <span className="text-nm-fragment-red opacity-60">/</span>
             {item}
           </span>
         ))}

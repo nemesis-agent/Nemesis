@@ -31,12 +31,12 @@ export function Hero() {
         <div className="flex flex-col items-center text-center">
           {/* Badge */}
           <div
-            className="fade-in-up mb-8 inline-flex items-center gap-2 border border-nm-border bg-nm-surface px-4 py-1.5"
+            className="network-badge fade-in-up mb-8 inline-flex items-center gap-2 overflow-hidden border border-nm-border bg-nm-surface px-4 py-1.5"
             style={{ animationDelay: "0ms" }}
           >
             <span className="status-pulse h-1.5 w-1.5 bg-nm-resolve" aria-hidden="true" />
             <span className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-              live on base mainnet
+              live on base + solana
             </span>
           </div>
 
@@ -67,7 +67,7 @@ export function Hero() {
           >
             Deploy autonomous agents that watch the market and propose action on your behalf.
             Powered by OpenRouter for Base and Solana. Every wallet action waits for your
-            approval — nothing moves without you.
+            approval - nothing moves without you.
           </p>
 
           {/* CTAs */}

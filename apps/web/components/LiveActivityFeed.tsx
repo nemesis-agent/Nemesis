@@ -108,7 +108,7 @@ export function LiveActivityFeed() {
             <div className="flex items-center gap-2">
               <span className="status-pulse h-2 w-2 bg-nm-resolve" aria-hidden="true" />
               <span className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-                live feed / base mainnet
+                live feed / base + solana
               </span>
             </div>
             <div className="flex gap-1.5">

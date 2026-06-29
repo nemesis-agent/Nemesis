@@ -15,6 +15,9 @@ const layout = read("apps/web/app/layout.tsx");
 const home = read("apps/web/app/page.tsx");
 const hero = read("apps/web/components/Hero.tsx");
 const footer = read("apps/web/components/Footer.tsx");
+const ticker = read("apps/web/components/HeroTicker.tsx");
+const networkPulse = read("apps/web/components/NetworkPulse.tsx");
+const liveActivityFeed = read("apps/web/components/LiveActivityFeed.tsx");
 const growth = read("apps/web/components/GrowthLoop.tsx");
 const faq = read("apps/web/components/FAQSection.tsx");
 const templateDetail = read("apps/web/app/templates/[id]/page.tsx");
@@ -37,6 +40,13 @@ check("sitemap and robots are present with safe boundaries", () => {
   assert(robots.includes("disallow: [\"/dashboard\", \"/agents/\", \"/api/\"]"), "robots must keep private surfaces out of indexing");
 });
 
+check("home network copy reflects Base and Solana support", () => {
+  assert(hero.includes("live on base + solana"), "hero badge must not be Base-only");
+  assert(networkPulse.includes("base + solana"), "navbar network pill must show both supported networks");
+  assert(liveActivityFeed.includes("live feed / base + solana"), "network activity feed must show both supported networks");
+  assert(ticker.includes("base + solana live"), "hero ticker must show Base + Solana support");
+  assert(![hero, ticker, networkPulse, liveActivityFeed].join("\n").toLowerCase().includes("base mainnet"), "public network copy must not imply Base-only support");
+});
 check("home page has growth loop and FAQ without unsafe claims", () => {
   assert(home.includes("GrowthLoop"), "home page must render growth loop");
   assert(home.includes("FAQSection"), "home page must render FAQ section");

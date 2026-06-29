@@ -345,7 +345,7 @@ body::after {
 }
 
 /* ---------------------------------------------------------------------
- * Status pulse — soft breathing animation for the "base mainnet" dot in
+ * Status pulse - soft breathing animation for live network indicators in
  * the navbar. Calm, slow, never distracting.
  * ------------------------------------------------------------------- */
 @keyframes status-pulse {
@@ -368,9 +368,62 @@ body::after {
   }
 }
 
+
 /* ---------------------------------------------------------------------
- * Mobile nav panel — quick fade + slide-down entrance when the
- * hamburger menu opens. No exit animation (panel just unmounts) — the
+ * Network badges - restrained scanline sweep for Base + Solana status UI.
+ * ------------------------------------------------------------------- */
+@keyframes network-scan {
+  0% { transform: translateX(-120%); opacity: 0; }
+  18% { opacity: 0.65; }
+  54% { opacity: 0.25; }
+  100% { transform: translateX(140%); opacity: 0; }
+}
+
+@keyframes network-border-glow {
+  0%, 100% { border-color: rgb(var(--nm-border)); box-shadow: inset 0 0 0 1px transparent; }
+  50% { border-color: rgba(226, 82, 79, 0.45); box-shadow: inset 0 0 18px rgba(74, 143, 217, 0.08); }
+}
+
+.network-badge,
+.network-pulse-card {
+  position: relative;
+  isolation: isolate;
+  animation: network-border-glow 4.8s ease-in-out infinite;
+}
+
+.network-badge::after,
+.network-pulse-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 0%, rgba(226, 82, 79, 0.16) 42%, rgba(74, 143, 217, 0.14) 55%, transparent 75%);
+  transform: translateX(-120%);
+  animation: network-scan 5.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.network-badge > *,
+.network-pulse-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.network-pulse-card::after {
+  animation-delay: 900ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .network-badge,
+  .network-pulse-card,
+  .network-badge::after,
+  .network-pulse-card::after {
+    animation: none;
+  }
+}
+/* ---------------------------------------------------------------------
+ * Mobile nav panel - quick fade + slide-down entrance when the
+ * hamburger menu opens. No exit animation (panel just unmounts) - the
  * backdrop fade alone reads as a clean close.
  * ------------------------------------------------------------------- */
 @keyframes mobile-menu-in {
@@ -395,7 +448,7 @@ body::after {
 }
 
 /* ---------------------------------------------------------------------
- * Ticker / marquee — continuous horizontal scroll used in HeroTicker.
+ * Ticker / marquee - continuous horizontal scroll used in HeroTicker.
  * Uses translateX(-33.333%) so the first third scrolls completely off
  * before looping (the content is tripled in the component).
  * ------------------------------------------------------------------- */

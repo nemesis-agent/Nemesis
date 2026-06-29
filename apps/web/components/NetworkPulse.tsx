@@ -30,10 +30,10 @@ export function NetworkPulse() {
   }, [reducedMotion]);
 
   return (
-    <div className="hidden items-center gap-3 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted sm:flex border border-nm-border bg-nm-surface px-2 py-1">
+    <div className="network-pulse-card hidden items-center gap-3 overflow-hidden font-mono text-[10px] uppercase tracking-widest2 text-nm-muted sm:flex border border-nm-border bg-nm-surface px-2 py-1">
       <div className="flex items-center gap-2 border-r border-nm-border pr-3">
         <span className={`h-1.5 w-1.5 bg-nm-resolve transition-opacity duration-300 ${pulsing ? "opacity-100 scale-150" : "opacity-50 scale-100"}`} aria-hidden="true" />
-        base mainnet
+        base + solana
       </div>
       <div className="flex gap-3">
         <span className="text-nm-fg">bl: <span className="text-nm-fragment-blue">{block}</span></span>
