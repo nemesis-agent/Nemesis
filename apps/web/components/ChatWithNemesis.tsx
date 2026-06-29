@@ -20,20 +20,33 @@ const INTRO_MESSAGE: ChatMessage = {
     "I am the NEMESIS Master Agent. Ask naturally about NEMESIS, crypto automation, Base, Solana, or anything else. I will not handle secrets, private keys, tokens, or private user data.",
 };
 
+const SUGGESTED_PROMPTS = [
+  "What is NEMESIS?",
+  "How does approval-first execution work?",
+  "Can I ask general questions here?",
+  "What should I never paste into this chat?",
+];
+
 export function ChatWithNemesis() {
   const [messages, setMessages] = useState<ChatMessage[]>([INTRO_MESSAGE]);
   const [input, setInput] = useState("");
   const [stage, setStage] = useState<"idle" | "thinking">("idle");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputId = useId();
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, stage]);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const trimmed = input.trim();
+  useEffect(() => {
+    if (!textareaRef.current) return;
+    textareaRef.current.style.height = "auto";
+    textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 220)}px`;
+  }, [input]);
+
+  async function sendMessage(raw: string) {
+    const trimmed = raw.trim();
     if (!trimmed || stage === "thinking") return;
 
     const userMessage: ChatMessage = {
@@ -49,7 +62,7 @@ export function ChatWithNemesis() {
     try {
       const conversation = nextMessages
         .filter((message) => message.id !== "intro")
-        .slice(-10)
+        .slice(-40)
         .map((message) => ({
           role: message.role === "agent" ? "assistant" : "user",
           content: message.content,
@@ -81,16 +94,21 @@ export function ChatWithNemesis() {
     }
   }
 
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await sendMessage(input);
+  }
+
   return (
     <div className="border border-nm-border bg-nm-bg">
       <div
         ref={scrollRef}
         className="flex flex-col gap-5 overflow-y-auto p-6"
-        style={{ maxHeight: "400px", scrollbarWidth: "thin", scrollBehavior: "smooth" }}
+        style={{ maxHeight: "480px", scrollbarWidth: "thin", scrollBehavior: "smooth" }}
         aria-live="polite"
       >
         {messages.map((message) => (
-          <div key={message.id} className={message.role === "user" ? "ml-auto max-w-[85%]" : "max-w-[85%]"}>
+          <div key={message.id} className={message.role === "user" ? "ml-auto max-w-[88%]" : "max-w-[88%]"}>
             <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
               {message.role === "user" ? "you" : "master agent"}
             </p>
@@ -103,7 +121,7 @@ export function ChatWithNemesis() {
         ))}
 
         {stage === "thinking" && (
-          <div className="max-w-[85%]">
+          <div className="max-w-[88%]">
             <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">master agent</p>
             <div className="mt-3 w-32">
               <FragmentDivider segments={12} loading />
@@ -114,22 +132,44 @@ export function ChatWithNemesis() {
 
       <FragmentDivider />
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3 bg-nm-surface p-6 sm:flex-row">
-        <label htmlFor={inputId} className="sr-only">Ask NEMESIS</label>
-        <input
-          id={inputId}
-          type="text"
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          maxLength={1_000}
-          autoComplete="off"
-          placeholder="Ask NEMESIS anything. Do not paste secrets or private keys."
-          className="flex-1 border border-nm-border bg-nm-bg px-4 py-3 text-sm text-nm-fg placeholder:text-nm-muted focus:border-nm-fg focus:outline-none"
-        />
-        <Button type="submit" variant="primary" magnetic disabled={stage === "thinking" || !input.trim()}>
-          Ask
-        </Button>
-      </form>
+      <div className="bg-nm-surface p-6">
+        <div className="mb-4 flex flex-wrap gap-2">
+          {SUGGESTED_PROMPTS.map((prompt) => (
+            <button
+              key={prompt}
+              type="button"
+              className="border border-nm-border px-3 py-2 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted transition-colors hover:border-nm-fragment-red hover:text-nm-fg disabled:opacity-50"
+              disabled={stage === "thinking"}
+              onClick={() => void sendMessage(prompt)}
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <label htmlFor={inputId} className="sr-only">Ask NEMESIS</label>
+          <textarea
+            ref={textareaRef}
+            id={inputId}
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                void sendMessage(input);
+              }
+            }}
+            rows={3}
+            autoComplete="off"
+            placeholder="Ask NEMESIS anything. Shift + Enter for a new line. Do not paste secrets or private keys."
+            className="min-h-28 flex-1 resize-none border border-nm-border bg-nm-bg px-4 py-3 text-sm leading-relaxed text-nm-fg placeholder:text-nm-muted focus:border-nm-fg focus:outline-none"
+          />
+          <Button type="submit" variant="primary" magnetic disabled={stage === "thinking" || !input.trim()}>
+            Ask
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }

@@ -12,9 +12,8 @@ const openrouter = createOpenRouter({
   apiKey: openrouterApiKey || "missing-openrouter-api-key",
 });
 
-const MAX_MESSAGES = 10;
-const MAX_MESSAGE_CHARS = 1_000;
-const MAX_TOTAL_CHARS = 6_000;
+const MAX_MESSAGES = 60;
+const MAX_MODEL_INPUT_CHARS = 80_000;
 const SECRET_LIKE_INPUT =
   /(-----BEGIN [A-Z ]*PRIVATE KEY-----|\b(?:sk-or-v1-|sk-[a-z0-9_-]{16,})|\b\d{8,12}:[A-Za-z0-9_-]{25,}|(?:seed|recovery|mnemonic|private\s*key)\s*[:=])/i;
 
@@ -81,29 +80,42 @@ const PUBLIC_PRODUCT_CONTEXT = {
 };
 
 function parseMessages(value: unknown): SafeMessage[] | null {
-  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_MESSAGES) return null;
+  if (!Array.isArray(value) || value.length === 0) return null;
 
   const messages: SafeMessage[] = [];
-  let totalChars = 0;
-  for (const item of value) {
+  for (const item of value.slice(-MAX_MESSAGES)) {
     if (!item || typeof item !== "object") return null;
     const role = "role" in item ? item.role : null;
     const content = "content" in item ? item.content : null;
     if ((role !== "user" && role !== "assistant") || typeof content !== "string") return null;
 
     const trimmed = content.trim();
-    if (!trimmed || trimmed.length > MAX_MESSAGE_CHARS) return null;
-    totalChars += trimmed.length;
-    if (totalChars > MAX_TOTAL_CHARS) return null;
+    if (!trimmed) return null;
     messages.push({ role, content: trimmed });
   }
   return messages;
 }
 
+function fitMessagesForModel(messages: SafeMessage[]) {
+  const fitted: SafeMessage[] = [];
+  let totalChars = 0;
+
+  for (const message of [...messages].reverse()) {
+    const remaining = MAX_MODEL_INPUT_CHARS - totalChars;
+    if (remaining <= 0) break;
+
+    const content = message.content.length > remaining ? message.content.slice(-remaining) : message.content;
+    fitted.unshift({ ...message, content });
+    totalChars += content.length;
+  }
+
+  return fitted;
+}
+
 export async function POST(request: Request) {
   const rateLimit = enforceRateLimit({
     key: rateLimitKey(request, "public-chat"),
-    limit: 8,
+    limit: 30,
     windowMs: 60_000,
   });
   if (rateLimit) return rateLimit;
@@ -118,7 +130,7 @@ export async function POST(request: Request) {
   const messages = parseMessages(body.messages);
   if (!messages) {
     return NextResponse.json(
-      { error: "Messages must contain 1-10 valid entries with at most 1,000 characters each." },
+      { error: "Messages must contain at least one valid text entry." },
       { status: 400 },
     );
   }
@@ -168,10 +180,10 @@ ${JSON.stringify(PUBLIC_PRODUCT_CONTEXT)}`;
     const { text } = await generateText({
       model: openrouter(openrouterModel),
       instructions,
-      messages,
-      maxOutputTokens: 800,
-      temperature: 0.2,
-      timeout: { totalMs: 20_000 },
+      messages: fitMessagesForModel(messages),
+      maxOutputTokens: 1_400,
+      temperature: 0.35,
+      timeout: { totalMs: 30_000 },
     });
 
     const reply = text.trim();

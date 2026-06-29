@@ -57,7 +57,13 @@ check("public chat stays natural without weakening secret boundaries", () => {
   assert(chat.includes("You can answer general questions naturally"), "public chat should not be limited to NEMESIS-only FAQ mode");
   assert(chat.includes("Refuse requests involving API keys, bot tokens, private keys"), "public chat must keep credential refusal boundary");
   assert(chat.includes("messages.some((message) => SECRET_LIKE_INPUT.test(message.content))"), "public chat must scan the conversation for leaked secrets");
+  assert(chat.includes("MAX_MODEL_INPUT_CHARS"), "public chat should trim oversized model context instead of blocking normal long chat");
+  assert(chat.includes("fitMessagesForModel(messages)"), "public chat must fit conversation history before calling the model");
+  assert(!chat.includes("MAX_MESSAGE_CHARS"), "public chat API must not keep the old per-message character cap");
+  assert(component.includes("textarea"), "chat UI should support multi-line natural messages");
+  assert(component.includes("SUGGESTED_PROMPTS"), "chat UI should offer starter prompts");
   assert(component.includes("Ask NEMESIS anything"), "chat UI should communicate natural chat behavior");
+  assert(!component.includes("maxLength"), "chat UI must not enforce the old 1000-character cap");
 });
 check("link-code retention cleanup is wired", () => {
   const links = read("packages/db/src/links.ts");
