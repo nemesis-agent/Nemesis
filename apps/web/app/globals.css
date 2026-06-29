@@ -23,6 +23,8 @@ html,
 body {
   background-color: theme("colors.nm-bg");
   color: theme("colors.nm-fg");
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 body {
@@ -640,7 +642,7 @@ body::after {
 }
 
 /* ---------------------------------------------------------------------
- * Navbar Logo Hover Effect — a premium "chaos resolving into order" 
+ * Navbar Logo Hover Effect — a premium "chaos resolving into order"
  * interaction. When hovered, the text splits instantly with brand colors
  * (red/blue) and snaps back to perfect alignment.
  * ------------------------------------------------------------------- */

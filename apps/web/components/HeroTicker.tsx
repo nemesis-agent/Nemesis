@@ -22,7 +22,7 @@ export function HeroTicker() {
 
   return (
     <div
-      className="overflow-hidden border-y border-nm-border py-3"
+      className="w-full max-w-full overflow-hidden border-y border-nm-border py-3"
       aria-hidden="true"
     >
       <div className="ticker-track flex gap-0 whitespace-nowrap">

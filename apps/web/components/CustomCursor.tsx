@@ -59,7 +59,7 @@ export function CustomCursor() {
   return (
     <>
       <div
-        className="pointer-events-none fixed inset-0 z-[99999] transition-opacity duration-300"
+        className="pointer-events-none fixed inset-0 z-[99999] hidden overflow-hidden transition-opacity duration-300 md:block"
         style={{ opacity: isVisible ? 1 : 0 }}
       >
         {/* Trailing Ring */}

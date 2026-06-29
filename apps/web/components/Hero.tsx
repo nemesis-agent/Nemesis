@@ -6,13 +6,13 @@ import { TEMPLATES } from "@nemesis/templates";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative max-w-full overflow-hidden">
       {/* Backgrounds */}
       <HeroParticles />
 
       {/* Ambient radial glow behind the wordmark */}
       <div
-        className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2"
+        className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[min(600px,100vw)] w-[min(600px,100vw)] -translate-x-1/2 -translate-y-1/2"
         aria-hidden="true"
         style={{
           background:

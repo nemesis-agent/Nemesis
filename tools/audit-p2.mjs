@@ -100,6 +100,16 @@ check("public docs, brand assets, and product copy are synchronized", () => {
   }
 });
 
+check("mobile layout contains horizontal overflow boundaries", () => {
+  const globals = read("apps/web/app/globals.css");
+  const hero = read("apps/web/components/Hero.tsx");
+  const ticker = read("apps/web/components/HeroTicker.tsx");
+  const cursor = read("apps/web/components/CustomCursor.tsx");
+  assert(globals.includes("overflow-x: clip"), "document root must clip decorative horizontal overflow");
+  assert(hero.includes("h-[min(600px,100vw)]") && hero.includes("w-[min(600px,100vw)]"), "hero glow must fit the viewport");
+  assert(ticker.includes("w-full max-w-full overflow-hidden"), "ticker must be width-bounded");
+  assert(cursor.includes("hidden overflow-hidden") && cursor.includes("md:block"), "custom cursor must stay disabled on mobile");
+});
 check("package scripts expose P1 and P2 gates", () => {
   const pkg = JSON.parse(read("package.json"));
   assert(pkg.scripts?.["audit:p1"] === "node tools/audit-p1.mjs", "audit:p1 script missing");
