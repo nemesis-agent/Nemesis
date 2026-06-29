@@ -34,7 +34,7 @@ export async function POST(request: Request) {
   const auth = await requireAnyWalletAuth();
   if (auth.error) return auth.error;
 
-  const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "intent", auth.wallet.walletKey), limit: 12, windowMs: 60_000 });
+  const rateLimit = await enforceRateLimit({ key: rateLimitKey(request, "intent", auth.wallet.walletKey), limit: 12, windowMs: 60_000 });
   if (rateLimit) return rateLimit;
 
   let body: { messages?: unknown[] } | null = null;

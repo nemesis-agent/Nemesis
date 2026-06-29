@@ -66,10 +66,17 @@ CREATE TABLE IF NOT EXISTS runtime_health (
   details             TEXT NOT NULL DEFAULT '{}',
   last_heartbeat_at   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);CREATE TABLE IF NOT EXISTS rate_limits (
+  key                 TEXT PRIMARY KEY,
+  request_count       INTEGER NOT NULL CHECK (request_count >= 0),
+  reset_at            TIMESTAMP WITH TIME ZONE NOT NULL,
+  updated_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_agents_wallet ON agents(wallet_address);
 CREATE INDEX IF NOT EXISTS idx_proposals_agent ON proposals(agent_id);
 CREATE INDEX IF NOT EXISTS idx_link_codes_wallet ON link_codes(wallet_address);
+ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_rate_limits_reset_at ON rate_limits(reset_at);
 `;
 
 // Initialize schema on import

@@ -11,7 +11,7 @@ import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
  * sign-in challenge; default remains SIWE/Base for backwards compatibility.
  */
 export async function GET(request: Request) {
-  const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "auth:nonce"), limit: 30, windowMs: 60_000 });
+  const rateLimit = await enforceRateLimit({ key: rateLimitKey(request, "auth:nonce"), limit: 30, windowMs: 60_000 });
   if (rateLimit) return rateLimit;
 
   const session = await getSession();

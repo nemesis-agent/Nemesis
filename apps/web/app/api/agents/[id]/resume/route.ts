@@ -13,7 +13,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const auth = await requireAnyWalletAuth();
   if (auth.error) return auth.error;
 
-  const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "agents:resume", auth.wallet.walletKey), limit: 30, windowMs: 60_000 });
+  const rateLimit = await enforceRateLimit({ key: rateLimitKey(request, "agents:resume", auth.wallet.walletKey), limit: 30, windowMs: 60_000 });
   if (rateLimit) return rateLimit;
 
   const existing = await getAgent(id);

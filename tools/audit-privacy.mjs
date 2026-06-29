@@ -65,6 +65,17 @@ check("public chat stays natural without weakening secret boundaries", () => {
   assert(component.includes("Ask NEMESIS anything"), "chat UI should communicate natural chat behavior");
   assert(!component.includes("maxLength"), "chat UI must not enforce the old 1000-character cap");
 });
+check("rate limits are shared, atomic, and privacy-preserving", () => {
+  const webLimiter = read("apps/web/lib/rate-limit.ts");
+  const dbLimiter = read("packages/db/src/rate-limits.ts");
+  const migration = read("supabase/migrations/202606300001_rate_limits.sql");
+  assert(webLimiter.includes("consumeRateLimit"), "web limiter must use the shared database counter");
+  assert(webLimiter.includes('createHash("sha256")'), "rate-limit identities must be hashed before storage");
+  assert(!webLimiter.includes("new Map"), "rate limiter must not use process-local counters");
+  assert(dbLimiter.includes("ON CONFLICT (key) DO UPDATE"), "database counter must update atomically");
+  assert(dbLimiter.includes("cleanupExpiredRateLimits"), "expired rate-limit rows must be cleaned up");
+  assert(migration.includes("ENABLE ROW LEVEL SECURITY"), "rate-limit table must enable row-level security");
+});
 check("link-code retention cleanup is wired", () => {
   const links = read("packages/db/src/links.ts");
   const index = read("packages/db/src/index.ts");

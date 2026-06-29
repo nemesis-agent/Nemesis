@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   const originError = rejectCrossOrigin(request);
   if (originError) return originError;
 
-  const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "auth:solana:verify"), limit: 12, windowMs: 60_000 });
+  const rateLimit = await enforceRateLimit({ key: rateLimitKey(request, "auth:solana:verify"), limit: 12, windowMs: 60_000 });
   if (rateLimit) return rateLimit;
 
   const session = await getSession();

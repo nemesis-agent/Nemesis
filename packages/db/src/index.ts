@@ -39,3 +39,9 @@ export {
   type RuntimeHealthStatus,
 } from "./runtime-health.js";
 export { pool } from "./client.js";
+
+export {
+  consumeRateLimit,
+  type ConsumeRateLimitInput,
+  type RateLimitResult,
+} from "./rate-limits.js";

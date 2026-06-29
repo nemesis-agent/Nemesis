@@ -113,7 +113,7 @@ function fitMessagesForModel(messages: SafeMessage[]) {
 }
 
 export async function POST(request: Request) {
-  const rateLimit = enforceRateLimit({
+  const rateLimit = await enforceRateLimit({
     key: rateLimitKey(request, "public-chat"),
     limit: 30,
     windowMs: 60_000,

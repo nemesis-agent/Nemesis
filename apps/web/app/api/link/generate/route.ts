@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   const auth = chain ? await requireWalletAuthForChain(chain) : await requireAnyWalletAuth();
   if (auth.error) return auth.error;
 
-  const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "link:generate", auth.wallet.walletKey), limit: 6, windowMs: 10 * 60_000 });
+  const rateLimit = await enforceRateLimit({ key: rateLimitKey(request, "link:generate", auth.wallet.walletKey), limit: 6, windowMs: 10 * 60_000 });
   if (rateLimit) return rateLimit;
 
   const { code, expiresAt } = await generateLinkCode(auth.wallet.walletKey);

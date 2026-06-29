@@ -54,7 +54,7 @@ export async function POST(request: Request) {
   const auth = await requireWalletAuthForChain(templateChain);
   if (auth.error) return auth.error;
 
-  const rateLimit = enforceRateLimit({ key: rateLimitKey(request, "agents:create", auth.wallet.walletKey), limit: 20, windowMs: 60_000 });
+  const rateLimit = await enforceRateLimit({ key: rateLimitKey(request, "agents:create", auth.wallet.walletKey), limit: 20, windowMs: 60_000 });
   if (rateLimit) return rateLimit;
 
   // Use provided name or auto-generate from template.
