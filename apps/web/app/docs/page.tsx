@@ -71,9 +71,10 @@ export default function DocsPage() {
             Product documentation for using NEMESIS as an approval-first, non-custodial agent platform across Base and Solana.
           </p>
         </div>
-        <Link href="/changelog" className="font-mono text-xs uppercase tracking-widest2 text-nm-fragment-red">
-          changelog {"->"}
-        </Link>
+        <div className="flex gap-4 font-mono text-xs uppercase tracking-widest2 text-nm-fragment-red">
+          <Link href="/changelog">changelog {"->"}</Link>
+          <Link href="/roadmap">roadmap {"->"}</Link>
+        </div>
       </div>
 
       <div className="mt-8">

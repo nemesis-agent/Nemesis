@@ -48,9 +48,10 @@ export default function ChangelogPage() {
             Public product notes for NEMESIS. Entries focus on shipped user-facing changes and safety-relevant improvements.
           </p>
         </div>
-        <Link href="/docs" className="font-mono text-xs uppercase tracking-widest2 text-nm-fragment-red">
-          docs {"->"}
-        </Link>
+        <div className="flex gap-4 font-mono text-xs uppercase tracking-widest2 text-nm-fragment-red">
+          <Link href="/docs">docs {"->"}</Link>
+          <Link href="/roadmap">roadmap {"->"}</Link>
+        </div>
       </div>
 
       <div className="mt-8">

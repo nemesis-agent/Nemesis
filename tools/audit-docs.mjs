@@ -7,18 +7,22 @@ function assert(condition, message) { if (!condition) throw new Error(message); 
 
 const docsPath = "apps/web/app/docs/page.tsx";
 const changelogPath = "apps/web/app/changelog/page.tsx";
+const roadmapPath = "apps/web/app/roadmap/page.tsx";
 const docs = existsSync(docsPath) ? read(docsPath) : "";
 const changelog = existsSync(changelogPath) ? read(changelogPath) : "";
+const roadmap = existsSync(roadmapPath) ? read(roadmapPath) : "";
 const footer = read("apps/web/components/Footer.tsx");
 const navbar = read("apps/web/components/Navbar.tsx");
 const sitemap = read("apps/web/app/sitemap.ts");
 const robots = read("apps/web/app/robots.ts");
 
-check("docs and changelog routes exist", () => {
+check("docs, changelog, and roadmap routes exist", () => {
   assert(existsSync(docsPath), "docs page route missing");
   assert(existsSync(changelogPath), "changelog page route missing");
   assert(docs.includes("export const metadata"), "docs page should define metadata");
   assert(changelog.includes("export const metadata"), "changelog page should define metadata");
+  assert(existsSync(roadmapPath), "roadmap page route missing");
+  assert(roadmap.includes("export const metadata"), "roadmap page should define metadata");
 });
 
 check("docs cover public product essentials", () => {
@@ -46,17 +50,33 @@ check("changelog is public-facing and current", () => {
   }
 });
 
-check("docs and changelog are discoverable", () => {
+
+check("roadmap is directional and boundary-focused", () => {
+  for (const phrase of [
+    "shipped",
+    "building",
+    "exploring",
+    "not planned",
+    "No item is a promise of timing or outcome",
+    "Automatic transaction execution without explicit wallet approval",
+    "Paywalls, premium tiers, or access gating",
+  ]) {
+    assert(roadmap.includes(phrase), `roadmap missing phrase: ${phrase}`);
+  }
+});
+check("docs, changelog, and roadmap are discoverable", () => {
   assert(navbar.includes('{ href: "/docs", label: "docs" }'), "navbar should link docs");
   assert(footer.includes('href="/docs"'), "footer should link docs");
   assert(footer.includes('href="/changelog"'), "footer should link changelog");
+  assert(footer.includes('href="/roadmap"'), "footer should link roadmap");
   assert(sitemap.includes('`${SITE_URL}/docs`'), "sitemap should include docs");
   assert(sitemap.includes('`${SITE_URL}/changelog`'), "sitemap should include changelog");
-  assert(robots.includes('"/docs"') && robots.includes('"/changelog"'), "robots should allow docs and changelog");
+  assert(sitemap.includes('`${SITE_URL}/roadmap`'), "sitemap should include roadmap");
+  assert(robots.includes('"/docs"') && robots.includes('"/changelog"') && robots.includes('"/roadmap"'), "robots should allow docs, changelog, and roadmap");
 });
 
 check("public docs avoid unsafe claims and mojibake", () => {
-  const combined = `${docs}\n${changelog}\n${footer}`;
+  const combined = `${docs}\n${changelog}\n${roadmap}\n${footer}`;
   assert(!/[\u00c2\u00c3\u00e2\u20ac]/.test(combined), "docs-facing source contains mojibake");
   assert(!/risk-free|guaranteed|guarantees|guarantee outcome|passive income/i.test(combined), "docs-facing copy contains unsafe claims");
 });
