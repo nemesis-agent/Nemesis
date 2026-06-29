@@ -31,4 +31,10 @@ export {
   isWalletLinked,
   type ConsumeLinkResult,
 } from "./links.js";
+export {
+  getRuntimeHealth,
+  recordRuntimeHealth,
+  type RuntimeHealth,
+  type RuntimeHealthStatus,
+} from "./runtime-health.js";
 export { pool } from "./client.js";

@@ -60,6 +60,13 @@ CREATE TABLE IF NOT EXISTS proposals (
   created_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS runtime_health (
+  key                 TEXT PRIMARY KEY,
+  status              TEXT NOT NULL CHECK (status IN ('starting', 'healthy', 'degraded', 'error')),
+  details             TEXT NOT NULL DEFAULT '{}',
+  last_heartbeat_at   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 CREATE INDEX IF NOT EXISTS idx_agents_wallet ON agents(wallet_address);
 CREATE INDEX IF NOT EXISTS idx_proposals_agent ON proposals(agent_id);
 CREATE INDEX IF NOT EXISTS idx_link_codes_wallet ON link_codes(wallet_address);
@@ -91,6 +98,12 @@ if (DATABASE_URL) {
             WHERE table_name='proposals' AND column_name='execution_state'
           ) THEN
             ALTER TABLE proposals ADD COLUMN execution_state TEXT NOT NULL DEFAULT '{}';
+          END IF;
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name='runtime_health' AND column_name='details'
+          ) THEN
+            ALTER TABLE runtime_health ADD COLUMN details TEXT NOT NULL DEFAULT '{}';
           END IF;
         END $$;
       `);
