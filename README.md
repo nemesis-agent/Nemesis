@@ -99,6 +99,7 @@ High-risk and degen templates require explicit acknowledgement before deploy.
 - [Product Guide](./docs/PRODUCT_GUIDE.md)
 - [Security Model](./docs/SECURITY.md)
 - [Privacy Notes](./docs/PRIVACY.md)
+- [Token Safety](./docs/TOKEN_SAFETY.md)
 - [Architecture](./ARCHITECTURE.md)
 - [Project Context](./CONTEXT.md)
 

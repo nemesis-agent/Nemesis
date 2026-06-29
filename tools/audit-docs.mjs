@@ -9,10 +9,12 @@ const docsPath = "apps/web/app/docs/page.tsx";
 const changelogPath = "apps/web/app/changelog/page.tsx";
 const roadmapPath = "apps/web/app/roadmap/page.tsx";
 const updatesPath = "apps/web/app/updates/page.tsx";
+const tokenSafetyPath = "docs/TOKEN_SAFETY.md";
 const docs = existsSync(docsPath) ? read(docsPath) : "";
 const changelog = existsSync(changelogPath) ? read(changelogPath) : "";
 const roadmap = existsSync(roadmapPath) ? read(roadmapPath) : "";
 const updates = existsSync(updatesPath) ? read(updatesPath) : "";
+const tokenSafety = existsSync(tokenSafetyPath) ? read(tokenSafetyPath) : "";
 const footer = read("apps/web/components/Footer.tsx");
 const navbar = read("apps/web/components/Navbar.tsx");
 const sitemap = read("apps/web/app/sitemap.ts");
@@ -37,6 +39,10 @@ check("docs cover public product essentials", () => {
     "telegram linking",
     "base and solana support",
     "talk with NEMESIS",
+    "official contract address",
+    "how to verify NEMESIS",
+    "what the token does not do",
+    "avoid impersonators",
     "does not custody funds",
     "do not hold signing authority",
   ]) {
@@ -81,6 +87,25 @@ check("updates page is Medium-backed and privacy-safe", () => {
   }
 });
 
+
+check("token safety docs are public and anti-scam focused", () => {
+  for (const phrase of [
+    "Official NEMESIS contract address",
+    "HTXeyDoVbtJxEApA4oRMT1xLtCGoUQ5P962Cur6EASY",
+    "How To Verify",
+    "What The Token Does Not Do",
+    "Avoid Impersonators",
+    "Official Channels Only",
+    "https://nemesis-agent.xyz",
+    "https://x.com/Nemesis_agent",
+    "https://github.com/nemesis-agent/Nemesis",
+    "https://t.me/NemesisAgentAppBot",
+    "does not let agents auto-execute transactions",
+    "does not replace wallet approval",
+  ]) {
+    assert(tokenSafety.includes(phrase), `token safety docs missing phrase: ${phrase}`);
+  }
+});
 check("docs, changelog, roadmap, and updates are discoverable", () => {
   assert(navbar.includes('{ href: "/docs", label: "docs" }'), "navbar should link docs");
   assert(footer.includes('href="/docs"'), "footer should link docs");
@@ -95,7 +120,7 @@ check("docs, changelog, roadmap, and updates are discoverable", () => {
 });
 
 check("public docs avoid unsafe claims and mojibake", () => {
-  const combined = `${docs}\n${changelog}\n${roadmap}\n${updates}\n${footer}`;
+  const combined = `${docs}\n${changelog}\n${roadmap}\n${updates}\n${tokenSafety}\n${footer}`;
   assert(!/[\u00c2\u00c3\u00e2\u20ac]/.test(combined), "docs-facing source contains mojibake");
   assert(!/risk-free|guaranteed|guarantees|guarantee outcome|passive income/i.test(combined), "docs-facing copy contains unsafe claims");
 });

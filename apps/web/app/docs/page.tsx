@@ -59,6 +59,30 @@ const DOC_SECTIONS = [
     ],
   },
   {
+    id: "how-to-verify",
+    title: "how to verify NEMESIS",
+    body: [
+      "Use the official website, GitHub, X account, and Telegram bot as the source of truth. The website must be exactly nemesis-agent.xyz, the X account must be @Nemesis_agent, the GitHub organization must be nemesis-agent, and the Telegram bot must be @NemesisAgentAppBot.",
+      "Before interacting with any token or contract, compare the full contract address character by character. Treat shortened links, lookalike domains, copied screenshots, unofficial comments, and unsolicited support messages as untrusted.",
+    ],
+  },
+  {
+    id: "token-boundaries",
+    title: "what the token does not do",
+    body: [
+      "The NEMESIS token does not give NEMESIS custody over user funds, does not let agents auto-execute transactions, and does not replace wallet approval. The product remains approval-first: agents propose, users approve, wallets sign.",
+      "The token does not remove market, smart-contract, liquidity, wallet, RPC, or execution risk. NEMESIS does not guarantee fills, execution price, availability, returns, or token safety.",
+    ],
+  },
+  {
+    id: "avoid-impersonators",
+    title: "avoid impersonators",
+    body: [
+      "Impersonators may publish fake contracts, fake Telegram bots, fake support accounts, fake airdrops, or fake websites. NEMESIS will never ask for seed phrases, private keys, recovery phrases, wallet export files, exchange passwords, Telegram bot tokens, API keys, or remote access to your device.",
+      "If two sources disagree, do not interact until the address and link can be verified from the official website and GitHub.",
+    ],
+  },
+  {
     id: "talk-with-nemesis",
     title: "talk with NEMESIS",
     body: [
