@@ -34,6 +34,10 @@ export interface TemplateParameter {
   options?: string[];
   /** Optional unit suffix shown next to the value, e.g. "USDC" or "%" */
   unit?: string;
+  /** Minimum accepted value for numeric parameters. */
+  min?: number;
+  /** Maximum accepted value for numeric parameters. */
+  max?: number;
 }
 
 export interface AgentTemplate {

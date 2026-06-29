@@ -435,6 +435,9 @@ function DeploymentPlanCard({
                   <input
                     id={`param-${param.key}`}
                     type={param.type === "address" ? "text" : "number"}
+                    min={param.type === "address" ? undefined : param.min}
+                    max={param.type === "address" ? undefined : param.max}
+                    step={param.type === "address" ? undefined : param.type === "number" ? "any" : "0.01"}
                     value={pendingParams[param.key] as string | number}
                     onChange={(e) => {
                       const val = param.type === "address" ? e.target.value : Number(e.target.value);

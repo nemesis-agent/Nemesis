@@ -29,6 +29,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Max ape per token",
         type: "currency",
         default: 50,
+        min: 1,
+        max: 10000,
         unit: "USDC",
         description: "The largest amount proposed for any single new launch.",
       },
@@ -37,6 +39,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Minimum liquidity",
         type: "currency",
         default: 20000,
+        min: 1000,
+        max: 100000000,
         unit: "USDC",
         description: "Launches below this liquidity are skipped entirely.",
       },
@@ -63,6 +67,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Min initial liquidity",
         type: "currency",
         default: 10000,
+        min: 1000,
+        max: 100000000,
         unit: "USDC",
         description: "Pools created below this liquidity are ignored.",
       },
@@ -71,6 +77,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Allocation per pool",
         type: "currency",
         default: 100,
+        min: 1,
+        max: 10000,
         unit: "USDC",
         description: "Amount proposed when a matching new pool is found.",
       },
@@ -113,6 +121,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Entry price",
         type: "currency",
         default: 3000,
+        min: 0.01,
+        max: 10000000,
         unit: "USDC",
         description: "Reference entry price for this position.",
       },
@@ -121,6 +131,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Take profit",
         type: "percent",
         default: 100,
+        min: 0.01,
+        max: 10000,
         unit: "%",
         description: "Propose selling once the position is up by this much.",
       },
@@ -129,6 +141,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Stop loss",
         type: "percent",
         default: 30,
+        min: 0.01,
+        max: 100,
         unit: "%",
         description: "Propose selling once the position is down by this much.",
       },
@@ -137,6 +151,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Max hold duration",
         type: "number",
         default: 48,
+        min: 1,
+        max: 8760,
         unit: "hours",
         description: "Propose an exit if neither target is hit within this window.",
       },
@@ -174,6 +190,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Target price",
         type: "currency",
         default: 3000,
+        min: 0.01,
+        max: 10000000,
         unit: "USDC",
         description: "The price at which this agent should propose the trade.",
       },
@@ -190,6 +208,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Order size",
         type: "currency",
         default: 500,
+        min: 1,
+        max: 1000000,
         unit: "USDC",
         description: "The size of the order proposed when the target price is reached.",
       },
@@ -221,6 +241,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Dip trigger",
         type: "percent",
         default: 5,
+        min: 0.01,
+        max: 95,
         unit: "%",
         description: "Propose a buy whenever the price falls this much from its recent high.",
       },
@@ -229,6 +251,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Buy amount",
         type: "currency",
         default: 50,
+        min: 1,
+        max: 1000000,
         unit: "USDC",
         description: "Amount proposed for each dip-triggered buy.",
       },
@@ -237,6 +261,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Cooldown between buys",
         type: "number",
         default: 12,
+        min: 1,
+        max: 8760,
         unit: "hours",
         description: "Minimum time between two dip-triggered proposals.",
       },
@@ -268,6 +294,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Entry price",
         type: "currency",
         default: 3000,
+        min: 0.01,
+        max: 10000000,
         unit: "USDC",
         description: "Reference entry price for this position.",
       },
@@ -276,6 +304,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Gain target",
         type: "percent",
         default: 100,
+        min: 0.01,
+        max: 10000,
         unit: "%",
         description: "Propose a partial sell once the position gains this much.",
       },
@@ -284,6 +314,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Portion to sell",
         type: "percent",
         default: 30,
+        min: 1,
+        max: 100,
         unit: "%",
         description: "How much of the position to propose selling when the target is hit.",
       },
@@ -314,6 +346,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Minimum claim amount",
         type: "currency",
         default: 5,
+        min: 0.01,
+        max: 1000000,
         unit: "USDC",
         description: "Only propose a claim once accrued yield exceeds this amount.",
       },
@@ -330,6 +364,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Review cadence",
         type: "number",
         default: 24,
+        min: 1,
+        max: 8760,
         unit: "hours",
         description: "Minimum time between yield review proposals.",
       },
@@ -357,6 +393,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Max gas price",
         type: "number",
         default: 5,
+        min: 0.001,
+        max: 1000,
         unit: "gwei",
         description: "The agent waits until gas drops to or below this level.",
       },
@@ -365,6 +403,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Max wait time",
         type: "number",
         default: 6,
+        min: 1,
+        max: 8760,
         unit: "hours",
         description: "Propose executing anyway after this long, even if gas hasn't dropped.",
       },
@@ -396,6 +436,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Weekly gas budget",
         type: "currency",
         default: 2,
+        min: 0.01,
+        max: 1000,
         unit: "USDC",
         description: "Approximate total gas this agent should spend per week.",
       },
@@ -427,6 +469,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Drift tolerance",
         type: "percent",
         default: 10,
+        min: 0.01,
+        max: 95,
         unit: "%",
         description: "Propose a rebalance once the actual split drifts this far from target.",
       },
@@ -459,6 +503,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Dip trigger",
         type: "percent",
         default: 5,
+        min: 0.01,
+        max: 95,
         unit: "%",
         description: "Propose a buy review whenever SOL falls this much from its recorded high.",
       },
@@ -467,6 +513,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Buy amount",
         type: "currency",
         default: 50,
+        min: 1,
+        max: 1000000,
         unit: "USDC",
         description: "USDC amount used when preparing the Jupiter swap proposal.",
       },
@@ -475,6 +523,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Cooldown between reviews",
         type: "number",
         default: 12,
+        min: 1,
+        max: 8760,
         unit: "hours",
         description: "Minimum time between two dip-triggered proposals.",
       },
@@ -507,6 +557,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Entry price",
         type: "currency",
         default: 140,
+        min: 0.01,
+        max: 10000000,
         unit: "USDC",
         description: "Reference SOL entry price for this review agent.",
       },
@@ -515,6 +567,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Gain target",
         type: "percent",
         default: 25,
+        min: 0.01,
+        max: 10000,
         unit: "%",
         description: "Propose a sell review once SOL is up this much from entry.",
       },
@@ -523,6 +577,8 @@ export const TEMPLATES: AgentTemplate[] = [
         label: "Portion to review",
         type: "percent",
         default: 25,
+        min: 1,
+        max: 100,
         unit: "%",
         description: "How much of the position the proposal suggests reviewing.",
       },
@@ -545,6 +601,64 @@ export const getTemplateById = (id: string): AgentTemplate | undefined =>
 
 export const getTemplatesByCategory = (category: AgentTemplate["category"]): AgentTemplate[] =>
   TEMPLATES.filter((template) => template.category === category);
+
+export type TemplateParameterValue = string | number | boolean;
+
+export type TemplateParameterValidationResult =
+  | { ok: true; parameters: Record<string, TemplateParameterValue> }
+  | { ok: false; error: string };
+
+export function validateTemplateParameters(
+  template: AgentTemplate,
+  input: Record<string, unknown> | undefined,
+): TemplateParameterValidationResult {
+  const raw = input ?? {};
+  const allowed = new Set(template.parameters.map((param) => param.key));
+
+  for (const key of Object.keys(raw)) {
+    if (!allowed.has(key)) return { ok: false, error: `Unknown parameter: ${key}` };
+  }
+
+  const parameters: Record<string, TemplateParameterValue> = {};
+  for (const param of template.parameters) {
+    const value = raw[param.key] ?? param.default;
+
+    if (param.type === "boolean") {
+      if (typeof value !== "boolean") return { ok: false, error: `${param.key} must be a boolean.` };
+      parameters[param.key] = value;
+      continue;
+    }
+
+    if (param.type === "select") {
+      if (typeof value !== "string" || !param.options?.includes(value)) {
+        return { ok: false, error: `${param.key} must be one of: ${param.options?.join(", ") ?? ""}.` };
+      }
+      parameters[param.key] = value;
+      continue;
+    }
+
+    if (param.type === "address") {
+      if (typeof value !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(value)) {
+        return { ok: false, error: `${param.key} must be a valid EVM address.` };
+      }
+      parameters[param.key] = value;
+      continue;
+    }
+
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+      return { ok: false, error: `${param.key} must be a finite number.` };
+    }
+
+    const min = param.min ?? 0;
+    const max = param.max ?? (param.type === "currency" ? 10_000_000 : param.type === "percent" ? 10_000 : Number.MAX_SAFE_INTEGER);
+    if (value < min || value > max) {
+      return { ok: false, error: `${param.key} must be between ${min} and ${max}.` };
+    }
+    parameters[param.key] = value;
+  }
+
+  return { ok: true, parameters };
+}
 
 export type { AgentTemplate, TemplateCategory, RiskLevel, TemplateRuntimeStatus, BaseProtocol, SolanaProtocol, TemplateProtocol, TemplateChain, TemplateParameter } from "./types";
 export { TEMPLATE_CATEGORIES, RISK_LABELS } from "./types";
