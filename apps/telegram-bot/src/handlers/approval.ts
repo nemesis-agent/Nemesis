@@ -1,6 +1,4 @@
 import type { Telegraf, Context } from "telegraf";
-import { Markup } from "telegraf";
-
 import {
   createProposal,
   getAgent,
@@ -11,6 +9,7 @@ import {
   type Proposal,
 } from "@nemesis/db";
 import { buildWalletSignatureCheckPayload, dashboardProposalUrl } from "../lib/base-payload.js";
+import { proposalKeyboard } from "../lib/ui.js";
 import { escapeHtml, formatProposalMessage } from "../lib/format.js";
 
 /**
@@ -26,10 +25,7 @@ export async function sendProposal(
 ): Promise<void> {
   await bot.telegram.sendMessage(chatId, formatProposalMessage(proposal, agentName), {
     parse_mode: "HTML",
-    ...Markup.inlineKeyboard([
-      Markup.button.callback("approve", `approve:${proposal.id}`),
-      Markup.button.callback("skip", `skip:${proposal.id}`),
-    ]),
+    ...proposalKeyboard(proposal, proposal.agentId),
   });
 }
 
@@ -70,10 +66,7 @@ export async function demoCommand(ctx: Context): Promise<void> {
 
   await ctx.reply(formatProposalMessage(proposal, agent.name), {
     parse_mode: "HTML",
-    ...Markup.inlineKeyboard([
-      Markup.button.callback("approve", `approve:${proposal.id}`),
-      Markup.button.callback("skip", `skip:${proposal.id}`),
-    ]),
+    ...proposalKeyboard(proposal, proposal.agentId),
   });
 }
 

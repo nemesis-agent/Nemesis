@@ -10,6 +10,7 @@ import { pauseCommand, resumeCommand } from "./commands/pause.js";
 import { startCommand } from "./commands/start.js";
 import { statusCommand } from "./commands/status.js";
 import { demoCommand, registerApprovalHandlers } from "./handlers/approval.js";
+import { registerMenuHandlers } from "./handlers/menu.js";
 import { createAccessControl } from "./lib/auth.js";
 import { sendOpsAlert } from "./lib/alerts.js";
 import { startRunner } from "./runner.js";
@@ -127,6 +128,21 @@ bot.command("pause", pauseCommand);
 bot.command("resume", resumeCommand);
 bot.command("demo", demoCommand);
 
+await bot.telegram.setMyCommands([
+  { command: "start", description: "show setup status" },
+  { command: "help", description: "show command guide" },
+  { command: "link", description: "link wallet with dashboard code" },
+  { command: "unlink", description: "remove Telegram link" },
+  { command: "agents", description: "list deployed agents" },
+  { command: "status", description: "show agent status" },
+  { command: "pause", description: "pause an agent" },
+  { command: "resume", description: "resume an agent" },
+]).catch((error) => {
+  const message = error instanceof Error ? error.message : "unknown error";
+  console.warn("[nemesis-bot] failed to set Telegram command menu", message);
+});
+
+registerMenuHandlers(bot);
 registerApprovalHandlers(bot);
 
 bot.catch((error, ctx) => {

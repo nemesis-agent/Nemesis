@@ -1,6 +1,7 @@
 import type { Context } from "telegraf";
 
 import { getWalletForTelegramChatId } from "@nemesis/db";
+import { mainMenuKeyboard, shortWallet } from "../lib/ui.js";
 
 const WELCOME_UNLINKED = [
   "<code>[ NEMESIS ]</code>",
@@ -21,7 +22,6 @@ const WELCOME_UNLINKED = [
   "/status - overall status",
   "/pause &lt;id&gt; - pause an agent",
   "/resume &lt;id&gt; - resume an agent",
-  "/demo - send a sample proposal (testing only)",
 ].join("\n");
 
 const WELCOME_LINKED = (short: string) => [
@@ -38,7 +38,6 @@ const WELCOME_LINKED = (short: string) => [
   "/pause &lt;id&gt; - pause an agent",
   "/resume &lt;id&gt; - resume an agent",
   "/unlink - remove this chat from your wallet",
-  "/demo - send a sample proposal (testing only)",
 ].join("\n");
 
 export async function startCommand(ctx: Context): Promise<void> {
@@ -46,9 +45,8 @@ export async function startCommand(ctx: Context): Promise<void> {
   const wallet = await getWalletForTelegramChatId(chatId);
 
   if (wallet) {
-    const short = `${wallet.slice(0, 6)}...${wallet.slice(-4)}`;
-    await ctx.reply(WELCOME_LINKED(short), { parse_mode: "HTML" });
+    await ctx.reply(WELCOME_LINKED(shortWallet(wallet)), { parse_mode: "HTML", ...mainMenuKeyboard(true) });
   } else {
-    await ctx.reply(WELCOME_UNLINKED, { parse_mode: "HTML" });
+    await ctx.reply(WELCOME_UNLINKED, { parse_mode: "HTML", ...mainMenuKeyboard(false) });
   }
 }

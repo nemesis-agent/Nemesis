@@ -24,14 +24,35 @@ check("telegram bot-facing source is ascii-safe", () => {
     "apps/telegram-bot/src/commands/pause.ts",
     "apps/telegram-bot/src/commands/start.ts",
     "apps/telegram-bot/src/commands/status.ts",
+    "apps/telegram-bot/src/handlers/approval.ts",
+    "apps/telegram-bot/src/handlers/menu.ts",
+    "apps/telegram-bot/src/index.ts",
     "apps/telegram-bot/src/lib/auth.ts",
     "apps/telegram-bot/src/lib/format.ts",
+    "apps/telegram-bot/src/lib/ui.ts",
   ];
   for (const file of files) {
     assert(!/[^\x00-\x7F]/.test(read(file)), `${file} contains non-ASCII bot-facing text`);
   }
 });
 
+
+check("telegram UX exposes menu, dashboard actions, and ownership-scoped agent controls", () => {
+  const index = read("apps/telegram-bot/src/index.ts");
+  const ui = read("apps/telegram-bot/src/lib/ui.ts");
+  const menu = read("apps/telegram-bot/src/handlers/menu.ts");
+  const agents = read("apps/telegram-bot/src/commands/agents.ts");
+  const approval = read("apps/telegram-bot/src/handlers/approval.ts");
+  assert(index.includes("setMyCommands"), "Telegram command menu must be registered");
+  assert(index.includes("registerMenuHandlers(bot)"), "Telegram menu callbacks must be registered");
+  assert(ui.includes("mainMenuKeyboard"), "Telegram main menu keyboard missing");
+  assert(ui.includes("proposalKeyboard"), "Telegram proposal keyboard missing");
+  assert(ui.includes("Markup.button.url(\"open in dashboard\""), "Proposal keyboard must expose dashboard URL button");
+  assert(menu.includes("agent.walletAddress.toLowerCase() !== wallet.toLowerCase()"), "Agent action callbacks must enforce wallet ownership");
+  assert(menu.includes("agent:pause:") && menu.includes("agent:resume:"), "Agent pause/resume callbacks missing");
+  assert(agents.includes("agentKeyboard(agent)"), "/agents must expose per-agent action buttons");
+  assert(approval.includes("proposalKeyboard(proposal"), "Proposal notifications must use upgraded keyboard");
+});
 check("solana proposal confirmation supports retrying pending signatures", () => {
   const execute = read("apps/web/components/ExecuteProposalButton.tsx");
   assert(execute.includes("solanaPendingSignature"), "Solana pending signature state missing");

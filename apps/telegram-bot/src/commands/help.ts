@@ -1,6 +1,7 @@
 import type { Context } from "telegraf";
 
 import { getWalletForTelegramChatId } from "@nemesis/db";
+import { linkedWalletKeyboard, shortWallet, unlinkedWalletKeyboard } from "../lib/ui.js";
 
 const HELP_UNLINKED = [
   "<code>[ NEMESIS / help ]</code>",
@@ -39,10 +40,9 @@ export async function helpCommand(ctx: Context): Promise<void> {
   const wallet = await getWalletForTelegramChatId(String(ctx.chat?.id ?? ""));
 
   if (!wallet) {
-    await ctx.reply(HELP_UNLINKED, { parse_mode: "HTML" });
+    await ctx.reply(HELP_UNLINKED, { parse_mode: "HTML", ...unlinkedWalletKeyboard() });
     return;
   }
 
-  const short = `${wallet.slice(0, 6)}...${wallet.slice(-4)}`;
-  await ctx.reply(linkedHelp(short), { parse_mode: "HTML" });
+  await ctx.reply(linkedHelp(shortWallet(wallet)), { parse_mode: "HTML", ...linkedWalletKeyboard() });
 }
