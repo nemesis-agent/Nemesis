@@ -6,6 +6,7 @@ import {
   listAgents,
   listProposalsForAgent,
   pruneOldProposals,
+  recordRuntimeHealth,
   updateAgentRuntimeState,
   type Agent,
   type ProposalDetail,
@@ -19,7 +20,9 @@ import { buildEthToUsdcSwapPayload, buildUsdcApproveAndSwapToEthPayload } from "
 import { buildSolanaSolToUsdcSwapPayload, buildSolanaUsdcToSolSwapPayload } from "./lib/jupiter-solana.js";
 
 const RUNNER_INTERVAL_MS = 1000 * 60;
-const BASE_RPC_URL = process.env.BASE_RPC_URL ?? "https://mainnet.base.org";
+const DEFAULT_BASE_RPC_URL = "https://mainnet.base.org";
+const BASE_RPC_URLS = getBaseRpcUrls();
+const RUNNER_HEALTH_KEY = "telegram-runner";
 const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL ?? process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com";
 const solanaConnection = new Connection(SOLANA_RPC_URL, "confirmed");
 const MIN_SOL_RESERVE_LAMPORTS = BigInt(Math.floor(0.02 * LAMPORTS_PER_SOL));
@@ -40,6 +43,17 @@ const PRODUCTION_TEMPLATES = new Set([
 const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 let cycleCount = 0;
 
+class BaseRpcHttpError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly endpointHost: string,
+  ) {
+    super(message);
+    this.name = "BaseRpcHttpError";
+  }
+}
+
 interface EvaluationResult {
   title: string;
   action: string;
@@ -52,11 +66,13 @@ interface EvaluationResult {
 
 export function startRunner(bot: Telegraf) {
   logger.info({ msg: "initializing sub-agent runner" });
+  void safeRecordRunnerHealth("starting", { event: "runner_starting", baseRpcEndpoints: BASE_RPC_URLS.map(redactRpcEndpoint) });
 
   setInterval(() => {
     cycleCount++;
     runCycle(bot).catch((err) => {
-      void sendOpsAlert({ event: "runner_cycle_error", severity: "critical", message: "error in runner cycle", context: { error: String(err) } });
+      void safeRecordRunnerHealth("error", { event: "runner_cycle_error", error: cleanErrorMessage(err) });
+      void sendOpsAlert({ event: "runner_cycle_error", severity: "critical", message: "error in runner cycle", context: { error: cleanErrorMessage(err) } });
     });
 
     if (cycleCount % 1440 === 0) {
@@ -68,19 +84,37 @@ export function startRunner(bot: Telegraf) {
     }
   }, RUNNER_INTERVAL_MS);
 
-  runCycle(bot).catch((err) => { void sendOpsAlert({ event: "runner_first_cycle_error", severity: "critical", message: "error in first runner cycle", context: { error: String(err) } }); });
+  runCycle(bot).catch((err) => {
+    void safeRecordRunnerHealth("error", { event: "runner_first_cycle_error", error: cleanErrorMessage(err) });
+    void sendOpsAlert({ event: "runner_first_cycle_error", severity: "critical", message: "error in first runner cycle", context: { error: cleanErrorMessage(err) } });
+  });
 }
 
 async function runCycle(bot: Telegraf) {
+  const cycleStartedAt = new Date();
   const agents = await listAgents();
   const activeAgents = agents.filter((agent) => agent.status === "active");
 
+  await safeRecordRunnerHealth("healthy", {
+    event: "cycle_started",
+    activeAgents: activeAgents.length,
+    cycleStartedAt: cycleStartedAt.toISOString(),
+  });
+
   if (activeAgents.length === 0) {
     logger.debug({ msg: "cycle skipped: 0 active agents" });
+    await safeRecordRunnerHealth("healthy", {
+      event: "cycle_completed",
+      activeAgents: 0,
+      cycleStartedAt: cycleStartedAt.toISOString(),
+      durationMs: Date.now() - cycleStartedAt.getTime(),
+    });
     return;
   }
 
   logger.info({ msg: `cycle started: evaluating ${activeAgents.length} active agent(s)` });
+  let evaluatedAgents = 0;
+  let proposedAgents = 0;
 
   for (const agent of activeAgents) {
     if (!PRODUCTION_TEMPLATES.has(agent.templateId)) {
@@ -100,6 +134,7 @@ async function runCycle(bot: Telegraf) {
     });
 
     if (!result) continue;
+    evaluatedAgents += 1;
 
     const chatId = await getTelegramChatIdForWallet(agent.walletAddress);
     if (!chatId) {
@@ -119,6 +154,7 @@ async function runCycle(bot: Telegraf) {
       });
 
       await sendProposal(bot, chatId, proposal, agent.name);
+      proposedAgents += 1;
       await updateAgentRuntimeState(agent.id, result.state, result.lastEvent);
       logger.info({ msg: "proposal dispatched to Telegram", proposalId: proposal.id, agentId: agent.id });
     } catch (err) {
@@ -130,6 +166,15 @@ async function runCycle(bot: Telegraf) {
       });
     }
   }
+
+  await safeRecordRunnerHealth("healthy", {
+    event: "cycle_completed",
+    activeAgents: activeAgents.length,
+    evaluatedAgents,
+    proposedAgents,
+    cycleStartedAt: cycleStartedAt.toISOString(),
+    durationMs: Date.now() - cycleStartedAt.getTime(),
+  });
 }
 
 async function evaluateAgent(agent: Agent): Promise<EvaluationResult | null> {
@@ -744,21 +789,93 @@ async function getUsdcBalance(address: string): Promise<number> {
   return Number(BigInt(result)) / 1e6;
 }
 
+function getBaseRpcUrls(): string[] {
+  const configured = [
+    process.env.BASE_RPC_URL,
+    ...(process.env.BASE_RPC_FALLBACK_URLS ?? "").split(","),
+    DEFAULT_BASE_RPC_URL,
+  ];
+
+  return [...new Set(configured.map((url) => url?.trim()).filter((url): url is string => Boolean(url)))];
+}
+
+function redactRpcEndpoint(endpoint: string): string {
+  try {
+    return new URL(endpoint).host;
+  } catch {
+    return "invalid-endpoint";
+  }
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function cleanErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message.slice(0, 240);
+  return String(error).slice(0, 240);
+}
+
+function shouldRetryBaseRpcError(error: unknown): boolean {
+  if (error instanceof BaseRpcHttpError) {
+    return error.status === 408 || error.status === 409 || error.status === 425 || error.status === 429 || error.status >= 500;
+  }
+  return error instanceof TypeError;
+}
+
+async function safeRecordRunnerHealth(status: "starting" | "healthy" | "degraded" | "error", details: Record<string, unknown>) {
+  try {
+    await recordRuntimeHealth(RUNNER_HEALTH_KEY, status, details);
+  } catch (err) {
+    logger.warn({ msg: "failed to record runner health", error: cleanErrorMessage(err) });
+  }
+}
+
 async function callBaseRpc(method: string, params: unknown[]): Promise<`0x${string}`> {
-  const response = await fetch(BASE_RPC_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+  let lastError: unknown;
+
+  for (const [index, endpoint] of BASE_RPC_URLS.entries()) {
+    const endpointHost = redactRpcEndpoint(endpoint);
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+      });
+
+      if (!response.ok) {
+        throw new BaseRpcHttpError(`Base RPC ${method} failed with HTTP ${response.status}`, response.status, endpointHost);
+      }
+
+      const data = (await response.json()) as { result?: `0x${string}`; error?: { message?: string } };
+      if (data.error) {
+        throw new Error(data.error.message ?? `Base RPC ${method} returned an error`);
+      }
+      if (data.result === undefined) {
+        throw new Error(`Base RPC ${method} returned no result`);
+      }
+
+      if (index > 0) {
+        logger.warn({ msg: "Base RPC recovered on fallback endpoint", method, endpointHost });
+      }
+      return data.result;
+    } catch (err) {
+      lastError = err;
+      const retryable = shouldRetryBaseRpcError(err);
+      logger.warn({ msg: "Base RPC attempt failed", method, endpointHost, retryable, error: cleanErrorMessage(err) });
+
+      if (!retryable || index === BASE_RPC_URLS.length - 1) break;
+      await sleep(Math.min(1_500, 250 * (index + 1)));
+    }
+  }
+
+  await safeRecordRunnerHealth("degraded", {
+    event: "base_rpc_failed",
+    method,
+    endpointsTried: BASE_RPC_URLS.map(redactRpcEndpoint),
+    error: cleanErrorMessage(lastError),
   });
 
-  if (!response.ok) {
-    throw new Error(`Base RPC ${method} failed: ${response.status}`);
-  }
-
-  const data = (await response.json()) as { result?: `0x${string}`; error?: { message?: string } };
-  if (!data.result) {
-    throw new Error(data.error?.message ?? `Base RPC ${method} returned no result`);
-  }
-
-  return data.result;
+  throw new Error(`Base RPC ${method} failed after ${BASE_RPC_URLS.length} endpoint(s): ${cleanErrorMessage(lastError)}`);
 }
