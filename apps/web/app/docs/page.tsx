@@ -51,6 +51,14 @@ const DOC_SECTIONS = [
     ],
   },
   {
+    id: "official-contract",
+    title: "official contract address",
+    body: [
+      "Official NEMESIS contract address: HTXeyDoVbtJxEApA4oRMT1xLtCGoUQ5P962Cur6EASY.",
+      "Always verify the address from official NEMESIS channels before interacting with any token or contract. NEMESIS remains non-custodial and approval-first; your own wallet is still the final signer.",
+    ],
+  },
+  {
     id: "talk-with-nemesis",
     title: "talk with NEMESIS",
     body: [
@@ -100,7 +108,7 @@ export default function DocsPage() {
               <h2 className="font-mono text-sm font-bold uppercase tracking-widest2 text-nm-fg">{section.title}</h2>
               <div className="mt-4 space-y-4 text-sm leading-relaxed text-nm-muted">
                 {section.body.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
+                  <p key={paragraph} className="break-words">{paragraph}</p>
                 ))}
               </div>
             </section>

@@ -14,6 +14,7 @@ Agents monitor. Users approve. Your wallet remains the final signer.
 - Telegram: [@NemesisAgentAppBot](https://t.me/NemesisAgentAppBot)
 - X: [@Nemesis_agent](https://x.com/Nemesis_agent)
 - GitHub: [nemesis-agent/Nemesis](https://github.com/nemesis-agent/Nemesis)
+- Contract Address: `HTXeyDoVbtJxEApA4oRMT1xLtCGoUQ5P962Cur6EASY`
 
 ## What NEMESIS Does
 
@@ -68,6 +69,9 @@ High-risk and degen templates require explicit acknowledgement before deploy.
 
 - Non-custodial: NEMESIS never asks for seed phrases or private keys.
 - Approval-first: agents create proposals, not forced transactions.
+- Official contract address: `HTXeyDoVbtJxEApA4oRMT1xLtCGoUQ5P962Cur6EASY`.
+  Always verify it from official NEMESIS channels before interacting with any
+  token or contract.
 - Wallet-scoped: dashboard, Telegram, agents, and proposals are scoped to the
   authenticated or linked wallet.
 - Parameterized: templates use structured parameters and plain-language
