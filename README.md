@@ -79,11 +79,12 @@ High-risk and degen templates require explicit acknowledgement before deploy.
 
 ## Stack
 
-- Web: Next.js 14, React, RainbowKit, Wagmi, SIWE, iron-session.
+- Web: Next.js App Router, React, RainbowKit, Wagmi, SIWE, iron-session.
 - Bot: Telegraf.
 - Database: Supabase/Postgres through `@nemesis/db`.
 - Intelligence: OpenRouter.
 - Deploy: Railway monolith with PM2 processes for web and bot.
+- Reliability: runner heartbeat, health endpoint, dashboard status, and Base RPC fallback support.
 
 ## Documentation
 

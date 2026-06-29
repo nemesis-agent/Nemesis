@@ -57,6 +57,12 @@ Templates are intentionally constrained:
 - plain-language approval summary
 - risk acknowledgement for high-risk and degen templates
 
+## Operational Reliability
+
+The runner writes heartbeat data to `runtime_health` without storing secrets. The web health endpoint and wallet dashboard expose only coarse service state, last heartbeat age, and cycle metadata.
+
+Base RPC reads support primary and fallback endpoints. Endpoint logs are host-redacted, and transient HTTP 429/5xx or network failures can fail over before an agent evaluation is marked failed.
+
 ## AI Safety Boundary
 
 OpenRouter-powered product and planning flows are restricted to product context
