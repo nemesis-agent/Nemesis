@@ -20,7 +20,8 @@
     "smoke:prod": "node tools/smoke-production.mjs",
     "audit:p1": "node tools/audit-p1.mjs",
     "audit:p2": "node tools/audit-p2.mjs",
-    "audit:privacy": "node tools/audit-privacy.mjs"
+    "audit:privacy": "node tools/audit-privacy.mjs",
+    "audit:agent-quality": "node tools/audit-agent-quality.mjs"
   },
   "engines": {
     "node": ">=22.5.0"
