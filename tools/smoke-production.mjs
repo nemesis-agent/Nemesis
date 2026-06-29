@@ -31,7 +31,7 @@ check("health endpoint is healthy and database-connected", async () => {
   }
 });
 
-for (const path of ["/", "/templates", "/terms", "/privacy", ...templateIds().map((id) => `/templates/${id}`)]) {
+for (const path of ["/", "/templates", "/docs", "/changelog", "/terms", "/privacy", ...templateIds().map((id) => `/templates/${id}`)]) {
   check(`${path} returns 200`, async () => {
     await expectStatus(path, 200);
   });
