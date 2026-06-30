@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 
-import { consumeRateLimit } from "@nemesis/db";
+import { consumeRateLimit } from "@nemesis/db/dist/rate-limits.js";
 import { redactForLog } from "@/lib/privacy";
 
 interface RateLimitOptions {
