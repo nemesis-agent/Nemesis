@@ -12,11 +12,20 @@ export const metadata: Metadata = {
 const CHANGES = [
   {
     label: "current",
+    title: "template detail polish and docs sync",
+    items: [
+      "Template detail pages now show safety rails, approval boundary, observed fields, approval checklist, parameter defaults, and proposal preview before deployment.",
+      "Removed mock backtest-style language from template previews so users are not shown APY, win-rate, or performance claims before deploy.",
+      "Updated public docs, security notes, privacy notes, architecture context, and roadmap language to match the current Base and Solana release state.",
+    ],
+  },
+  {
+    label: "latest",
     title: "public FAQ and docs layer",
     items: [
       "Added a public FAQ explaining non-custody, approval-first agents, Telegram linking, Base and Solana support, free access, and Talk with NEMESIS boundaries.",
-      "Added public documentation for safe operation, deployment flow, security model, Telegram linking, network support, and chat behavior.",
-      "Added changelog surface so users can track meaningful product updates.",
+      "Added public documentation for safe operation, deployment flow, security model, Telegram linking, network support, token safety, and chat behavior.",
+      "Added changelog, roadmap, and updates surfaces so users can track meaningful product changes from the website.",
     ],
   },
   {
@@ -32,7 +41,7 @@ const CHANGES = [
     title: "Base and Solana approval-first agents",
     items: [
       "Template coverage includes production-ready Base agents and Solana templates with wallet-scoped proposal flows.",
-      "Dashboard, agent detail, Telegram linking, proposal confirmation, and runtime health surfaces are guarded around authenticated or linked wallet ownership.",
+      "Dashboard, agent detail, Telegram linking, proposal confirmation, runtime health, and public status surfaces are guarded around authenticated or linked wallet ownership.",
     ],
   },
 ];

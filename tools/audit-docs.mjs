@@ -39,6 +39,8 @@ check("docs cover public product essentials", () => {
     "telegram linking",
     "base and solana support",
     "talk with NEMESIS",
+    "template detail pages",
+    "operational status",
     "official contract address",
     "how to verify NEMESIS",
     "what the token does not do",
@@ -52,6 +54,7 @@ check("docs cover public product essentials", () => {
 
 check("changelog is public-facing and current", () => {
   for (const phrase of [
+    "template detail polish and docs sync",
     "public FAQ and docs layer",
     "Talk with NEMESIS expansion",
     "Base and Solana approval-first agents",
@@ -81,6 +84,8 @@ check("updates page is Medium-backed and privacy-safe", () => {
     "what NEMESIS can and cannot access",
     "how Telegram proposal linking works",
     "Base and Solana support notes",
+    "template detail pages without performance theater",
+    "public-safe health and runner visibility",
     "should not reveal secrets",
   ]) {
     assert(updates.includes(phrase), `updates missing phrase: ${phrase}`);

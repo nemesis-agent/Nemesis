@@ -8,11 +8,11 @@ export default function TermsPage() {
         <FragmentDivider />
       </div>
       <div className="prose prose-invert mt-12 text-sm leading-relaxed text-nm-muted">
-        <p><strong>Last updated: June 28, 2026</strong></p>
+        <p><strong>Last updated: June 30, 2026</strong></p>
         <p>
           These terms describe how NEMESIS works and the responsibilities you accept when using it. By using the
-          platform, connecting a wallet, deploying an agent, linking Telegram, or approving a proposal, you agree to
-          these terms.
+          platform, connecting a wallet, deploying an agent, linking Telegram, using Talk with NEMESIS, or approving a
+          proposal, you agree to these terms.
         </p>
 
         <h2 className="text-nm-fg">1. Nature of the service</h2>
@@ -40,7 +40,7 @@ export default function TermsPage() {
         <p>
           Crypto assets, DeFi protocols, liquidity pools, and new token launches are risky. Prices can move quickly;
           liquidity can disappear; transactions can fail; slippage can be severe; smart contracts, bridges, RPCs,
-          oracles, APIs, and third-party protocols can be exploited or unavailable. NEMESIS makes no guarantee of
+          oracles, APIs, and third-party protocols can be exploited or unavailable. NEMESIS makes no promise of
           profit, performance, uptime, execution price, token safety, or proposal accuracy.
         </p>
 
@@ -53,10 +53,10 @@ export default function TermsPage() {
 
         <h2 className="text-nm-fg">6. Third-party services</h2>
         <p>
-          NEMESIS depends on third-party infrastructure and services including wallet providers, WalletConnect,
+          NEMESIS depends on third-party infrastructure and services including wallet providers, WalletConnect/Reown,
           Telegram, OpenRouter/model providers, Railway, Supabase/Postgres, RPC providers, price feeds, DexScreener,
-          decentralized exchanges, and Base and Solana network infrastructure. Their availability, terms, privacy
-          practices, and behavior are outside NEMESIS control.
+          Jupiter, decentralized exchanges, and Base and Solana network infrastructure. Their availability, terms,
+          privacy practices, and behavior are outside NEMESIS control.
         </p>
 
         <h2 className="text-nm-fg">7. Prohibited use</h2>

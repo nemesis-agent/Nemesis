@@ -1,7 +1,6 @@
 # NEMESIS Token Safety
 
-NEMESIS is public. That means users should verify every link, contract address,
-and bot account before interacting with the product or any token surface.
+NEMESIS is public. That means users should verify every link, contract address, and bot account before interacting with the product or any token surface.
 
 ## Official Contract Address
 
@@ -24,8 +23,8 @@ Before interacting with any token or contract:
 2. Check that the website domain is exactly `nemesis-agent.xyz`.
 3. Check that the Telegram bot is exactly `@NemesisAgentAppBot`.
 4. Check that the X account is exactly `@Nemesis_agent`.
-5. Treat shortened links, lookalike domains, copied screenshots, and unofficial
-   comments as untrusted.
+5. Check that GitHub is exactly `nemesis-agent/Nemesis`.
+6. Treat shortened links, lookalike domains, copied screenshots, unofficial comments, and unsolicited support messages as untrusted.
 
 ## What The Token Does Not Do
 
@@ -34,16 +33,14 @@ The NEMESIS token does not change the core security model:
 - It does not give NEMESIS custody over user funds.
 - It does not let agents auto-execute transactions.
 - It does not replace wallet approval.
-- It does not remove market, smart-contract, liquidity, or wallet risk.
-- It does not guarantee fills, execution price, availability, returns, or token
-  safety.
+- It does not remove market, smart-contract, liquidity, RPC, wallet, or execution risk.
+- It does not promise fills, execution price, availability, returns, or token safety.
 
 NEMESIS remains approval-first: agents propose, users approve, wallets sign.
 
 ## Avoid Impersonators
 
-Impersonators may publish fake contracts, fake Telegram bots, fake support
-accounts, fake airdrops, or fake websites.
+Impersonators may publish fake contracts, fake Telegram bots, fake support accounts, fake airdrops, or fake websites.
 
 NEMESIS will never ask for:
 
@@ -60,6 +57,4 @@ If a message asks for those items, treat it as malicious.
 
 ## Official Channels Only
 
-Use official NEMESIS channels for product links, contract references, and safety
-updates. If two sources disagree, do not interact until the address and link can
-be verified from the official website and GitHub.
+Use official NEMESIS channels for product links, contract references, and safety updates. If two sources disagree, do not interact until the address and link can be verified from the official website and GitHub.

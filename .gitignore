@@ -1,4 +1,4 @@
-# Internal planning docs — not for public consumption
+# Internal planning docs - not for public consumption
 # These contain security gap details, internal roadmap, and placeholder notes
 AGENTS.md
 CONTEXT.md
@@ -17,7 +17,7 @@ out/
 .env.local
 .env.*.local
 
-# Database — never commit the SQLite file or any data directory
+# Database - never commit the SQLite file or any data directory
 data/
 
 # Logs

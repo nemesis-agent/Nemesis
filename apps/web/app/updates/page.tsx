@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { FragmentDivider } from "@/components/FragmentDivider";
@@ -41,6 +41,18 @@ const UPDATE_TOPICS = [
     title: "shipping FAQ, docs, changelog, and roadmap",
     summary:
       "A development note on the public trust layer: FAQ, docs, changelog, roadmap, production smoke checks, and audit gates for product-facing copy.",
+  },
+  {
+    label: "build log",
+    title: "template detail pages without performance theater",
+    summary:
+      "A product note on replacing mock backtest-style preview language with proposal preview, safety rails, observed fields, approval checklist, and parameter defaults.",
+  },
+  {
+    label: "reliability",
+    title: "public-safe health and runner visibility",
+    summary:
+      "A reliability note on database reachability, runner heartbeat, Telegram polling lock state, Base RPC fallback, Solana RPC probing, and why health surfaces must stay secret-free.",
   },
 ];
 

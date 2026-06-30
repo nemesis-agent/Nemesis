@@ -18,16 +18,18 @@ const ROADMAP_SECTIONS = [
       "Solana support with Solflare-compatible wallet flow and guarded proposal paths.",
       "Telegram proposal linking for wallet-specific notifications and commands.",
       "Talk with NEMESIS powered by OpenRouter for natural product and general chat.",
-      "Public FAQ, documentation, changelog, and production audit gates.",
+      "Public FAQ, documentation, changelog, roadmap, updates, and token safety pages.",
+      "Template detail pages with safety rails, explainability, parameter defaults, and proposal preview.",
+      "Observability layer for OpenRouter, Telegram bot, Base RPC fallback, Solana RPC, and runner heartbeat visibility.",
     ],
   },
   {
     label: "building",
     title: "active product work",
     items: [
-      "Observability layer for OpenRouter, Telegram bot, Base RPC fallback, Solana RPC, and runner heartbeat visibility.",
       "Production smoke automation expansion across public pages, template pages, verification files, and auth guard checks.",
       "User guide polish with clearer empty states, deploy instructions, Telegram linking copy, and proposal review language.",
+      "More public education content through Medium updates and short development notes.",
     ],
   },
   {
@@ -35,10 +37,9 @@ const ROADMAP_SECTIONS = [
     title: "research and validation",
     items: [
       "More executable template encoders with constrained contracts, exact payload verification, and no arbitrary calldata path.",
-      "Richer agent simulation previews that show condition, action, risk, and expected approval flow before deployment.",
+      "Richer proposal preview surfaces that show condition, action, risk, observed values, and expected approval flow before deployment.",
       "More template filters by chain, risk level, protocol, and category.",
       "Optional notification improvements such as clearer Telegram status responses and proposal reminders.",
-      "More public education content including architecture notes, safety notes, and short development updates.",
     ],
   },
   {

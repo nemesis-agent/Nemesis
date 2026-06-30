@@ -1,56 +1,38 @@
 # NEMESIS Security Model
 
-NEMESIS is built around a non-custodial, approval-first security model. Agents
-monitor conditions and prepare proposals; users keep custody and final signing
-authority in their own wallets.
+NEMESIS is built around a non-custodial, approval-first security model. Agents monitor conditions and prepare proposals; users keep custody and final signing authority in their own wallets.
 
 ## Non-Custodial By Design
 
-NEMESIS does not store seed phrases, private keys, recovery phrases, custodial
-exchange credentials, or wallet-export material.
+NEMESIS does not store seed phrases, private keys, recovery phrases, custodial exchange credentials, or wallet-export material.
 
 Wallet signatures happen in the user's own wallet.
 
 ## Approval-First Execution
 
-Agents do not silently move funds. They monitor, evaluate, and create proposals.
-A proposal can only move forward after the user reviews the wallet action and
-signs from their own wallet.
+Agents do not silently move funds. They monitor, evaluate, and create proposals. A proposal can only move forward after the user reviews the wallet action and signs from their own wallet.
 
 ## Ownership Boundaries
 
-Dashboard data, Telegram commands, agent detail pages, pause/resume actions,
-proposal review, and proposal confirmation are scoped to the authenticated or
-linked wallet.
+Dashboard data, Telegram commands, agent detail pages, pause/resume actions, proposal review, and proposal confirmation are scoped to the authenticated or linked wallet.
 
-This prevents one wallet or Telegram chat from controlling another wallet's
-agents.
+This prevents one wallet or Telegram chat from controlling another wallet's agents.
 
 ## Link-Code Safety
 
-Telegram linking uses short-lived, single-use codes generated for the signed-in
-wallet session. Codes are consumed atomically so a code cannot be reused after a
-successful link.
+Telegram linking uses short-lived, single-use codes generated for the signed-in wallet session. Codes are consumed atomically so a code cannot be reused after a successful link.
 
 ## Cross-Origin Controls
 
-Mutating web routes reject unexpected cross-origin requests when an `Origin`
-header is present. This reduces accidental or malicious cross-site mutation
-paths.
+Mutating web routes reject unexpected cross-origin requests when an `Origin` header is present. This reduces accidental or malicious cross-site mutation paths.
 
 ## Proposal confirmations
 
-Where executable payloads are prepared, confirmation endpoints compare the
-submitted transaction against stored proposal data before marking a proposal
-approved.
+Where executable payloads are prepared, confirmation endpoints compare the submitted transaction against stored proposal data before marking a proposal approved.
 
-Validation includes ownership and transaction-shape checks such as signer,
-network, target, value, and calldata where applicable. Multi-step Base proposals
-track completed hashes so approvals advance one stored step at a time.
+Validation includes ownership and transaction-shape checks such as signer, network, target, value, calldata, or Solana transaction message data where applicable. Multi-step Base proposals track completed hashes so approvals advance one stored step at a time.
 
-Executable payloads are only prepared for workflows with dedicated encoders and
-clear input bounds. Unsupported workflows remain proposal review-only rather than
-generating arbitrary calldata.
+Executable payloads are only prepared for workflows with dedicated encoders and clear input bounds. Unsupported workflows remain proposal review-only rather than generating arbitrary calldata.
 
 ## Template Controls
 
@@ -61,6 +43,7 @@ Templates are intentionally constrained:
 - structured parameters
 - plain-language approval summary
 - risk acknowledgement for high-risk and degen templates
+- template detail pages that show safety rails, observed fields, approval checklist, defaults, and proposal preview before deploy
 
 ## Wallet/User Privacy Controls
 
@@ -76,12 +59,9 @@ Base RPC reads support primary and fallback endpoints. Endpoint logs are host-re
 
 ## AI Safety Boundary
 
-OpenRouter-powered product and planning flows are restricted to product context
-and structured outputs. They must not expose secrets, environment variables,
-private logs, user records, or developer-only operational data.
+OpenRouter-powered product and planning flows are restricted away from secrets and private runtime data. Talk with NEMESIS can answer general questions naturally, but it must not expose environment variables, private logs, user records, developer-only operational data, or hidden internal files.
 
-If required model credentials are missing, protected model routes fail closed
-rather than silently using mock production behavior.
+If required model credentials are missing, protected model routes fail closed rather than silently using mock production behavior.
 
 ## Token And Contract Safety
 
@@ -89,15 +69,10 @@ Official NEMESIS contract address:
 
 `HTXeyDoVbtJxEApA4oRMT1xLtCGoUQ5P962Cur6EASY`
 
-Users should verify the full address from official NEMESIS channels before
-interacting with any token or contract. The token does not change the NEMESIS
-security model: agents still cannot custody funds, cannot auto-execute
-transactions, and cannot replace wallet approval.
+Users should verify the full address from official NEMESIS channels before interacting with any token or contract. The token does not change the NEMESIS security model: agents still cannot custody funds, cannot auto-execute transactions, and cannot replace wallet approval.
 
 ## User Responsibility
 
-Users should reject any proposal that does not match the wallet preview,
-expected network, expected token, expected amount, destination, fee, or current
-market context.
+Users should reject any proposal that does not match the wallet preview, expected network, expected token, expected amount, destination, fee, or current market context.
 
-NEMESIS is a proposal system, not a profit guarantee.
+NEMESIS is a proposal system, not a profit promise.

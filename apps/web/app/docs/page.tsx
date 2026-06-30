@@ -27,6 +27,14 @@ const DOC_SECTIONS = [
     ],
   },
   {
+    id: "template-details",
+    title: "template detail pages",
+    body: [
+      "Each template detail page explains the chain, risk level, production state, condition, proposed action, safety rails, observed fields, approval checklist, parameter defaults, and plan preview before deployment.",
+      "The proposal preview is an example review surface, not a performance claim. It avoids APY, win-rate, and fake backtest language so users understand the approval flow without being pushed by misleading metrics.",
+    ],
+  },
+  {
     id: "security-model",
     title: "security model",
     body: [
@@ -71,7 +79,7 @@ const DOC_SECTIONS = [
     title: "what the token does not do",
     body: [
       "The NEMESIS token does not give NEMESIS custody over user funds, does not let agents auto-execute transactions, and does not replace wallet approval. The product remains approval-first: agents propose, users approve, wallets sign.",
-      "The token does not remove market, smart-contract, liquidity, wallet, RPC, or execution risk. NEMESIS does not guarantee fills, execution price, availability, returns, or token safety.",
+      "The token does not remove market, smart-contract, liquidity, wallet, RPC, or execution risk. NEMESIS does not promise fills, execution price, availability, returns, or token safety.",
     ],
   },
   {
@@ -88,6 +96,14 @@ const DOC_SECTIONS = [
     body: [
       "Talk with NEMESIS is a public chat surface powered by OpenRouter. It can answer general questions naturally and can explain NEMESIS concepts, templates, safety boundaries, and usage flows.",
       "It has no access to your wallet, database rows, Telegram chat, runtime agents, environment variables, private developer systems, or hidden internal files.",
+    ],
+  },
+  {
+    id: "operational-status",
+    title: "operational status",
+    body: [
+      "NEMESIS exposes public-safe health and status surfaces for database reachability, runner heartbeat age, Telegram polling lock state, and Base/Solana RPC probes.",
+      "These surfaces are for reliability visibility only. They do not reveal API keys, bot tokens, raw database URLs, private user records, or full internal logs.",
     ],
   },
 ];
