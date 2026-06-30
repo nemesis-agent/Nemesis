@@ -5,7 +5,12 @@ import { VersionedTransaction } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from "wagmi";
 import type { Proposal } from "@nemesis/db";
-import { validateBaseExecutionPayload, validateSolanaExecutionPayload, type SolanaExecutionEnvelope } from "@nemesis/execution";
+import {
+  summarizeExecutionPayload,
+  validateBaseExecutionPayload,
+  validateSolanaExecutionPayload,
+  type SolanaExecutionEnvelope,
+} from "@nemesis/execution";
 import { Button } from "./Button";
 
 interface ExecuteProposalButtonProps {
@@ -24,12 +29,6 @@ function isSolanaPayload(payload: TxPayload | MultiStepPayload | SolanaJupiterSw
   return (payload as SolanaJupiterSwapPayload).kind === "solana-jupiter-swap" && (payload as SolanaJupiterSwapPayload).chain === "solana";
 }
 
-function getPayloadSteps(rawPayload: string): TxPayload[] {
-  const parsed = parsePayload(rawPayload);
-  if (isSolanaPayload(parsed)) return [];
-  return Array.isArray((parsed as MultiStepPayload).steps) ? ((parsed as MultiStepPayload).steps ?? []) : [parsed as TxPayload];
-}
-
 function getCompletedStepCount(proposal: Proposal): number {
   const hashes = proposal.executionState?.completedTxHashes;
   return Array.isArray(hashes) ? hashes.length : 0;
@@ -42,13 +41,14 @@ function base64ToBytes(value: string): Uint8Array {
   return bytes;
 }
 
-function getButtonLabel(rawPayload: string, proposal: Proposal): string {
-  const parsed = parsePayload(rawPayload);
-  if (isSolanaPayload(parsed)) return parsed.label ?? "Sign Jupiter swap in Solflare";
-
-  const steps = getPayloadSteps(rawPayload);
-  const step = steps[getCompletedStepCount(proposal)];
-  return step?.label ?? "Sign in wallet";
+function formatExpiry(expiresAt: string | null): string | null {
+  if (!expiresAt) return null;
+  const expiryMs = Date.parse(expiresAt);
+  if (!Number.isFinite(expiryMs)) return null;
+  const seconds = Math.max(0, Math.floor((expiryMs - Date.now()) / 1000));
+  if (seconds === 0) return "expired";
+  if (seconds < 60) return `expires in ${seconds}s`;
+  return `expires in ${Math.floor(seconds / 60)}m`;
 }
 
 export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) {
@@ -59,6 +59,8 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
   const { connection } = useConnection();
   const { address: baseAddress } = useAccount();
   const solanaWallet = useWallet();
+  const summary = summarizeExecutionPayload(proposal.unsignedTxPayload, getCompletedStepCount(proposal));
+  const expiryLabel = formatExpiry(summary.expiresAt);
 
   const {
     data: hash,
@@ -141,6 +143,9 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
     if (!proposal.unsignedTxPayload) return;
     try {
       setVerificationError(null);
+      if (!summary.executable) {
+        throw new Error(summary.reason ?? "This proposal is not executable from the wallet UI.");
+      }
       if (solanaPendingSignature) {
         setIsSolanaSigning(true);
         await confirmSolanaSignature(solanaPendingSignature);
@@ -191,16 +196,9 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
   if (!proposal.unsignedTxPayload) {
     return (
       <div className="text-[10px] text-nm-muted uppercase tracking-widest2 font-mono border border-nm-border px-2 py-1">
-        No Payload
+        Review only
       </div>
     );
-  }
-
-  let stepLabel = "Sign in wallet";
-  try {
-    stepLabel = getButtonLabel(proposal.unsignedTxPayload, proposal);
-  } catch {
-    stepLabel = "Invalid payload";
   }
 
   const isLoading = isSigning || isConfirming || isVerifying || isSolanaSigning;
@@ -214,17 +212,22 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
     ? "Verifying..."
     : solanaPendingSignature
     ? "Retry Solana verification"
-    : stepLabel;
+    : summary.actionLabel;
 
   return (
     <div className="flex flex-col items-end gap-1">
       <Button
         variant="primary"
         onClick={handleExecute}
-        disabled={isLoading || isConfirmed}
+        disabled={isLoading || isConfirmed || summary.expired || summary.kind === "invalid"}
       >
         {buttonText}
       </Button>
+      <span className="max-w-56 text-right font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+        {summary.networkLabel}
+        {summary.totalSteps > 1 ? ` step ${Math.min(summary.currentStep, summary.totalSteps)}/${summary.totalSteps}` : ""}
+        {expiryLabel ? ` / ${expiryLabel}` : ""}
+      </span>
 
       {sendError && (
         <span className="text-[10px] text-nm-fragment-red font-mono lowercase">
@@ -236,9 +239,9 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
           transaction failed on-chain
         </span>
       )}
-      {verificationError && (
-        <span className="text-[10px] text-nm-fragment-red font-mono lowercase">
-          {verificationError}
+      {(verificationError || summary.reason) && (
+        <span className="max-w-64 text-right text-[10px] text-nm-fragment-red font-mono lowercase">
+          {verificationError ?? summary.reason}
         </span>
       )}
     </div>

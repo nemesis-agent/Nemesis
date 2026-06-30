@@ -119,6 +119,10 @@ function RunnerHealthCard({ health }: { health: DashboardRuntimeHealth }) {
   const healthy = health.status === "healthy" && !health.stale;
   const event = typeof health.details.event === "string" ? health.details.event.replaceAll("_", " ") : "waiting for heartbeat";
   const activeAgents = typeof health.details.activeAgents === "number" ? health.details.activeAgents : null;
+  const proposedAgents = typeof health.details.proposedAgents === "number" ? health.details.proposedAgents : null;
+  const executableProposals = typeof health.details.executableProposals === "number" ? health.details.executableProposals : null;
+  const reviewOnlyProposals = typeof health.details.reviewOnlyProposals === "number" ? health.details.reviewOnlyProposals : null;
+  const skippedPending = typeof health.details.skippedPending === "number" ? health.details.skippedPending : null;
 
   return (
     <div className="border border-nm-border bg-nm-bg p-6">
@@ -148,6 +152,26 @@ function RunnerHealthCard({ health }: { health: DashboardRuntimeHealth }) {
           <div className="flex justify-between gap-4 border-t border-nm-border pt-3">
             <dt className="font-mono uppercase tracking-widest2 text-nm-muted">active</dt>
             <dd className="text-right text-nm-fg">{activeAgents}</dd>
+          </div>
+        )}
+        {proposedAgents !== null && (
+          <div className="flex justify-between gap-4 border-t border-nm-border pt-3">
+            <dt className="font-mono uppercase tracking-widest2 text-nm-muted">proposed</dt>
+            <dd className="text-right text-nm-fg">{proposedAgents}</dd>
+          </div>
+        )}
+        {(executableProposals !== null || reviewOnlyProposals !== null) && (
+          <div className="flex justify-between gap-4 border-t border-nm-border pt-3">
+            <dt className="font-mono uppercase tracking-widest2 text-nm-muted">payloads</dt>
+            <dd className="text-right text-nm-fg">
+              {executableProposals ?? 0} sign / {reviewOnlyProposals ?? 0} review
+            </dd>
+          </div>
+        )}
+        {skippedPending !== null && skippedPending > 0 && (
+          <div className="flex justify-between gap-4 border-t border-nm-border pt-3">
+            <dt className="font-mono uppercase tracking-widest2 text-nm-muted">waiting</dt>
+            <dd className="text-right text-nm-fg">{skippedPending} pending</dd>
           </div>
         )}
       </dl>

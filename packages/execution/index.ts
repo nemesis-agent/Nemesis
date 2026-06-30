@@ -201,3 +201,105 @@ export function validateSolanaExecutionPayload(
 
   return { ok: true, value: payload };
 }
+export type ExecutionPayloadSummary = {
+  kind: "base" | "solana" | "review-only" | "invalid";
+  executable: boolean;
+  networkLabel: string;
+  actionLabel: string;
+  currentStep: number;
+  totalSteps: number;
+  expiresAt: string | null;
+  expired: boolean;
+  reason: string | null;
+};
+
+function expiredAt(expiresAt: unknown, nowMs: number): { expiresAt: string | null; expired: boolean } {
+  if (typeof expiresAt !== "string") return { expiresAt: null, expired: false };
+  const parsed = Date.parse(expiresAt);
+  if (!Number.isFinite(parsed)) return { expiresAt: null, expired: false };
+  return { expiresAt, expired: parsed <= nowMs };
+}
+
+export function summarizeExecutionPayload(
+  rawPayload: string | null | undefined,
+  completedSteps: number = 0,
+  nowMs: number = Date.now(),
+): ExecutionPayloadSummary {
+  if (!rawPayload) {
+    return {
+      kind: "review-only",
+      executable: false,
+      networkLabel: "review only",
+      actionLabel: "Review proposal",
+      currentStep: 0,
+      totalSteps: 0,
+      expiresAt: null,
+      expired: false,
+      reason: "No wallet transaction payload was generated.",
+    };
+  }
+
+  let payload: unknown;
+  try {
+    payload = JSON.parse(rawPayload) as unknown;
+  } catch {
+    return {
+      kind: "invalid",
+      executable: false,
+      networkLabel: "invalid",
+      actionLabel: "Invalid payload",
+      currentStep: 0,
+      totalSteps: 0,
+      expiresAt: null,
+      expired: false,
+      reason: "Payload is not valid JSON.",
+    };
+  }
+
+  if (payload && typeof payload === "object" && (payload as BaseExecutionEnvelope).kind === "base-uniswap-v3") {
+    const basePayload = payload as BaseExecutionEnvelope;
+    const steps = Array.isArray(basePayload.steps) ? basePayload.steps : [];
+    const safeCompleted = Math.max(0, Math.min(steps.length, Math.floor(completedSteps)));
+    const expiry = expiredAt(basePayload.expiresAt, nowMs);
+    const nextStep = steps[safeCompleted];
+    return {
+      kind: "base",
+      executable: steps.length > 0 && !expiry.expired && safeCompleted < steps.length,
+      networkLabel: "Base",
+      actionLabel: nextStep?.label ?? (safeCompleted >= steps.length ? "All steps confirmed" : "Sign in wallet"),
+      currentStep: steps.length > 0 ? safeCompleted + 1 : 0,
+      totalSteps: steps.length,
+      expiresAt: expiry.expiresAt,
+      expired: expiry.expired,
+      reason: expiry.expired ? "Execution payload expired. Wait for the agent to create a fresh proposal." : null,
+    };
+  }
+
+  if (payload && typeof payload === "object" && (payload as SolanaExecutionEnvelope).kind === "solana-jupiter-swap") {
+    const solanaPayload = payload as SolanaExecutionEnvelope;
+    const expiry = expiredAt(solanaPayload.expiresAt, nowMs);
+    return {
+      kind: "solana",
+      executable: !expiry.expired,
+      networkLabel: "Solana",
+      actionLabel: solanaPayload.label || "Sign Jupiter swap in Solflare",
+      currentStep: 1,
+      totalSteps: 1,
+      expiresAt: expiry.expiresAt,
+      expired: expiry.expired,
+      reason: expiry.expired ? "Execution payload expired. Wait for the agent to create a fresh proposal." : null,
+    };
+  }
+
+  return {
+    kind: "invalid",
+    executable: false,
+    networkLabel: "unknown",
+    actionLabel: "Unsupported payload",
+    currentStep: 0,
+    totalSteps: 0,
+    expiresAt: null,
+    expired: false,
+    reason: "Payload type is not supported by the current execution policy.",
+  };
+}

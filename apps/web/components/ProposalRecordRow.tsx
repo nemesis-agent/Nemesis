@@ -1,4 +1,5 @@
 import type { Proposal, ProposalStatus } from "@nemesis/db";
+import { summarizeExecutionPayload } from "@nemesis/execution";
 import { ExecuteProposalButton } from "./ExecuteProposalButton";
 
 const STATUS_STYLES: Record<ProposalStatus, string> = {
@@ -19,9 +20,26 @@ interface ProposalRecordRowProps {
   proposal: Proposal;
 }
 
+function getCompletedStepCount(proposal: Proposal): number {
+  const hashes = proposal.executionState?.completedTxHashes;
+  return Array.isArray(hashes) ? hashes.length : 0;
+}
+
+function formatExpiry(expiresAt: string | null): string {
+  if (!expiresAt) return "not executable";
+  const expiryMs = Date.parse(expiresAt);
+  if (!Number.isFinite(expiryMs)) return "unknown";
+  const seconds = Math.max(0, Math.floor((expiryMs - Date.now()) / 1000));
+  if (seconds === 0) return "expired";
+  if (seconds < 60) return `${seconds}s`;
+  return `${Math.floor(seconds / 60)}m`;
+}
+
 export function ProposalRecordRow({ proposal }: ProposalRecordRowProps) {
   const explainabilityDetails = proposal.details.filter((detail) => EXPLAINABILITY_LABELS.has(detail.label.toLowerCase()));
   const technicalDetails = proposal.details.filter((detail) => !EXPLAINABILITY_LABELS.has(detail.label.toLowerCase()));
+  const execution = summarizeExecutionPayload(proposal.unsignedTxPayload, getCompletedStepCount(proposal));
+  const approvalLabel = execution.executable ? "wallet signature required" : "review only";
 
   return (
     <div className="border border-nm-border p-4">
@@ -64,7 +82,7 @@ export function ProposalRecordRow({ proposal }: ProposalRecordRowProps) {
         </div>
       )}
 
-      <div className="mt-3 grid gap-2 border border-nm-border/70 p-3 sm:grid-cols-3">
+      <div className="mt-3 grid gap-2 border border-nm-border/70 p-3 sm:grid-cols-4">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">created</p>
           <p className="mt-1 text-xs text-nm-fg">{new Date(proposal.createdAt).toLocaleString()}</p>
@@ -74,8 +92,14 @@ export function ProposalRecordRow({ proposal }: ProposalRecordRowProps) {
           <p className="mt-1 text-xs text-nm-fg">{STATUS_LABELS[proposal.status]}</p>
         </div>
         <div>
+          <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">execution</p>
+          <p className="mt-1 text-xs text-nm-fg">
+            {execution.networkLabel}{execution.totalSteps > 1 ? ` ${Math.min(execution.currentStep, execution.totalSteps)}/${execution.totalSteps}` : ""}
+          </p>
+        </div>
+        <div>
           <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">approval</p>
-          <p className="mt-1 text-xs text-nm-fg">wallet signature required</p>
+          <p className="mt-1 text-xs text-nm-fg">{execution.expired ? "payload expired" : approvalLabel}</p>
         </div>
       </div>
 
@@ -85,6 +109,11 @@ export function ProposalRecordRow({ proposal }: ProposalRecordRowProps) {
           <span className="ml-2 font-mono text-[10px] text-nm-muted">
             gas ~{proposal.estimatedGasUsd}
           </span>
+          {proposal.status === "pending" && execution.expiresAt && (
+            <span className="ml-2 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+              expires {formatExpiry(execution.expiresAt)}
+            </span>
+          )}
         </p>
         {proposal.txHash && (
           <span className="font-mono text-[10px] uppercase tracking-widest2 text-nm-resolve">
