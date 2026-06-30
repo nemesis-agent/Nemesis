@@ -112,6 +112,15 @@ async function runCycle(bot: Telegraf) {
     await safeRecordRunnerHealth("healthy", {
       event: "cycle_completed",
       activeAgents: 0,
+      evaluatedAgents: 0,
+      proposedAgents: 0,
+      skippedPending: 0,
+      skippedUnsupported: 0,
+      unlinkedTriggers: 0,
+      executableProposals: 0,
+      reviewOnlyProposals: 0,
+      evaluationFailures: 0,
+      dispatchFailures: 0,
       cycleStartedAt: cycleStartedAt.toISOString(),
       durationMs: Date.now() - cycleStartedAt.getTime(),
     });
@@ -121,20 +130,30 @@ async function runCycle(bot: Telegraf) {
   logger.info({ msg: `cycle started: evaluating ${activeAgents.length} active agent(s)` });
   let evaluatedAgents = 0;
   let proposedAgents = 0;
+  let skippedPending = 0;
+  let skippedUnsupported = 0;
+  let unlinkedTriggers = 0;
+  let executableProposals = 0;
+  let reviewOnlyProposals = 0;
+  let evaluationFailures = 0;
+  let dispatchFailures = 0;
 
   for (const agent of activeAgents) {
     if (!PRODUCTION_TEMPLATES.has(agent.templateId)) {
+      skippedUnsupported += 1;
       await updateAgentRuntimeState(agent.id, agent.runtimeState, "Template runtime is not production-enabled yet.");
       continue;
     }
 
     const existingPending = (await listProposalsForAgent(agent.id)).some((proposal) => proposal.status === "pending");
     if (existingPending) {
+      skippedPending += 1;
       await updateAgentRuntimeState(agent.id, agent.runtimeState, "Skipped check: pending proposal already exists.");
       continue;
     }
 
     const result = await evaluateAgent(agent).catch((err) => {
+      evaluationFailures += 1;
       void sendOpsAlert({ event: "agent_evaluation_failed", severity: "warning", message: "agent evaluation failed", context: { agentId: agent.id, templateId: agent.templateId, error: String(err) } });
       return null;
     });
@@ -144,6 +163,7 @@ async function runCycle(bot: Telegraf) {
 
     const chatId = await getTelegramChatIdForWallet(agent.walletAddress);
     if (!chatId) {
+      unlinkedTriggers += 1;
       await updateAgentRuntimeState(agent.id, agent.runtimeState, "Proposal trigger detected, but Telegram is not linked yet.");
       logger.warn({ msg: "skip proposal dispatch: no Telegram linked", walletAddress: maskIdentifier(agent.walletAddress) });
       continue;
@@ -161,9 +181,17 @@ async function runCycle(bot: Telegraf) {
 
       await sendProposal(bot, chatId, proposal, agent.name);
       proposedAgents += 1;
+      if (result.unsignedTxPayload) executableProposals += 1;
+      else reviewOnlyProposals += 1;
       await updateAgentRuntimeState(agent.id, result.state, result.lastEvent);
-      logger.info({ msg: "proposal dispatched to Telegram", proposalId: proposal.id, agentId: agent.id });
+      logger.info({
+        msg: "proposal dispatched to Telegram",
+        proposalId: proposal.id,
+        agentId: agent.id,
+        executable: Boolean(result.unsignedTxPayload),
+      });
     } catch (err) {
+      dispatchFailures += 1;
       await sendOpsAlert({
         event: "proposal_dispatch_failed",
         severity: "critical",
@@ -173,16 +201,22 @@ async function runCycle(bot: Telegraf) {
     }
   }
 
-  await safeRecordRunnerHealth("healthy", {
+  await safeRecordRunnerHealth(dispatchFailures > 0 || evaluationFailures > 0 ? "degraded" : "healthy", {
     event: "cycle_completed",
     activeAgents: activeAgents.length,
     evaluatedAgents,
     proposedAgents,
+    skippedPending,
+    skippedUnsupported,
+    unlinkedTriggers,
+    executableProposals,
+    reviewOnlyProposals,
+    evaluationFailures,
+    dispatchFailures,
     cycleStartedAt: cycleStartedAt.toISOString(),
     durationMs: Date.now() - cycleStartedAt.getTime(),
   });
 }
-
 function enrichProposalDetails(result: EvaluationResult, agent: Agent): ProposalDetail[] {
   const existingLabels = new Set(result.details.map((detail) => detail.label.toLowerCase()));
   if ([...EXPLAINABILITY_DETAIL_LABELS].every((label) => existingLabels.has(label))) return result.details;

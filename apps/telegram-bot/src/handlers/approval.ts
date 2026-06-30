@@ -8,6 +8,7 @@ import {
   skipProposal,
   type Proposal,
 } from "@nemesis/db";
+import { summarizeExecutionPayload } from "@nemesis/execution";
 import { buildWalletSignatureCheckPayload, dashboardProposalUrl } from "../lib/base-payload.js";
 import { proposalKeyboard } from "../lib/ui.js";
 import { escapeHtml, formatProposalMessage } from "../lib/format.js";
@@ -115,7 +116,8 @@ export function registerApprovalHandlers(
       return;
     }
 
-    await ctx.answerCbQuery("open dashboard to sign");
+    const execution = summarizeExecutionPayload(proposal.unsignedTxPayload, 0);
+    await ctx.answerCbQuery(execution.executable ? "open dashboard to sign" : "open dashboard to review");
 
     if (options.onApprove) {
       await options.onApprove(proposal, ctx);
@@ -125,13 +127,14 @@ export function registerApprovalHandlers(
     const dashboardUrl = dashboardProposalUrl(agent.id);
     await ctx.reply(
       [
-        `<code>&gt; ready for wallet signature</code>`,
+        execution.executable ? `<code>&gt; ready for wallet signature</code>` : `<code>&gt; review only</code>`,
         agent ? `agent: <b>${escapeHtml(agent.name)}</b>` : "",
         `proposal: <code>${proposalId}</code>`,
+        `network: <b>${escapeHtml(execution.networkLabel)}</b>`,
         ``,
-        proposal.unsignedTxPayload
+        execution.executable
           ? `<b>Open dashboard and sign from your own wallet:</b>\n${escapeHtml(dashboardUrl)}`
-          : `<i>No executable payload generated yet. Review this proposal in the dashboard.</i>`,
+          : `<i>No executable payload is attached. Review the proposal details in the dashboard.</i>\n${escapeHtml(dashboardUrl)}`,
         ``,
         `<i>NEMESIS never signs or broadcasts from the server.</i>`
       ]

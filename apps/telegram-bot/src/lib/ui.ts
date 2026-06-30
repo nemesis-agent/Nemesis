@@ -1,6 +1,7 @@
 import { Markup } from "telegraf";
 
 import type { Agent, Proposal } from "@nemesis/db";
+import { summarizeExecutionPayload } from "@nemesis/execution";
 import { dashboardProposalUrl } from "./base-payload.js";
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://nemesis-agent.xyz").replace(/\/$/, "");
@@ -10,6 +11,11 @@ export function shortWallet(wallet: string): string {
   return wallet.startsWith("solana:")
     ? `${wallet.slice(0, 13)}...${wallet.slice(-4)}`
     : `${wallet.slice(0, 6)}...${wallet.slice(-4)}`;
+}
+
+function completedStepCount(proposal: Proposal): number {
+  const hashes = proposal.executionState?.completedTxHashes;
+  return Array.isArray(hashes) ? hashes.length : 0;
 }
 
 export function mainMenuKeyboard(linked: boolean) {
@@ -49,8 +55,10 @@ export function agentKeyboard(agent: Agent) {
 }
 
 export function proposalKeyboard(proposal: Proposal, agentId: string) {
+  const execution = summarizeExecutionPayload(proposal.unsignedTxPayload, completedStepCount(proposal));
+  const primaryLabel = execution.executable ? "review + sign in dashboard" : "review in dashboard";
   return Markup.inlineKeyboard([
-    [Markup.button.url("open in dashboard", dashboardProposalUrl(agentId))],
-    [Markup.button.callback("approve in dashboard", `approve:${proposal.id}`), Markup.button.callback("skip", `skip:${proposal.id}`)],
+    [Markup.button.url(primaryLabel, dashboardProposalUrl(agentId))],
+    [Markup.button.callback("acknowledge", `approve:${proposal.id}`), Markup.button.callback("skip proposal", `skip:${proposal.id}`)],
   ]);
 }
