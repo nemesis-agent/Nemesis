@@ -68,6 +68,23 @@ function parameterKeys(block) {
 
 const blocks = templateBlocks();
 
+check("web security headers are explicit and wallet-compatible", () => {
+  const config = read("apps/web/next.config.mjs");
+  for (const directive of [
+    "Content-Security-Policy",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    "connect-src 'self' https: wss:",
+    "Referrer-Policy",
+    "Strict-Transport-Security",
+    "X-Content-Type-Options",
+    "X-Frame-Options",
+    "Permissions-Policy",
+  ]) {
+    assert(config.includes(directive), `web security config missing ${directive}`);
+  }
+  assert(!config.includes("'unsafe-eval'"), "production CSP must not allow unsafe eval");
+});
 check("template registry has expected production coverage", () => {
   assert(blocks.length >= 12, `expected at least 12 templates, found ${blocks.length}`);
   const ids = new Set();
