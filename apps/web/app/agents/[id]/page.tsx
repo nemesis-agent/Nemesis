@@ -216,6 +216,22 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
               </div>
             </div>
 
+
+            <div className="mt-4 border border-nm-border/70 p-4">
+              <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">explainability</p>
+              <p className="mt-2 text-sm leading-relaxed text-nm-muted">{template.explainability.decisionRule}</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <div>
+                  <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red">observed</p>
+                  <p className="mt-1 text-sm leading-relaxed text-nm-muted">{template.explainability.observedFields.join(" . ")}</p>
+                </div>
+                <div>
+                  <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red">approval check</p>
+                  <p className="mt-1 text-sm leading-relaxed text-nm-muted">{template.explainability.approvalChecklist[0]}</p>
+                </div>
+              </div>
+            </div>
+
             <div className="mt-4 flex flex-wrap gap-2">
               {template.protocols.map((protocol) => (
                 <span

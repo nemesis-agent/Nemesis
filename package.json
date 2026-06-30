@@ -25,7 +25,8 @@
     "audit:real-execution": "node tools/audit-real-execution.mjs",
     "audit:growth": "node tools/audit-growth.mjs",
     "audit:docs": "node tools/audit-docs.mjs",
-    "audit:observability": "node tools/audit-observability.mjs"
+    "audit:observability": "node tools/audit-observability.mjs",
+    "audit:explainability": "node tools/audit-explainability.mjs"
   },
   "engines": {
     "node": ">=22.5.0"

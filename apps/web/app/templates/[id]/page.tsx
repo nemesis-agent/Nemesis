@@ -116,6 +116,28 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
       </section>
 
       <section className="mt-8">
+        <h2 className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">how proposals are explained</h2>
+        <div className="mt-3 grid gap-3 border border-nm-border bg-nm-surface p-4">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red">decision rule</p>
+            <p className="mt-1 text-sm leading-relaxed text-nm-muted">{template.explainability.decisionRule}</p>
+          </div>
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red">observed fields</p>
+            <p className="mt-1 text-sm leading-relaxed text-nm-muted">{template.explainability.observedFields.join(" . ")}</p>
+          </div>
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red">approval checklist</p>
+            <ul className="mt-2 grid gap-1 text-sm leading-relaxed text-nm-muted">
+              {template.explainability.approvalChecklist.map((item) => (
+                <li key={item}>- {item}</li>
+              ))}
+            </ul>
+          </div>
+          <p className="text-sm leading-relaxed text-nm-muted">{template.explainability.limitation}</p>
+        </div>
+      </section>
+      <section className="mt-8">
         <SimulationView />
       </section>
 

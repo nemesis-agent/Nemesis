@@ -13,11 +13,16 @@ const STATUS_LABELS: Record<ProposalStatus, string> = {
   skipped: "skipped",
 };
 
+const EXPLAINABILITY_LABELS = new Set(["why", "observed", "approval check", "limitation"]);
+
 interface ProposalRecordRowProps {
   proposal: Proposal;
 }
 
 export function ProposalRecordRow({ proposal }: ProposalRecordRowProps) {
+  const explainabilityDetails = proposal.details.filter((detail) => EXPLAINABILITY_LABELS.has(detail.label.toLowerCase()));
+  const technicalDetails = proposal.details.filter((detail) => !EXPLAINABILITY_LABELS.has(detail.label.toLowerCase()));
+
   return (
     <div className="border border-nm-border p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -37,12 +42,41 @@ export function ProposalRecordRow({ proposal }: ProposalRecordRowProps) {
       </div>
 
       <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1">
-        {proposal.details.map((detail) => (
+        {technicalDetails.map((detail) => (
           <span key={detail.label} className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
             {detail.label}:{" "}
             <span className="text-nm-fg">{detail.value}</span>
           </span>
         ))}
+      </div>
+
+      {explainabilityDetails.length > 0 && (
+        <div className="mt-3 border border-nm-border bg-black/20 p-3">
+          <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">decision trace</p>
+          <div className="mt-2 grid gap-2">
+            {explainabilityDetails.map((detail) => (
+              <div key={detail.label}>
+                <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red">{detail.label}</p>
+                <p className="mt-1 text-sm leading-relaxed text-nm-muted">{detail.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-3 grid gap-2 border border-nm-border/70 p-3 sm:grid-cols-3">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">created</p>
+          <p className="mt-1 text-xs text-nm-fg">{new Date(proposal.createdAt).toLocaleString()}</p>
+        </div>
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">status</p>
+          <p className="mt-1 text-xs text-nm-fg">{STATUS_LABELS[proposal.status]}</p>
+        </div>
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">approval</p>
+          <p className="mt-1 text-xs text-nm-fg">wallet signature required</p>
+        </div>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">

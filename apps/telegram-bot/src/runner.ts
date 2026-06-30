@@ -44,6 +44,7 @@ const PRODUCTION_TEMPLATES = new Set([
   "solana-profit-taker",
 ]);
 const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+const EXPLAINABILITY_DETAIL_LABELS = new Set(["why", "observed", "approval check", "limitation"]);
 let cycleCount = 0;
 
 class BaseRpcHttpError extends Error {
@@ -153,7 +154,7 @@ async function runCycle(bot: Telegraf) {
         title: result.title,
         proposedAction: result.action,
         estimatedGasUsd: result.estimatedGasUsd,
-        details: result.details,
+        details: enrichProposalDetails(result, agent),
         unsignedTxPayload: result.unsignedTxPayload,
       });
 
@@ -179,6 +180,26 @@ async function runCycle(bot: Telegraf) {
     cycleStartedAt: cycleStartedAt.toISOString(),
     durationMs: Date.now() - cycleStartedAt.getTime(),
   });
+}
+
+function enrichProposalDetails(result: EvaluationResult, agent: Agent): ProposalDetail[] {
+  const existingLabels = new Set(result.details.map((detail) => detail.label.toLowerCase()));
+  if ([...EXPLAINABILITY_DETAIL_LABELS].every((label) => existingLabels.has(label))) return result.details;
+
+  const observed = result.details
+    .filter((detail) => !["source", "wallet action", "token address", "pair"].includes(detail.label.toLowerCase()))
+    .slice(0, 4)
+    .map((detail) => `${detail.label}: ${detail.value}`)
+    .join("; ");
+
+  const explanation: ProposalDetail[] = [
+    { label: "why", value: result.lastEvent || result.action },
+    { label: "observed", value: observed || "condition matched the configured agent parameters" },
+    { label: "approval check", value: "review chain, amount, asset, destination, and wallet preview before signing" },
+    { label: "limitation", value: agent.templateId.includes("solana") ? "Solana proposal only moves after your Solflare signature" : "Base proposal only moves after your wallet signature" },
+  ];
+
+  return [...result.details, ...explanation.filter((detail) => !existingLabels.has(detail.label))];
 }
 
 async function evaluateAgent(agent: Agent): Promise<EvaluationResult | null> {

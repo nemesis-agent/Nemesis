@@ -19,6 +19,19 @@ export type SolanaProtocol = "jupiter" | "solana-rpc" | "solflare";
 
 export type TemplateProtocol = BaseProtocol | SolanaProtocol;
 
+export interface TemplateExplainability {
+  /** Plain-language reason users should expect when this template creates a proposal. */
+  proposalReason: string;
+  /** The exact decision rule in user-facing language. */
+  decisionRule: string;
+  /** Public-safe fields a proposal should surface when the condition matches. */
+  observedFields: string[];
+  /** Checklist users should review before approving or signing anything. */
+  approvalChecklist: string[];
+  /** Boundary note shown with the template and proposal surfaces. */
+  limitation: string;
+}
+
 export interface TemplateParameter {
   /** Stable machine key, e.g. "maxApeAmount" */
   key: string;
@@ -55,6 +68,8 @@ export interface AgentTemplate {
   condition: string;
   /** Plain-language description of what the agent proposes when the condition is met */
   action: string;
+  /** Public-safe explanation model used in template, dashboard, and proposal review surfaces. */
+  explainability: TemplateExplainability;
   /** Protocol skills this template depends on */
   protocols: TemplateProtocol[];
   /** Configurable parameters surfaced in the deploy form */

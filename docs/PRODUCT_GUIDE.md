@@ -102,6 +102,16 @@ If a proposal looks wrong, stale, unexpected, or too risky, skip it.
 
 Executable payload coverage is intentionally narrow. Base ETH/USDC limit, dip, profit-taking, and portfolio rebalance proposals can prepare wallet-signable payloads when parameters and balances are clear. Solana dip and profit proposals can prepare Jupiter transactions. Launch discovery, pool discovery, yield review, gas review, airdrop review, and launch-flipper exits stay review-only until dedicated encoders and checks are added for those exact workflows.
 
+## Proposal Explainability
+
+Every NEMESIS proposal is designed to answer four questions before a user signs anything:
+
+- Why did the agent create this proposal?
+- What public-safe values were observed?
+- What should the user check before approving?
+- What limitation still applies?
+
+The dashboard separates decision trace details from technical inputs, and Telegram proposal messages include the same approval boundary. NEMESIS may prepare guarded payloads where available, but the user still reviews the wallet preview and signs from their own wallet only if the proposal matches their intent.
 ## Operational Status
 
 NEMESIS exposes public-safe status checks at `/api/health` and `/api/status`.

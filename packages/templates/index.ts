@@ -1,4 +1,29 @@
-import type { AgentTemplate } from "./types";
+import type { AgentTemplate, TemplateExplainability } from "./types";
+
+type AgentTemplateDraft = Omit<AgentTemplate, "explainability"> & { explainability?: Partial<TemplateExplainability> };
+
+function defaultObservedFields(template: AgentTemplateDraft): string[] {
+  const fields = template.parameters.slice(0, 5).map((param) => param.label);
+  return [...new Set(["matched condition", ...fields, "wallet action", "source data"])];
+}
+
+function withExplainability(template: AgentTemplateDraft): AgentTemplate {
+  const chain = template.chain ?? "base";
+  return {
+    ...template,
+    explainability: {
+      proposalReason: template.explainability?.proposalReason ?? `NEMESIS proposes this only when: ${template.condition}`,
+      decisionRule: template.explainability?.decisionRule ?? `If the monitored ${chain} condition matches the configured parameters, create one proposal for user review.`,
+      observedFields: template.explainability?.observedFields ?? defaultObservedFields(template),
+      approvalChecklist: template.explainability?.approvalChecklist ?? [
+        "Confirm the observed values match your intent.",
+        "Check token, chain, amount, destination, and wallet preview before signing.",
+        "Skip the proposal if the data looks stale, incomplete, or unexpectedly risky.",
+      ],
+      limitation: template.explainability?.limitation ?? "This is monitoring and proposal generation only. NEMESIS never signs, broadcasts, or guarantees execution outcomes automatically.",
+    },
+  };
+}
 
 /**
  * The NEMESIS template library.
@@ -8,7 +33,7 @@ import type { AgentTemplate } from "./types";
  * intentionally scoped to single-condition logic - see ARCHITECTURE.md for
  * why compound strategies (looping, delta-neutral, perps) were cut from v1.
  */
-export const TEMPLATES: AgentTemplate[] = [
+const TEMPLATE_DRAFTS: AgentTemplateDraft[] = [
   // ---------------------------------------------------------------------
   // Launch & snipe
   // ---------------------------------------------------------------------
@@ -587,6 +612,8 @@ export const TEMPLATES: AgentTemplate[] = [
       "This Solana agent tracks SOL from an entry price of {entryPrice} USDC. Once SOL is up {gainTargetPercent}%, it prepares a Jupiter sell review for {sellPortionPercent}% of spendable SOL while keeping a fee reserve. You still make the final decision in your own Solflare wallet.",
   },];
 
+export const TEMPLATES: AgentTemplate[] = TEMPLATE_DRAFTS.map(withExplainability);
+
 export const isTemplateProductionReady = (template: AgentTemplate): boolean =>
   template.runtimeStatus === "production";
 
@@ -660,5 +687,5 @@ export function validateTemplateParameters(
   return { ok: true, parameters };
 }
 
-export type { AgentTemplate, TemplateCategory, RiskLevel, TemplateRuntimeStatus, BaseProtocol, SolanaProtocol, TemplateProtocol, TemplateChain, TemplateParameter } from "./types";
+export type { AgentTemplate, TemplateCategory, RiskLevel, TemplateRuntimeStatus, BaseProtocol, SolanaProtocol, TemplateProtocol, TemplateChain, TemplateParameter, TemplateExplainability } from "./types";
 export { TEMPLATE_CATEGORIES, RISK_LABELS } from "./types";
