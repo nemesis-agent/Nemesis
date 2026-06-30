@@ -24,7 +24,8 @@
     "audit:agent-quality": "node tools/audit-agent-quality.mjs",
     "audit:real-execution": "node tools/audit-real-execution.mjs",
     "audit:growth": "node tools/audit-growth.mjs",
-    "audit:docs": "node tools/audit-docs.mjs"
+    "audit:docs": "node tools/audit-docs.mjs",
+    "audit:observability": "node tools/audit-observability.mjs"
   },
   "engines": {
     "node": ">=22.5.0"

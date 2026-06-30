@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import { Telegraf } from "telegraf";
-import { pool } from "@nemesis/db";
+import { pool, recordRuntimeHealth, type RuntimeHealthStatus } from "@nemesis/db";
 
 import { agentsCommand } from "./commands/agents.js";
 import { helpCommand } from "./commands/help.js";
@@ -16,6 +16,7 @@ import { sendOpsAlert } from "./lib/alerts.js";
 import { startRunner } from "./runner.js";
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_HEALTH_KEY = "telegram-bot";
 if (!token) {
   throw new Error("TELEGRAM_BOT_TOKEN is not set. Copy .env.example to .env and fill it in.");
 }
@@ -35,6 +36,19 @@ async function acquireBotLock() {
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function cleanHealthError(error: unknown): string {
+  if (error instanceof Error) return error.message.slice(0, 160);
+  return String(error).slice(0, 160);
+}
+
+async function safeRecordTelegramHealth(status: RuntimeHealthStatus, details: Record<string, unknown>) {
+  try {
+    await recordRuntimeHealth(TELEGRAM_HEALTH_KEY, status, details);
+  } catch (error) {
+    console.warn("[nemesis-bot] failed to record Telegram health", cleanHealthError(error));
+  }
 }
 
 function isTelegramPollingConflict(error: unknown): boolean {
@@ -59,6 +73,7 @@ async function launchPollingWithRetry(botInstance: Telegraf): Promise<void> {
     if (!startupError) {
       launchPromise.catch(async (error) => {
         if (isTelegramPollingConflict(error)) {
+          await safeRecordTelegramHealth("degraded", { event: "telegram_polling_conflict", pollingState: "conflict" });
           await sendOpsAlert({
             event: "telegram_polling_conflict",
             severity: "warning",
@@ -72,6 +87,7 @@ async function launchPollingWithRetry(botInstance: Telegraf): Promise<void> {
         console.error("[nemesis-bot] polling stopped unexpectedly", error);
         process.exit(1);
       });
+      await safeRecordTelegramHealth("healthy", { event: "telegram_polling_running", lockState: "acquired", pollingState: "running" });
       console.log("[nemesis-bot] running");
       return;
     }
@@ -82,6 +98,7 @@ async function launchPollingWithRetry(botInstance: Telegraf): Promise<void> {
 
     attempt += 1;
     const delayMs = Math.min(60_000, 5_000 * attempt);
+    await safeRecordTelegramHealth("degraded", { event: "telegram_polling_conflict", pollingState: "retrying", attempt });
     console.warn(`[nemesis-bot] Telegram polling conflict; retrying in ${Math.round(delayMs / 1000)}s`);
     await sleep(delayMs);
   }
@@ -93,11 +110,13 @@ async function waitForBotLock(maxWaitMs = 240_000) {
   for (;;) {
     const client = await acquireBotLock();
     if (client) {
+      await safeRecordTelegramHealth("healthy", { event: "telegram_lock_acquired", lockState: "acquired", pollingState: "starting" });
       await sendOpsAlert({ event: "telegram_lock_acquired", severity: "info", message: "acquired Telegram polling lock" });
       return client;
     }
 
     if (Date.now() - startedAt >= maxWaitMs) {
+      await safeRecordTelegramHealth("error", { event: "telegram_lock_wait_timeout", lockState: "timeout", pollingState: "stopped" });
       await sendOpsAlert({
         event: "telegram_lock_wait_timeout",
         severity: "critical",
@@ -107,6 +126,7 @@ async function waitForBotLock(maxWaitMs = 240_000) {
       process.exit(0);
     }
 
+    await safeRecordTelegramHealth("degraded", { event: "telegram_lock_wait", lockState: "waiting", pollingState: "waiting" });
     await sendOpsAlert({ event: "telegram_lock_wait", severity: "warning", message: "another polling instance is active; waiting for lock" });
     await sleep(10_000);
   }
@@ -158,6 +178,7 @@ if (botLockClient) {
 
 async function shutdown(signal: "SIGINT" | "SIGTERM") {
   if (botLockClient) {
+    await safeRecordTelegramHealth("degraded", { event: "telegram_shutdown", lockState: "releasing", pollingState: "stopping" });
     bot.stop(signal);
     await botLockClient.query("SELECT pg_advisory_unlock(hashtext('nemesis-telegram-bot'))").catch(() => undefined);
     botLockClient.release();

@@ -102,6 +102,19 @@ If a proposal looks wrong, stale, unexpected, or too risky, skip it.
 
 Executable payload coverage is intentionally narrow. Base ETH/USDC limit, dip, profit-taking, and portfolio rebalance proposals can prepare wallet-signable payloads when parameters and balances are clear. Solana dip and profit proposals can prepare Jupiter transactions. Launch discovery, pool discovery, yield review, gas review, airdrop review, and launch-flipper exits stay review-only until dedicated encoders and checks are added for those exact workflows.
 
+## Operational Status
+
+NEMESIS exposes public-safe status checks at `/api/health` and `/api/status`.
+These endpoints are designed for operational visibility, not for exposing
+private configuration. They report app version metadata, database latency,
+runner heartbeat age, Telegram polling lock state, and Base/Solana RPC probe
+status without returning API keys, bot tokens, raw database URLs, private user
+data, or full internal logs.
+
+A `healthy` response means the database, runner, Telegram bot, and RPC probes
+are current. A `degraded` response means the app is still reachable, but one
+operational dependency needs attention, such as a stale runner heartbeat, an RPC
+probe failure, or Telegram polling lock transition during deploy.
 ## User Safety Rules
 
 - NEMESIS never needs seed phrases or private keys.

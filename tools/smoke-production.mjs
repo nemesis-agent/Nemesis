@@ -26,8 +26,23 @@ async function expectStatus(path, expected, init) {
 check("health endpoint is healthy and database-connected", async () => {
   const response = await expectStatus("/api/health", 200);
   const body = await response.json();
-  if (body.status !== "healthy" || body.database !== "connected") {
-    throw new Error(`health body is not healthy: ${JSON.stringify(body)}`);
+  if ((body.status !== "healthy" && body.status !== "degraded") || body.database?.status !== "connected") {
+    throw new Error(`health body is not connected: ${JSON.stringify(body)}`);
+  }
+  if (!body.app?.name || typeof body.app.uptimeSeconds !== "number") {
+    throw new Error("health body is missing app observability metadata");
+  }
+  if (typeof body.database.latencyMs !== "number") {
+    throw new Error("health body is missing database.latencyMs");
+  }
+  if (!body.runner || typeof body.runner.stale !== "boolean") {
+    throw new Error("health body is missing runner state");
+  }
+  if (!body.telegram || typeof body.telegram.stale !== "boolean") {
+    throw new Error("health body is missing Telegram state");
+  }
+  if (!body.rpc?.base?.status || !body.rpc?.solana?.status) {
+    throw new Error("health body is missing RPC state");
   }
 });
 
