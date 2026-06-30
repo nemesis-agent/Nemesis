@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   SOLANA_USDC_MINT,
   SOL_MINT,
+  summarizeExecutionPayload,
   validateBaseExecutionPayload,
   validateSolanaExecutionPayload,
 } from "../packages/execution/index.ts";
@@ -128,4 +129,36 @@ test("Solana policy rejects expired payload and wrong wallet", () => {
   const payload = solanaPayload();
   assert.equal(validateSolanaExecutionPayload(JSON.stringify(payload), "OtherWallet", NOW + 1).ok, false);
   assert.equal(validateSolanaExecutionPayload(JSON.stringify(payload), payload.walletAddress, NOW + 11 * 60_000).ok, false);
+});
+test("execution summary exposes step labels and expiry state", () => {
+  const payload = buildUsdcApproveAndSwapToEthPayload({
+    recipient: WALLET,
+    usdcAmount: 100,
+    ethUsdPrice: 2_500,
+  });
+
+  const firstStep = summarizeExecutionPayload(JSON.stringify(payload), 0, Date.parse(payload.createdAt) + 1);
+  assert.equal(firstStep.kind, "base");
+  assert.equal(firstStep.executable, true);
+  assert.equal(firstStep.actionLabel, "Approve exact USDC amount");
+  assert.equal(firstStep.totalSteps, 2);
+
+  const secondStep = summarizeExecutionPayload(JSON.stringify(payload), 1, Date.parse(payload.createdAt) + 1);
+  assert.equal(secondStep.actionLabel, "Swap USDC to ETH");
+
+  const expired = summarizeExecutionPayload(JSON.stringify(payload), 0, Date.parse(payload.expiresAt) + 1);
+  assert.equal(expired.executable, false);
+  assert.equal(expired.expired, true);
+});
+
+test("execution summary classifies review-only and Solana payloads", () => {
+  const reviewOnly = summarizeExecutionPayload(null, 0, NOW);
+  assert.equal(reviewOnly.kind, "review-only");
+  assert.equal(reviewOnly.executable, false);
+
+  const payload = solanaPayload();
+  const solana = summarizeExecutionPayload(JSON.stringify(payload), 0, NOW + 1);
+  assert.equal(solana.kind, "solana");
+  assert.equal(solana.networkLabel, "Solana");
+  assert.equal(solana.actionLabel, "Sign Jupiter swap");
 });

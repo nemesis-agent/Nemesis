@@ -1,4 +1,4 @@
-﻿import { readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 
 const checks = [];
 function check(name, fn) {
@@ -57,7 +57,9 @@ check("review-only templates still do not generate arbitrary calldata", () => {
 });
 
 check("web execution still verifies exact payloads before approval", () => {
-  assert(executeButton.includes("getPayloadSteps"), "frontend must execute only stored steps");
+  assert(executeButton.includes("validateBaseExecutionPayload"), "frontend must validate Base payloads before signing");
+  assert(executeButton.includes("validation.value.steps"), "frontend must execute only validated stored steps");
+  assert(executeButton.includes("summarizeExecutionPayload"), "frontend must expose execution metadata before signing");
   assert(executeButton.includes("payload.chainId !== 8453"), "frontend must reject unexpected Base chain");
   assert(confirmBase.includes("expectedTo !== actualTo"), "server must verify tx target");
   assert(confirmBase.includes("expectedData.toLowerCase() !== tx.input.toLowerCase()"), "server must verify calldata");
