@@ -39,14 +39,6 @@ Base wallets connect through RainbowKit, Wagmi, SIWE, and WalletConnect-compatib
 
 The security model stays the same across networks: NEMESIS can monitor conditions and prepare proposals, but the user's own wallet remains the final signer.
 
-## Official Contract Address
-
-Official NEMESIS contract address:
-
-`HTXeyDoVbtJxEApA4oRMT1xLtCGoUQ5P962Cur6EASY`
-
-Always verify this address from official NEMESIS channels before interacting with any token or contract. NEMESIS remains non-custodial and approval-first; your own wallet is still the final signer.
-
 ## Templates
 
 Templates are narrow by design. Each template has one monitored condition and one proposed action. This keeps plans understandable, reviewable, and safer to operate.

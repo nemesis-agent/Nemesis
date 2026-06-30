@@ -63,14 +63,6 @@ OpenRouter-powered product and planning flows are restricted away from secrets a
 
 If required model credentials are missing, protected model routes fail closed rather than silently using mock production behavior.
 
-## Token And Contract Safety
-
-Official NEMESIS contract address:
-
-`HTXeyDoVbtJxEApA4oRMT1xLtCGoUQ5P962Cur6EASY`
-
-Users should verify the full address from official NEMESIS channels before interacting with any token or contract. The token does not change the NEMESIS security model: agents still cannot custody funds, cannot auto-execute transactions, and cannot replace wallet approval.
-
 ## User Responsibility
 
 Users should reject any proposal that does not match the wallet preview, expected network, expected token, expected amount, destination, fee, or current market context.

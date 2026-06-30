@@ -41,7 +41,6 @@ check("docs cover public product essentials", () => {
     "talk with NEMESIS",
     "template detail pages",
     "operational status",
-    "official contract address",
     "how to verify NEMESIS",
     "what the token does not do",
     "avoid impersonators",
@@ -95,8 +94,6 @@ check("updates page is Medium-backed and privacy-safe", () => {
 
 check("token safety docs are public and anti-scam focused", () => {
   for (const phrase of [
-    "Official NEMESIS contract address",
-    "HTXeyDoVbtJxEApA4oRMT1xLtCGoUQ5P962Cur6EASY",
     "How To Verify",
     "What The Token Does Not Do",
     "Avoid Impersonators",

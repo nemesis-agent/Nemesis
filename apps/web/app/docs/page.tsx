@@ -59,19 +59,11 @@ const DOC_SECTIONS = [
     ],
   },
   {
-    id: "official-contract",
-    title: "official contract address",
-    body: [
-      "Official NEMESIS contract address: HTXeyDoVbtJxEApA4oRMT1xLtCGoUQ5P962Cur6EASY.",
-      "Always verify the address from official NEMESIS channels before interacting with any token or contract. NEMESIS remains non-custodial and approval-first; your own wallet is still the final signer.",
-    ],
-  },
-  {
     id: "how-to-verify",
     title: "how to verify NEMESIS",
     body: [
       "Use the official website, GitHub, X account, and Telegram bot as the source of truth. The website must be exactly nemesis-agent.xyz, the X account must be @Nemesis_agent, the GitHub organization must be nemesis-agent, and the Telegram bot must be @NemesisAgentAppBot.",
-      "Before interacting with any token or contract, compare the full contract address character by character. Treat shortened links, lookalike domains, copied screenshots, unofficial comments, and unsolicited support messages as untrusted.",
+      "Treat shortened links, lookalike domains, copied screenshots, unofficial comments, unsolicited support messages, and unverified token claims as untrusted.",
     ],
   },
   {
@@ -87,7 +79,7 @@ const DOC_SECTIONS = [
     title: "avoid impersonators",
     body: [
       "Impersonators may publish fake contracts, fake Telegram bots, fake support accounts, fake airdrops, or fake websites. NEMESIS will never ask for seed phrases, private keys, recovery phrases, wallet export files, exchange passwords, Telegram bot tokens, API keys, or remote access to your device.",
-      "If two sources disagree, do not interact until the address and link can be verified from the official website and GitHub.",
+      "If two sources disagree, do not interact until the link or claim can be verified from the official website and GitHub.",
     ],
   },
   {

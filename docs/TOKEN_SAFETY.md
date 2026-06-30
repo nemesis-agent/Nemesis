@@ -1,34 +1,21 @@
 # NEMESIS Token Safety
 
-NEMESIS is public. That means users should verify every link, contract address, and bot account before interacting with the product or any token surface.
+NEMESIS is public. Users should verify every product link, bot account, support message, and token-related claim before interacting.
 
-## Official Contract Address
+## How To Verify NEMESIS
 
-Official NEMESIS contract address:
-
-`HTXeyDoVbtJxEApA4oRMT1xLtCGoUQ5P962Cur6EASY`
-
-Copy the address only from official NEMESIS channels:
+Use only the official NEMESIS channels:
 
 - Website: https://nemesis-agent.xyz
 - X: https://x.com/Nemesis_agent
 - GitHub: https://github.com/nemesis-agent/Nemesis
 - Telegram bot: https://t.me/NemesisAgentAppBot
 
-## How To Verify
-
-Before interacting with any token or contract:
-
-1. Compare the full contract address character by character.
-2. Check that the website domain is exactly `nemesis-agent.xyz`.
-3. Check that the Telegram bot is exactly `@NemesisAgentAppBot`.
-4. Check that the X account is exactly `@Nemesis_agent`.
-5. Check that GitHub is exactly `nemesis-agent/Nemesis`.
-6. Treat shortened links, lookalike domains, copied screenshots, unofficial comments, and unsolicited support messages as untrusted.
+Check that the website domain, account name, and bot username match exactly. Treat shortened links, lookalike domains, copied screenshots, unofficial comments, unsolicited support messages, and unverified token claims as untrusted.
 
 ## What The Token Does Not Do
 
-The NEMESIS token does not change the core security model:
+A token does not change the NEMESIS security model:
 
 - It does not give NEMESIS custody over user funds.
 - It does not let agents auto-execute transactions.
@@ -40,7 +27,7 @@ NEMESIS remains approval-first: agents propose, users approve, wallets sign.
 
 ## Avoid Impersonators
 
-Impersonators may publish fake contracts, fake Telegram bots, fake support accounts, fake airdrops, or fake websites.
+Impersonators may publish fake token addresses, fake Telegram bots, fake support accounts, fake airdrops, or fake websites.
 
 NEMESIS will never ask for:
 
@@ -57,4 +44,4 @@ If a message asks for those items, treat it as malicious.
 
 ## Official Channels Only
 
-Use official NEMESIS channels for product links, contract references, and safety updates. If two sources disagree, do not interact until the address and link can be verified from the official website and GitHub.
+Use official NEMESIS channels for product links and safety updates. If two sources disagree, do not interact until the claim can be verified from the official website and GitHub.

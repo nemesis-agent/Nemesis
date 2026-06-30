@@ -28,11 +28,6 @@ const FAQ_ITEMS = [
       "NEMESIS currently supports Base and Solana surfaces. Base uses EVM wallet flows, while Solana support is designed around Solflare-compatible wallet access and guarded proposal flows.",
   },
   {
-    question: "what is the official contract address?",
-    answer:
-      "The official NEMESIS contract address is HTXeyDoVbtJxEApA4oRMT1xLtCGoUQ5P962Cur6EASY. Always verify the address from official NEMESIS channels before interacting with any token or contract.",
-  },
-  {
     question: "is NEMESIS free to use?",
     answer:
       "Yes. The product is intended to stay free for users. You may still pay normal network fees, DEX fees, wallet fees, or third-party infrastructure costs when you approve transactions yourself.",

@@ -56,7 +56,6 @@ check("public discovery routes stay indexed safely", () => {
 
 check("README exposes public product only", () => {
   assert(readme.includes("nemesis-agent.xyz"), "README must include live website");
-  assert(readme.includes("HTXeyDoVbtJxEApA4oRMT1xLtCGoUQ5P962Cur6EASY"), "README must include official contract address");
   assert(!readme.includes("ARCHITECTURE.md") && !readme.includes("CONTEXT.md"), "README must not link ignored internal docs");
 });
 
