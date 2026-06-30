@@ -35,7 +35,8 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@nemesis/templates", "@nemesis/db"],
+  transpilePackages: ["@nemesis/templates"],
+  serverExternalPackages: ["@nemesis/db", "pg"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { consumeRateLimit } from "@nemesis/db";
+import { redactForLog } from "@/lib/privacy";
 
 interface RateLimitOptions {
   key: string;
@@ -39,8 +40,8 @@ export async function enforceRateLimit({ key, limit, windowMs }: RateLimitOption
         },
       },
     );
-  } catch {
-    console.error("[RateLimit] shared limiter unavailable");
+  } catch (error) {
+    console.error("[RateLimit] shared limiter unavailable", redactForLog(error));
     return NextResponse.json(
       { error: "Request protection is temporarily unavailable. Try again shortly." },
       { status: 503, headers: { "Cache-Control": "no-store", "Retry-After": "5" } },
