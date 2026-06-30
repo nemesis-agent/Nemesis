@@ -1,26 +1,14 @@
 import { createHash } from "crypto";
 import { VersionedTransaction } from "@solana/web3.js";
+import {
+  EXECUTION_TTL_MS,
+  SOL_MINT,
+  SOLANA_USDC_MINT as USDC_MINT,
+  type SolanaExecutionEnvelope as SolanaJupiterSwapPayload,
+} from "@nemesis/execution";
 
 const JUPITER_SWAP_API_URL = (process.env.JUPITER_SWAP_API_URL ?? "https://api.jup.ag/swap/v1").replace(/\/$/, "");
-const SOL_MINT = "So11111111111111111111111111111111111111112";
-const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const USDC_DECIMALS = 6;
-
-export interface SolanaJupiterSwapPayload {
-  kind: "solana-jupiter-swap";
-  chain: "solana";
-  walletAddress: string;
-  inputMint: string;
-  outputMint: string;
-  inputAmount: string;
-  expectedOutputAmount: string;
-  otherAmountThreshold: string;
-  slippageBps: number;
-  serializedTransaction: string;
-  messageHash: string;
-  quoteHash: string;
-  label: string;
-}
 
 type JupiterQuoteResponse = {
   inputMint: string;
@@ -106,6 +94,7 @@ async function buildJupiterSwapPayload(input: {
     throw new Error(swap.error ?? "Jupiter did not return a swap transaction");
   }
 
+  const createdAt = Date.now();
   return {
     kind: "solana-jupiter-swap",
     chain: "solana",
@@ -120,6 +109,8 @@ async function buildJupiterSwapPayload(input: {
     messageHash: hashSolanaMessage(swap.swapTransaction),
     quoteHash: hashJson(quote),
     label: input.label,
+    createdAt: new Date(createdAt).toISOString(),
+    expiresAt: new Date(createdAt + EXECUTION_TTL_MS).toISOString(),
   };
 }
 

@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { VersionedTransaction } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { useSendTransaction, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from "wagmi";
 import type { Proposal } from "@nemesis/db";
+import { validateBaseExecutionPayload, validateSolanaExecutionPayload, type SolanaExecutionEnvelope } from "@nemesis/execution";
 import { Button } from "./Button";
 
 interface ExecuteProposalButtonProps {
@@ -13,14 +14,7 @@ interface ExecuteProposalButtonProps {
 
 type TxPayload = { to?: string; data?: string; value?: string; chainId?: number; label?: string };
 type MultiStepPayload = { steps?: TxPayload[] };
-type SolanaJupiterSwapPayload = {
-  kind: "solana-jupiter-swap";
-  chain: "solana";
-  walletAddress: string;
-  serializedTransaction: string;
-  messageHash: string;
-  label?: string;
-};
+type SolanaJupiterSwapPayload = SolanaExecutionEnvelope;
 
 function parsePayload(rawPayload: string): TxPayload | MultiStepPayload | SolanaJupiterSwapPayload {
   return JSON.parse(rawPayload) as TxPayload | MultiStepPayload | SolanaJupiterSwapPayload;
@@ -63,6 +57,7 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
   const [solanaPendingSignature, setSolanaPendingSignature] = useState<string | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const { connection } = useConnection();
+  const { address: baseAddress } = useAccount();
   const solanaWallet = useWallet();
 
   const {
@@ -133,6 +128,9 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
     }
     if (!solanaWallet.sendTransaction) throw new Error("Solana wallet cannot send transactions");
 
+    const validation = validateSolanaExecutionPayload(JSON.stringify(payload), solanaWallet.publicKey.toBase58());
+    if (!validation.ok) throw new Error(validation.error);
+
     const transaction = VersionedTransaction.deserialize(base64ToBytes(payload.serializedTransaction));
     const signature = await solanaWallet.sendTransaction(transaction, connection, { skipPreflight: false });
 
@@ -156,7 +154,14 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
         return;
       }
 
-      const steps = getPayloadSteps(proposal.unsignedTxPayload);
+      if (!baseAddress) {
+        throw new Error("Connect Base wallet first");
+      }
+      const validation = validateBaseExecutionPayload(proposal.unsignedTxPayload, baseAddress);
+      if (!validation.ok) {
+        throw new Error(validation.error);
+      }
+      const steps = validation.value.steps;
       const payload = steps[getCompletedStepCount(proposal)];
       if (!payload) {
         throw new Error("No remaining transaction step");

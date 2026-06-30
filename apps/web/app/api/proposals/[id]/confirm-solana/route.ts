@@ -6,30 +6,13 @@ import { Connection, VersionedTransactionResponse } from "@solana/web3.js";
 import { rejectCrossOrigin, requireSolanaAuth, walletOwnsAgent } from "@/lib/auth";
 import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { approveProposal, getAgent, getProposal } from "@nemesis/db";
+import { validateSolanaExecutionPayload } from "@nemesis/execution";
 
 const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL ?? process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com";
 const connection = new Connection(SOLANA_RPC_URL, "confirmed");
 
-type SolanaJupiterSwapPayload = {
-  kind?: string;
-  chain?: string;
-  walletAddress?: string;
-  messageHash?: string;
-};
-
 function isBase58Signature(value: string): boolean {
   return /^[1-9A-HJ-NP-Za-km-z]{64,128}$/.test(value);
-}
-
-function parseSolanaPayload(rawPayload: string): SolanaJupiterSwapPayload | null {
-  try {
-    const parsed = JSON.parse(rawPayload) as SolanaJupiterSwapPayload;
-    if (parsed.kind !== "solana-jupiter-swap" || parsed.chain !== "solana") return null;
-    if (!parsed.walletAddress || !parsed.messageHash) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
 }
 
 function transactionMessageHash(tx: VersionedTransactionResponse): string {
@@ -85,15 +68,14 @@ export async function POST(
     return NextResponse.json({ error: "Proposal has no executable Solana payload." }, { status: 400 });
   }
 
-  const payload = parseSolanaPayload(proposal.unsignedTxPayload);
-  if (!payload) {
-    return NextResponse.json({ error: "Stored Solana transaction payload is invalid." }, { status: 500 });
+  const payloadValidation = validateSolanaExecutionPayload(
+    proposal.unsignedTxPayload,
+    auth.wallet.solanaAddress,
+  );
+  if (!payloadValidation.ok) {
+    return NextResponse.json({ error: payloadValidation.error }, { status: 400 });
   }
-
-  if (payload.walletAddress !== auth.wallet.solanaAddress) {
-    return NextResponse.json({ error: "Proposal wallet does not match authenticated Solana wallet." }, { status: 403 });
-  }
-
+  const payload = payloadValidation.value;
   const status = await connection.getSignatureStatuses([signature], { searchTransactionHistory: true });
   const signatureStatus = status.value[0];
   if (!signatureStatus || signatureStatus.err) {

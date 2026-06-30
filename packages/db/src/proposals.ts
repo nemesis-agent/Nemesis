@@ -89,10 +89,10 @@ export async function createProposal(input: CreateProposalInput): Promise<Propos
 }
 
 export async function approveProposal(id: string, txHash?: string): Promise<Proposal | undefined> {
-  const query = txHash
-    ? "UPDATE proposals SET status = 'approved', tx_hash = $1 WHERE id = $2 AND status IN ('pending', 'approved') AND tx_hash IS NULL"
-    : "UPDATE proposals SET status = 'approved', tx_hash = $1 WHERE id = $2 AND status = 'pending'";
-  const { rowCount } = await pool.query(query, [txHash ?? null, id]);
+  const { rowCount } = await pool.query(
+    "UPDATE proposals SET status = 'approved', tx_hash = $1 WHERE id = $2 AND status = 'pending' AND tx_hash IS NULL",
+    [txHash ?? null, id],
+  );
   return rowCount ? getProposal(id) : undefined;
 }
 
@@ -101,11 +101,22 @@ export async function recordProposalExecutionStep(
   executionState: Record<string, unknown>,
   txHash: string,
   complete: boolean,
+  expectedCompletedSteps: number,
 ): Promise<Proposal | undefined> {
+  if (!Number.isInteger(expectedCompletedSteps) || expectedCompletedSteps < 0) {
+    throw new Error("expectedCompletedSteps must be a non-negative integer");
+  }
+
   const query = complete
-    ? "UPDATE proposals SET status = 'approved', tx_hash = $1, execution_state = $2 WHERE id = $3 AND status = 'pending'"
-    : "UPDATE proposals SET execution_state = $1 WHERE id = $2 AND status = 'pending'";
-  const params = complete ? [txHash, JSON.stringify(executionState), id] : [JSON.stringify(executionState), id];
+    ? `UPDATE proposals SET status = 'approved', tx_hash = $1, execution_state = $2
+       WHERE id = $3 AND status = 'pending' AND tx_hash IS NULL
+       AND COALESCE((NULLIF(execution_state, '')::jsonb ->> 'completedSteps')::integer, 0) = $4`
+    : `UPDATE proposals SET execution_state = $1
+       WHERE id = $2 AND status = 'pending'
+       AND COALESCE((NULLIF(execution_state, '')::jsonb ->> 'completedSteps')::integer, 0) = $3`;
+  const params = complete
+    ? [txHash, JSON.stringify(executionState), id, expectedCompletedSteps]
+    : [JSON.stringify(executionState), id, expectedCompletedSteps];
   const { rowCount } = await pool.query(query, params);
   return rowCount ? getProposal(id) : undefined;
 }

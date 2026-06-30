@@ -7,22 +7,12 @@ import { rejectCrossOrigin, requireAnyWalletAuth, walletOwnsAgent } from "@/lib/
 import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { redactForLog } from "@/lib/privacy";
 import { approveProposal, getProposal, getAgent, recordProposalExecutionStep } from "@nemesis/db";
+import { validateBaseExecutionPayload } from "@nemesis/execution";
 
 const publicClient = createPublicClient({
   chain: baseChain,
   transport: http(),
 });
-
-type TxPayload = { to?: string; value?: string; data?: string; chainId?: number; label?: string };
-type MultiStepPayload = { chainId?: number; steps?: TxPayload[] };
-
-function getPayloadSteps(rawPayload: string): TxPayload[] {
-  const parsed = JSON.parse(rawPayload) as TxPayload | MultiStepPayload;
-  if (Array.isArray((parsed as MultiStepPayload).steps)) {
-    return (parsed as MultiStepPayload).steps ?? [];
-  }
-  return [parsed as TxPayload];
-}
 
 function getCompletedStepHashes(executionState: Record<string, unknown>): string[] {
   const hashes = executionState.completedTxHashes;
@@ -96,17 +86,18 @@ export async function POST(
       return NextResponse.json({ error: "Proposal has no executable transaction payload." }, { status: 400 });
     }
 
-    let steps: TxPayload[];
-    try {
-      steps = getPayloadSteps(proposal.unsignedTxPayload);
-    } catch {
-      return NextResponse.json({ error: "Stored transaction payload is invalid." }, { status: 500 });
+    if (auth.wallet.chain !== "base") {
+      return NextResponse.json({ error: "Base wallet authentication is required." }, { status: 403 });
     }
 
-    if (steps.length === 0) {
-      return NextResponse.json({ error: "Stored transaction payload has no executable steps." }, { status: 500 });
+    const payloadValidation = validateBaseExecutionPayload(
+      proposal.unsignedTxPayload,
+      auth.wallet.address,
+    );
+    if (!payloadValidation.ok) {
+      return NextResponse.json({ error: payloadValidation.error }, { status: 400 });
     }
-
+    const steps = payloadValidation.value.steps;
     const completedTxHashes = getCompletedStepHashes(proposal.executionState);
     const expectedPayload = steps[completedTxHashes.length];
     if (!expectedPayload) {
@@ -136,6 +127,7 @@ export async function POST(
           { completedTxHashes: nextCompletedTxHashes, completedSteps: nextCompletedTxHashes.length },
           txHash,
           complete,
+          completedTxHashes.length,
         );
     if (!updated) {
       return NextResponse.json({ error: "Failed to update database." }, { status: 500 });

@@ -1,9 +1,12 @@
 import { encodeFunctionData, parseEther } from "viem";
-
-export const BASE_CHAIN_ID = 8453;
-export const WETH_BASE = "0x4200000000000000000000000000000000000006" as const;
-export const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
-export const UNISWAP_V3_SWAP_ROUTER_02_BASE = "0x2626664c2603336E57B271c5C0b26F421741e481" as const;
+import {
+  BASE_CHAIN_ID,
+  WETH_BASE,
+  USDC_BASE,
+  UNISWAP_V3_SWAP_ROUTER_02_BASE,
+  createBaseExecutionEnvelope,
+  type BaseExecutionEnvelope,
+} from "@nemesis/execution";
 
 
 const ERC20_ABI = [
@@ -43,24 +46,13 @@ const SWAP_ROUTER_ABI = [
   },
 ] as const;
 
-export interface UnsignedTxPayload {
-  chainId: typeof BASE_CHAIN_ID;
-  to: `0x${string}`;
-  value: string;
-  data: `0x${string}`;
-}
-
-export interface MultiStepTxPayload {
-  chainId: typeof BASE_CHAIN_ID;
-  steps: Array<UnsignedTxPayload & { label: string }>;
-}
 
 export function buildEthToUsdcSwapPayload(input: {
   recipient: string;
   ethAmount: string;
   ethUsdPrice: number;
   slippageBps?: number;
-}): UnsignedTxPayload {
+}): BaseExecutionEnvelope {
   if (!/^0x[a-fA-F0-9]{40}$/.test(input.recipient)) {
     throw new Error("Invalid swap recipient address");
   }
@@ -71,7 +63,7 @@ export function buildEthToUsdcSwapPayload(input: {
   }
 
   const slippageBps = BigInt(input.slippageBps ?? 100);
-  if (slippageBps < 0n || slippageBps > 5_000n) {
+  if (slippageBps < 1n || slippageBps > 500n) {
     throw new Error("Slippage bps outside safe range");
   }
 
@@ -99,12 +91,15 @@ export function buildEthToUsdcSwapPayload(input: {
     ],
   });
 
-  return {
-    chainId: BASE_CHAIN_ID,
-    to: UNISWAP_V3_SWAP_ROUTER_02_BASE,
-    value: amountIn.toString(),
-    data,
-  };
+  return createBaseExecutionEnvelope([
+    {
+      chainId: BASE_CHAIN_ID,
+      to: UNISWAP_V3_SWAP_ROUTER_02_BASE,
+      value: amountIn.toString(),
+      data,
+      label: "Swap ETH to USDC",
+    },
+  ]);
 }
 
 
@@ -113,7 +108,7 @@ export function buildUsdcApproveAndSwapToEthPayload(input: {
   usdcAmount: number;
   ethUsdPrice: number;
   slippageBps?: number;
-}): MultiStepTxPayload {
+}): BaseExecutionEnvelope {
   if (!/^0x[a-fA-F0-9]{40}$/.test(input.recipient)) {
     throw new Error("Invalid swap recipient address");
   }
@@ -125,7 +120,7 @@ export function buildUsdcApproveAndSwapToEthPayload(input: {
   }
 
   const slippageBps = BigInt(input.slippageBps ?? 100);
-  if (slippageBps < 0n || slippageBps > 5_000n) {
+  if (slippageBps < 1n || slippageBps > 500n) {
     throw new Error("Slippage bps outside safe range");
   }
 
@@ -155,11 +150,8 @@ export function buildUsdcApproveAndSwapToEthPayload(input: {
     ],
   });
 
-  return {
-    chainId: BASE_CHAIN_ID,
-    steps: [
-      { chainId: BASE_CHAIN_ID, to: USDC_BASE, value: "0", data: approveData, label: "Approve USDC" },
-      { chainId: BASE_CHAIN_ID, to: UNISWAP_V3_SWAP_ROUTER_02_BASE, value: "0", data: swapData, label: "Swap USDC to ETH" },
-    ],
-  };
+  return createBaseExecutionEnvelope([
+    { chainId: BASE_CHAIN_ID, to: USDC_BASE, value: "0", data: approveData, label: "Approve exact USDC amount" },
+    { chainId: BASE_CHAIN_ID, to: UNISWAP_V3_SWAP_ROUTER_02_BASE, value: "0", data: swapData, label: "Swap USDC to ETH" },
+  ]);
 }

@@ -20,6 +20,7 @@ import { sendOpsAlert } from "./lib/alerts.js";
 import { maskIdentifier, redactForOps } from "./lib/privacy.js";
 import { buildEthToUsdcSwapPayload, buildUsdcApproveAndSwapToEthPayload } from "./lib/uniswap-base.js";
 import { buildSolanaSolToUsdcSwapPayload, buildSolanaUsdcToSolSwapPayload } from "./lib/jupiter-solana.js";
+import { SOLANA_USDC_MINT } from "@nemesis/execution";
 
 const RUNNER_INTERVAL_MS = 1000 * 60;
 const DEFAULT_BASE_RPC_URL = "https://mainnet.base.org";
@@ -530,7 +531,8 @@ async function evaluateDipBuyer(agent: Agent): Promise<EvaluationResult | null> 
   }
 
   const now = new Date().toISOString();
-  const unsignedTxPayload = ticker === "ETH_USD"
+  const usdcBalance = ticker === "ETH_USD" ? await getUsdcBalance(agent.walletAddress) : 0;
+  const unsignedTxPayload = ticker === "ETH_USD" && usdcBalance >= buyAmount
     ? JSON.stringify(buildUsdcApproveAndSwapToEthPayload({
         recipient: agent.walletAddress,
         usdcAmount: buyAmount,
@@ -549,7 +551,7 @@ async function evaluateDipBuyer(agent: Agent): Promise<EvaluationResult | null> 
       { label: "recorded high", value: `$${highPrice.toFixed(2)}` },
       { label: "trigger", value: `${dipPercent}% dip` },
       { label: "cooldown", value: `${cooldownHours}h` },
-      { label: "wallet action", value: unsignedTxPayload ? "approve USDC, then swap USDC -> ETH" : "review only" },
+      { label: "wallet action", value: unsignedTxPayload ? "approve exact USDC amount, then swap USDC -> ETH" : ticker === "ETH_USD" ? "review only - insufficient USDC balance" : "review only" },
     ],
     state: { ...state, highPrice: price, lastProposalAt: now },
     lastEvent: `Dip trigger fired for ${ticker} at $${price.toFixed(2)}.`,
@@ -571,20 +573,26 @@ async function evaluateLimitOrder(agent: Agent): Promise<EvaluationResult | null
 
   let unsignedTxPayload: string | undefined;
   if (ticker === "ETH_USD" && direction === "sell") {
-    unsignedTxPayload = JSON.stringify(buildEthToUsdcSwapPayload({
-      recipient: agent.walletAddress,
-      ethAmount: (amount / price).toFixed(8),
-      ethUsdPrice: price,
-    }));
+    const requiredEth = amount / price;
+    const ethBalance = await getEthBalance(agent.walletAddress);
+    if (ethBalance >= requiredEth + MIN_BASE_ETH_RESERVE) {
+      unsignedTxPayload = JSON.stringify(buildEthToUsdcSwapPayload({
+        recipient: agent.walletAddress,
+        ethAmount: requiredEth.toFixed(8),
+        ethUsdPrice: price,
+      }));
+    }
   }
   if (ticker === "ETH_USD" && direction === "buy") {
-    unsignedTxPayload = JSON.stringify(buildUsdcApproveAndSwapToEthPayload({
-      recipient: agent.walletAddress,
-      usdcAmount: amount,
-      ethUsdPrice: price,
-    }));
+    const usdcBalance = await getUsdcBalance(agent.walletAddress);
+    if (usdcBalance >= amount) {
+      unsignedTxPayload = JSON.stringify(buildUsdcApproveAndSwapToEthPayload({
+        recipient: agent.walletAddress,
+        usdcAmount: amount,
+        ethUsdPrice: price,
+      }));
+    }
   }
-
   return {
     title: `${ticker} limit ${direction} hit`,
     action: `${ticker} traded at $${price.toFixed(2)} and crossed your ${direction} target of $${targetPrice}. Review a ${direction} proposal for ${amount} USDC notional.`,
@@ -596,7 +604,7 @@ async function evaluateLimitOrder(agent: Agent): Promise<EvaluationResult | null
       { label: "current price", value: `$${price.toFixed(2)}` },
       { label: "target price", value: `$${targetPrice}` },
       { label: "notional", value: `${amount} USDC` },
-      { label: "wallet action", value: direction === "buy" && unsignedTxPayload ? "approve USDC, then swap USDC -> ETH" : unsignedTxPayload ? "sign ETH -> USDC swap" : "review only" },
+      { label: "wallet action", value: direction === "buy" && unsignedTxPayload ? "approve exact USDC amount, then swap USDC -> ETH" : unsignedTxPayload ? "sign ETH -> USDC swap" : "review only - insufficient balance or unsupported asset" },
     ],
     state: { ...agent.runtimeState, ticker, lastPrice: price, lastProposalAt: new Date().toISOString() },
     lastEvent: `Limit ${direction} trigger fired for ${ticker} at $${price.toFixed(2)}.`,
@@ -723,11 +731,17 @@ async function evaluateSolanaDipBuyer(agent: Agent): Promise<EvaluationResult | 
   const solanaWallet = solanaAddressFromWalletKey(agent.walletAddress);
   if (solanaWallet) {
     try {
-      unsignedTxPayload = JSON.stringify(await buildSolanaUsdcToSolSwapPayload({
-        walletAddress: solanaWallet,
-        usdcAmount: buyAmount,
-      }));
-      walletAction = "sign Jupiter USDC -> SOL swap in Solflare";
+      const usdcAtomic = await getSolanaUsdcBalanceAtomic(solanaWallet);
+      const requiredAtomic = BigInt(Math.round(buyAmount * 1_000_000));
+      if (usdcAtomic < requiredAtomic) {
+        walletAction = "review only - insufficient Solana USDC balance";
+      } else {
+        unsignedTxPayload = JSON.stringify(await buildSolanaUsdcToSolSwapPayload({
+          walletAddress: solanaWallet,
+          usdcAmount: buyAmount,
+        }));
+        walletAction = "sign Jupiter USDC -> SOL swap in Solflare";
+      }
     } catch (err) {
       logger.warn({ msg: "Solana Jupiter payload unavailable", agentId: agent.id, error: redactForOps(String(err)) });
       void sendOpsAlert({
@@ -760,6 +774,19 @@ async function evaluateSolanaDipBuyer(agent: Agent): Promise<EvaluationResult | 
   };
 }
 
+
+async function getSolanaUsdcBalanceAtomic(walletAddress: string): Promise<bigint> {
+  const accounts = await solanaConnection.getParsedTokenAccountsByOwner(
+    new PublicKey(walletAddress),
+    { mint: new PublicKey(SOLANA_USDC_MINT) },
+    "confirmed",
+  );
+
+  return accounts.value.reduce((total, account) => {
+    const amount = account.account.data.parsed?.info?.tokenAmount?.amount;
+    return typeof amount === "string" && /^[0-9]+$/.test(amount) ? total + BigInt(amount) : total;
+  }, 0n);
+}
 function solanaAddressFromWalletKey(walletAddress: string): string | null {
   return walletAddress.startsWith("solana:") ? walletAddress.slice("solana:".length) : null;
 }

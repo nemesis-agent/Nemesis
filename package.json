@@ -28,12 +28,15 @@
     "audit:observability": "node tools/audit-observability.mjs",
     "audit:explainability": "node tools/audit-explainability.mjs",
     "audit:template-detail": "node tools/audit-template-detail.mjs",
-    "audit:copy-metadata": "node tools/audit-copy-metadata.mjs"
+    "audit:copy-metadata": "node tools/audit-copy-metadata.mjs",
+    "test:p0": "node --no-warnings --experimental-strip-types tests/execution-policy.test.ts",
+    "test:e2e": "playwright test"
   },
   "engines": {
     "node": ">=22.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "concurrently": "^10.0.3",
     "pm2": "^7.0.1"
   },
