@@ -114,7 +114,7 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
       });
 
       if (!res.ok) {
-        throw new Error("Master Agent API unavailable.");
+        throw new Error("NEMESIS planner is unavailable.");
       }
 
       const { intent } = await res.json();

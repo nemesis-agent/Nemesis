@@ -225,8 +225,8 @@ export default async function DashboardPage() {
                     3
                   </div>
                   <div>
-                    <h3 className="font-mono text-xs uppercase text-nm-fg">Deploy Master Agent</h3>
-                    <p className="mt-1 text-sm text-nm-muted">Tell the Master Agent what you want to automate. It will configure a sub-agent to watch the market for you.</p>
+                    <h3 className="font-mono text-xs uppercase text-nm-fg">Deploy first agent</h3>
+                    <p className="mt-1 text-sm text-nm-muted">Tell NEMESIS what you want to monitor. It will suggest a production-ready agent plan for your review.</p>
                     <Link
                       href="/agents/new"
                       className="mt-3 inline-block font-mono text-xs uppercase tracking-widest2 text-nm-fg border border-nm-border px-4 py-2 hover:bg-nm-surface transition-colors"

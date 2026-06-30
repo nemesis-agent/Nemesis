@@ -4,7 +4,7 @@ import { base, baseSepolia } from "wagmi/chains";
 /**
  * Wallet connection config.
  *
- * NEMESIS never holds user funds — this config only powers wallet
+ * NEMESIS never holds user funds - this config only powers wallet
  * connection and read calls / unsigned transaction proposals from the
  * client. See public security docs for the custody model.
  *

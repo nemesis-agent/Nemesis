@@ -7,10 +7,10 @@ import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 const BOOT_LOGS = [
   "NEMESIS_OS v1.0.4 initializing...",
   "Establishing secure Base and Solana network context...",
-  "Loading Master Agent parameters...",
-  "Decrypting local state...",
-  "Calibrating Sub-agent neural pathways...",
-  "Verifying MCP protocols...",
+  "Loading OpenRouter planning context...",
+  "Preparing wallet-scoped session...",
+  "Preparing approval-first agent checks...",
+  "Verifying Base and Solana route guards...",
   "OpenRouter intelligence online.",
   "Awaiting user input...",
 ];

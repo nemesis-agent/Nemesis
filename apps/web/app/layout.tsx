@@ -30,9 +30,9 @@ const productJsonLd = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "NEMESIS - autonomous agents on Base and Solana",
+  title: "NEMESIS - approval-first agents on Base and Solana",
   description:
-    "Deploy approval-first agents on Base and Solana. Chaos in, order out.",
+    "Deploy approval-first agents on Base and Solana. Agents propose; your wallet signs.",
   keywords: [
     "NEMESIS",
     "Base agents",
@@ -49,8 +49,8 @@ export const metadata: Metadata = {
     icon: "/assets/nemesis-favicon.png",
   },
   openGraph: {
-    title: "NEMESIS - autonomous agents on Base and Solana",
-    description: "Chaos in. Order out. Deploy approval-first agents on Base and Solana.",
+    title: "NEMESIS - approval-first agents on Base and Solana",
+    description: "Chaos in. Order out. Approval-first agents on Base and Solana.",
     siteName: "NEMESIS",
     type: "website",
     url: "/",

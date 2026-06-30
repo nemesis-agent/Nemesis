@@ -83,7 +83,7 @@ export interface AgentTemplate {
   /** Clear user-facing reason when deployment is gated. */
   disabledReason?: string;
   /**
-   * Plain-language summary the Master Agent must read back to the user
+   * Plain-language summary the NEMESIS planner must read back to the user
    * before deployment, per the approval-first design requirement.
    */
   approvalSummary: string;

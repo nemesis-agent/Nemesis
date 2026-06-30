@@ -14,7 +14,7 @@ export default function DeployPage({ searchParams }: DeployPageProps) {
       <p className="mt-3 max-w-2xl text-sm leading-relaxed text-nm-muted">
         {template
           ? `Starting from the "${template.name}" template. If it is production-ready, you can deploy it after reviewing the plan.`
-          : "Describe what you want in plain language. The Master Agent will only propose production-ready templates."}
+          : "Describe what you want in plain language. The NEMESIS planner will only propose production-ready templates."}
       </p>
 
       <div className="mt-8">

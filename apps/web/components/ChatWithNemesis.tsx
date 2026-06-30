@@ -17,7 +17,7 @@ const INTRO_MESSAGE: ChatMessage = {
   id: "intro",
   role: "agent",
   content:
-    "I am the NEMESIS Master Agent. Ask naturally about NEMESIS, crypto automation, Base, Solana, or anything else. I will not handle secrets, private keys, tokens, or private user data.",
+    "I am NEMESIS. Ask naturally about NEMESIS, crypto automation, Base, Solana, or anything else. I will not handle secrets, private keys, tokens, or private user data.",
 };
 
 const SUGGESTED_PROMPTS = [
@@ -110,7 +110,7 @@ export function ChatWithNemesis() {
         {messages.map((message) => (
           <div key={message.id} className={message.role === "user" ? "ml-auto max-w-[88%]" : "max-w-[88%]"}>
             <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-              {message.role === "user" ? "you" : "master agent"}
+              {message.role === "user" ? "you" : "nemesis"}
             </p>
             <p className={`mt-1 whitespace-pre-wrap text-sm leading-relaxed ${
               message.role === "user" ? "text-nm-fg" : "text-nm-muted"
@@ -122,7 +122,7 @@ export function ChatWithNemesis() {
 
         {stage === "thinking" && (
           <div className="max-w-[88%]">
-            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">master agent</p>
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">nemesis</p>
             <div className="mt-3 w-32">
               <FragmentDivider segments={12} loading />
             </div>

@@ -45,7 +45,7 @@ export async function POST(request: Request) {
   }
 
   if (!openrouterApiKey) {
-    return NextResponse.json({ error: "Master Agent is not configured." }, { status: 503 });
+    return NextResponse.json({ error: "NEMESIS planner is not configured." }, { status: 503 });
   }
 
   const { messages } = body ?? {};
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
       parameters: template.parameters.map((param) => `${param.key} (${param.type}): ${param.description}`),
     }));
 
-    const systemPrompt = `You are the NEMESIS Master Agent, an approval-first crypto automation assistant for Base and Solana.
+    const systemPrompt = `You are the NEMESIS NEMESIS planner, an approval-first crypto automation assistant for Base and Solana.
 The user wants to deploy new automated strategies or modify existing pending ones.
 
 AUTHENTICATED WALLET CHAIN: ${auth.wallet.chain}
@@ -112,14 +112,14 @@ Task: Analyze the conversation history. Select only from the production-ready te
     const hasUnsupportedPlan = object.plans.some((plan) => !productionTemplateIds.has(plan.templateId));
     if (hasUnsupportedPlan) {
       return NextResponse.json(
-        { error: "Master Agent returned a template that is not production-ready." },
+        { error: "NEMESIS planner returned a template that is not production-ready." },
         { status: 502 },
       );
     }
 
     return NextResponse.json({ intent: object }, { status: 200 });
   } catch (error: any) {
-    console.error("[Master Agent] Inference Error:", redactForLog(error));
+    console.error("[NEMESIS planner] Inference Error:", redactForLog(error));
     return NextResponse.json(
       { error: "Failed to process intent. The AI model may be unavailable." },
       { status: 500 },

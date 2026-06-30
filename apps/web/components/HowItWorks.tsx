@@ -5,12 +5,12 @@ const STEPS = [
   {
     label: "01",
     title: "Tell it what you want",
-    body: "Describe your goal in plain language - what you're holding, what you want to happen, how much risk you're comfortable with. The Master Agent reads your wallet to understand your starting position.",
+    body: "Describe your goal in plain language - what you're holding, what you want to happen, how much risk you're comfortable with. NEMESIS uses your connected wallet context to understand the starting point without taking custody.",
   },
   {
     label: "02",
     title: "Review the plan",
-    body: "Before anything is created, the Master Agent explains which agents it wants to deploy and why, in plain language - not template names or parameters you'd need to decode.",
+    body: "Before anything is created, NEMESIS explains which agent template fits and why, in plain language - not template names or parameters you'd need to decode.",
   },
   {
     label: "03",

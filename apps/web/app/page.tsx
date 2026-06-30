@@ -30,7 +30,7 @@ export default function HomePage() {
               Talk with Nemesis
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-relaxed text-nm-muted">
-              Have questions about our architecture, security, or how the agents work? Ask the Master Agent directly. No private data is required.
+              Have questions about architecture, security, templates, or wallet safety? Talk with NEMESIS directly. No private data is required.
             </p>
           </div>
         </ScrollReveal>

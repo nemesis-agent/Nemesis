@@ -17,6 +17,8 @@ import { startRunner } from "./runner.js";
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_HEALTH_KEY = "telegram-bot";
+const TELEGRAM_HEALTH_INTERVAL_MS = 60_000;
+let telegramHealthInterval: NodeJS.Timeout | undefined;
 if (!token) {
   throw new Error("TELEGRAM_BOT_TOKEN is not set. Copy .env.example to .env and fill it in.");
 }
@@ -51,6 +53,13 @@ async function safeRecordTelegramHealth(status: RuntimeHealthStatus, details: Re
   }
 }
 
+
+function startTelegramHealthHeartbeat() {
+  if (telegramHealthInterval) return;
+  telegramHealthInterval = setInterval(() => {
+    void safeRecordTelegramHealth("healthy", { event: "telegram_polling_running", lockState: "acquired", pollingState: "running" });
+  }, TELEGRAM_HEALTH_INTERVAL_MS);
+}
 function isTelegramPollingConflict(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
 
@@ -88,6 +97,7 @@ async function launchPollingWithRetry(botInstance: Telegraf): Promise<void> {
         process.exit(1);
       });
       await safeRecordTelegramHealth("healthy", { event: "telegram_polling_running", lockState: "acquired", pollingState: "running" });
+      startTelegramHealthHeartbeat();
       console.log("[nemesis-bot] running");
       return;
     }
@@ -177,6 +187,10 @@ if (botLockClient) {
 }
 
 async function shutdown(signal: "SIGINT" | "SIGTERM") {
+  if (telegramHealthInterval) {
+    clearInterval(telegramHealthInterval);
+    telegramHealthInterval = undefined;
+  }
   if (botLockClient) {
     await safeRecordTelegramHealth("degraded", { event: "telegram_shutdown", lockState: "releasing", pollingState: "stopping" });
     bot.stop(signal);

@@ -26,6 +26,8 @@ check("telegram lock state is recorded for health", () => {
   const bot = read("apps/telegram-bot/src/index.ts");
   assert(bot.includes("TELEGRAM_HEALTH_KEY"), "bot must define Telegram health key");
   assert(bot.includes("safeRecordTelegramHealth"), "bot must safely record Telegram health");
+  assert(bot.includes("TELEGRAM_HEALTH_INTERVAL_MS"), "bot must refresh Telegram health periodically");
+  assert(bot.includes("startTelegramHealthHeartbeat()"), "bot must start Telegram health heartbeat after polling starts");
   for (const event of ["telegram_lock_wait", "telegram_lock_acquired", "telegram_polling_running", "telegram_polling_conflict", "telegram_shutdown"]) {
     assert(bot.includes(event), `bot must record ${event}`);
   }

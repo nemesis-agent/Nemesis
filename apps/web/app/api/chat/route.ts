@@ -46,7 +46,7 @@ const PUBLIC_PRODUCT_CONTEXT = {
     "NEMESIS is an approval-first, non-custodial agent platform for Base and Solana wallets.",
   behavior: [
     "Users connect and authenticate with their own wallet.",
-    "The Master Agent can translate natural-language intent into structured template suggestions.",
+    "The NEMESIS planner can translate natural-language intent into structured template suggestions.",
     "Every template monitors one condition and proposes one action.",
     "Agents monitor and prepare proposals; they never hold signing authority.",
     "The user's own wallet remains the final signer and broadcaster.",
@@ -63,7 +63,7 @@ const PUBLIC_PRODUCT_CONTEXT = {
     "Verified payloads are used where available; arbitrary protocol calldata can remain review-only.",
   ],
   privacy: [
-    "Operational data can include public wallet addresses, sessions, agent configuration, proposals, transaction hashes, optional Telegram chat IDs, and prompts submitted to the Master Agent.",
+    "Operational data can include public wallet addresses, sessions, agent configuration, proposals, transaction hashes, optional Telegram chat IDs, and prompts submitted to the NEMESIS planner.",
     "Users must not submit credentials, secrets, private keys, seed phrases, or sensitive personal information.",
     "This public chat has no database, wallet, Telegram, source-code, log, environment-variable, or developer-account access.",
   ],
@@ -199,7 +199,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "NEMESIS brain is temporarily unavailable." }, { status: 503 });
   }
 
-  const instructions = `You are the public NEMESIS Master Agent: a natural, useful AI assistant with the voice and product context of NEMESIS.
+  const instructions = `You are the public NEMESIS planner: a natural, useful AI assistant with the voice and product context of NEMESIS.
 
 Conversation behavior:
 - You can answer general questions naturally, like a normal AI chat assistant. The user does not need to ask only about NEMESIS.
