@@ -64,6 +64,9 @@ check("public chat stays natural without weakening secret boundaries", () => {
   assert(component.includes("SUGGESTED_PROMPTS"), "chat UI should offer starter prompts");
   assert(component.includes("Ask NEMESIS anything"), "chat UI should communicate natural chat behavior");
   assert(!component.includes("maxLength"), "chat UI must not enforce the old 1000-character cap");
+  assert(chat.includes("MODEL_TIMEOUT_MS = 45_000"), "public chat should allow enough time for OpenRouter responses");
+  assert(chat.includes("transient inference failure; retrying"), "public chat should retry transient model failures once");
+  assert(chat.includes("NEMESIS brain is busy. Please retry in a moment."), "public chat should show a clear transient failure message");
 });
 check("rate limits are shared, atomic, and privacy-preserving", () => {
   const webLimiter = read("apps/web/lib/rate-limit.ts");

@@ -14,6 +14,8 @@ const openrouter = createOpenRouter({
 
 const MAX_MESSAGES = 60;
 const MAX_MODEL_INPUT_CHARS = 80_000;
+const MODEL_TIMEOUT_MS = 45_000;
+const MODEL_RETRY_DELAY_MS = 1_200;
 const SECRET_LIKE_INPUT =
   /(-----BEGIN [A-Z ]*PRIVATE KEY-----|\b(?:sk-or-v1-|sk-[a-z0-9_-]{16,})|\b\d{8,12}:[A-Za-z0-9_-]{25,}|(?:seed|recovery|mnemonic|private\s*key)\s*[:=])/i;
 
@@ -112,6 +114,52 @@ function fitMessagesForModel(messages: SafeMessage[]) {
   return fitted;
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isTransientModelError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  return (
+    message.includes("timeout") ||
+    message.includes("aborted") ||
+    message.includes("429") ||
+    message.includes("502") ||
+    message.includes("503") ||
+    message.includes("504") ||
+    message.includes("econnreset") ||
+    message.includes("network")
+  );
+}
+
+async function generateNemesisReply(instructions: string, messages: SafeMessage[]): Promise<string> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      const { text } = await generateText({
+        model: openrouter(openrouterModel),
+        instructions,
+        messages,
+        maxOutputTokens: 1_200,
+        temperature: 0.35,
+        timeout: { totalMs: MODEL_TIMEOUT_MS },
+      });
+
+      const reply = text.trim();
+      if (!reply) throw new Error("Model returned an empty response.");
+      return reply;
+    } catch (error) {
+      lastError = error;
+      if (attempt >= 2 || !isTransientModelError(error)) break;
+      console.warn("[Public NEMESIS Chat] transient inference failure; retrying", redactForLog(error));
+      await sleep(MODEL_RETRY_DELAY_MS);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Model inference failed.");
+}
+
 export async function POST(request: Request) {
   const rateLimit = await enforceRateLimit({
     key: rateLimitKey(request, "public-chat"),
@@ -177,23 +225,18 @@ PUBLIC_PRODUCT_CONTEXT:
 ${JSON.stringify(PUBLIC_PRODUCT_CONTEXT)}`;
 
   try {
-    const { text } = await generateText({
-      model: openrouter(openrouterModel),
-      instructions,
-      messages: fitMessagesForModel(messages),
-      maxOutputTokens: 1_400,
-      temperature: 0.35,
-      timeout: { totalMs: 30_000 },
-    });
-
-    const reply = text.trim();
-    if (!reply) throw new Error("Model returned an empty response.");
+    const reply = await generateNemesisReply(instructions, fitMessagesForModel(messages));
     return NextResponse.json({ reply });
   } catch (error) {
     console.error("[Public NEMESIS Chat] inference failed", redactForLog(error));
+    const transient = isTransientModelError(error);
     return NextResponse.json(
-      { error: "NEMESIS could not answer right now. Please try again shortly." },
-      { status: 502 },
+      {
+        error: transient
+          ? "NEMESIS brain is busy. Please retry in a moment."
+          : "NEMESIS could not answer right now. Please try again shortly.",
+      },
+      { status: transient ? 504 : 502 },
     );
   }
 }
