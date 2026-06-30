@@ -17,6 +17,10 @@ interface TemplateDetailPageProps {
 
 export const dynamicParams = false;
 
+function formatDefaultValue(value: string | number | boolean, unit?: string) {
+  return unit ? `${String(value)} ${unit}` : String(value);
+}
+
 export function generateStaticParams() {
   return TEMPLATES.map((template) => ({ id: template.id }));
 }
@@ -57,7 +61,9 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
   const { id } = await params;
   const template = getTemplateById(id);
   if (!template) notFound();
+
   const isProductionReady = isTemplateProductionReady(template);
+  const chain = getTemplateChain(template);
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
@@ -76,19 +82,50 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
         </div>
         <div className="flex shrink-0 flex-wrap justify-end gap-2">
           <span className="border border-nm-border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-            {getTemplateChain(template)}
+            {chain}
           </span>
           <span className="border border-nm-border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
             {RISK_LABELS[template.risk]} risk
+          </span>
+          <span className="border border-nm-border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+            {isProductionReady ? "production" : "gated"}
           </span>
         </div>
       </div>
 
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-nm-muted">{template.summary}</p>
 
+      <section className="mt-8 grid gap-3 sm:grid-cols-3">
+        {[
+          { label: "condition", value: "single trigger" },
+          { label: "action", value: "single proposal" },
+          { label: "approval", value: "wallet-signed" },
+        ].map((item) => (
+          <div key={item.label} className="border border-nm-border bg-nm-surface p-3">
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">{item.label}</p>
+            <p className="mt-1 font-mono text-xs uppercase tracking-widest2 text-nm-fg">{item.value}</p>
+          </div>
+        ))}
+      </section>
+
       <div className="mt-8">
         <FragmentDivider />
       </div>
+
+      <section className="mt-8">
+        <h2 className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">safety rails</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          {[
+            "one condition, one proposed action",
+            "no custody and no private keys",
+            "nothing signs without wallet approval",
+          ].map((item) => (
+            <div key={item} className="border border-nm-border bg-nm-surface p-3">
+              <p className="text-sm leading-relaxed text-nm-fg">{item}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section className="mt-8 grid gap-8 sm:grid-cols-2">
         <ScrollReveal>
@@ -105,14 +142,15 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
         <h2 className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">protocols</h2>
         <div className="mt-3 flex flex-wrap gap-2">
           {template.protocols.map((protocol) => (
-            <span
-              key={protocol}
-              className="border border-nm-border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted"
-            >
+            <span key={protocol} className="border border-nm-border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
               {protocol}
             </span>
           ))}
         </div>
+      </section>
+
+      <section className="mt-8">
+        <SimulationView template={template} />
       </section>
 
       <section className="mt-8">
@@ -124,7 +162,13 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
           </div>
           <div>
             <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red">observed fields</p>
-            <p className="mt-1 text-sm leading-relaxed text-nm-muted">{template.explainability.observedFields.join(" . ")}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {template.explainability.observedFields.map((field) => (
+                <span key={field} className="border border-nm-border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+                  {field}
+                </span>
+              ))}
+            </div>
           </div>
           <div>
             <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red">approval checklist</p>
@@ -137,9 +181,6 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
           <p className="text-sm leading-relaxed text-nm-muted">{template.explainability.limitation}</p>
         </div>
       </section>
-      <section className="mt-8">
-        <SimulationView />
-      </section>
 
       <section className="mt-8">
         <LogicFlow />
@@ -147,6 +188,20 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
 
       <section className="mt-8">
         <h2 className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">parameters</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <div className="border border-nm-border bg-nm-surface p-3">
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">count</p>
+            <p className="mt-1 font-mono text-xs text-nm-fg">{template.parameters.length}</p>
+          </div>
+          <div className="border border-nm-border bg-nm-surface p-3">
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">defaults</p>
+            <p className="mt-1 font-mono text-xs text-nm-fg">editable before deploy</p>
+          </div>
+          <div className="border border-nm-border bg-nm-surface p-3">
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">validation</p>
+            <p className="mt-1 font-mono text-xs text-nm-fg">server checked</p>
+          </div>
+        </div>
         <div className="mt-3 divide-y divide-nm-border border border-nm-border">
           {template.parameters.map((param, index) => (
             <ScrollReveal key={param.key} delayMs={index * 50}>
@@ -156,8 +211,7 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
                   <p className="mt-1 text-sm leading-relaxed text-nm-muted">{param.description}</p>
                 </div>
                 <p className="shrink-0 font-mono text-xs text-nm-fg sm:text-right">
-                  default: {String(param.default)}
-                  {param.unit ? ` ${param.unit}` : ""}
+                  default: {formatDefaultValue(param.default, param.unit)}
                 </p>
               </div>
             </ScrollReveal>
@@ -181,17 +235,23 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
         </div>
       </section>
 
-      <div className="mt-10">
-        {isProductionReady ? (
-          <Button href={`/agents/new?template=${template.id}`} variant="primary" magnetic>
-            Deploy this template
-          </Button>
-        ) : (
-          <div className="border border-nm-border bg-nm-surface p-4">
-            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">gated</p>
-            <p className="mt-2 text-sm leading-relaxed text-nm-muted">{getTemplateUnavailableReason(template)}</p>
-          </div>
-        )}
+      <div className="mt-10 border border-nm-border bg-nm-surface p-4">
+        <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">review before deploy</p>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-nm-muted">
+          Deploy only after the condition, action, parameters, and approval checklist match your intent. The agent can propose; your wallet remains the final signer.
+        </p>
+        <div className="mt-4">
+          {isProductionReady ? (
+            <Button href={`/agents/new?template=${template.id}`} variant="primary" magnetic>
+              Deploy this template
+            </Button>
+          ) : (
+            <div className="border border-nm-border bg-nm-bg p-4">
+              <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">gated</p>
+              <p className="mt-2 text-sm leading-relaxed text-nm-muted">{getTemplateUnavailableReason(template)}</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
