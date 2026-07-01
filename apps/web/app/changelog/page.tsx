@@ -15,7 +15,8 @@ const CHANGES = [
     title: "proposal lifecycle and status polish",
     items: [
       "Agent detail pages now include proposal status filters for all, pending, approved, and skipped proposals.",
-      "Proposal rows now explain wallet-signable, review-only, expired, and completed states more clearly before a user signs anything.",
+      "Proposal rows now show a visual review path from observed inputs to proposed action to wallet approval.",
+      "Proposal review now separates decision trace, observed inputs, execution preview, lifecycle state, and approval checklist before any wallet signing request.",
       "Public docs and health output now include clearer troubleshooting for Telegram linking, duplicate pending proposals, expired payloads, and degraded service checks.",
     ],
   },

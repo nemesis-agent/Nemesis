@@ -132,7 +132,7 @@ Proposal states are intentionally simple:
 - `approved`: the user approved and the stored confirmation checks passed
 - `skipped`: the user or linked Telegram flow dismissed the proposal
 
-Pending proposals can be wallet-signable or review-only. Wallet-signable proposals show network, step count, expiry, and approval copy in the dashboard. Review-only proposals explain why no signing button is shown.
+Pending proposals can be wallet-signable or review-only. Wallet-signable proposals show a visual path from observed inputs to proposed action to wallet approval, plus network, step count, remaining steps, payload TTL, gas estimate, decision trace, lifecycle state, and approval checklist. Review-only proposals explain why no signing button is shown and keep the review manual.
 
 Common troubleshooting paths:
 

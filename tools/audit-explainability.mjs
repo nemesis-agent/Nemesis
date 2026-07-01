@@ -34,6 +34,8 @@ check("runner stores public-safe proposal decision traces", () => {
 check("dashboard proposal view separates explainability from technical inputs", () => {
   assert(proposalRow.includes("decision trace"), "proposal row must render decision trace");
   assert(proposalRow.includes("technicalDetails"), "proposal row must keep technical details separate");
+  assert(proposalRow.includes("observed inputs"), "proposal row must render observed input cards");
+  assert(proposalRow.includes("approval checklist"), "proposal row must render approval checklist");
   assert(proposalRow.includes("wallet signature required"), "proposal row must state wallet approval requirement");
 });
 

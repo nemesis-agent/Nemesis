@@ -86,7 +86,7 @@ const DOC_SECTIONS = [
     id: "proposal-lifecycle",
     title: "proposal lifecycle",
     body: [
-      "A proposal starts as pending. If a dedicated encoder exists, the dashboard can show a wallet-signable payload with network, step, expiry, and approval guidance. If no encoder exists, the proposal remains review-only and no wallet signing request is opened.",
+      "A proposal starts as pending. The dashboard shows observed inputs, decision trace, proposed action, lifecycle state, approval checklist, and execution preview before any wallet signing request. If a dedicated encoder exists, the proposal can show a wallet-signable payload with network, step, expiry, and approval guidance. If no encoder exists, the proposal remains review-only and no wallet signing request is opened.",
       "Executable payloads can expire because market routes, balances, prices, blockhashes, and slippage windows change. Expired proposals should be treated as stale and regenerated rather than signed manually from old data.",
     ],
   },
