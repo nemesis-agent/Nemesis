@@ -7,11 +7,12 @@ export function escapeHtml(text: string): string {
 }
 
 const EXPLAINABILITY_LABELS = new Set(["why", "observed", "approval check", "limitation"]);
+const DIVIDER = "<code>------------------------------</code>";
 
 const STATUS_LABELS: Record<AgentStatus, string> = {
-  active: "active",
-  paused: "paused",
-  "awaiting-approval": "awaiting approval",
+  active: "ACTIVE",
+  paused: "PAUSED",
+  "awaiting-approval": "AWAITING APPROVAL",
 };
 
 function completedStepCount(proposal: Proposal): number {
@@ -29,11 +30,14 @@ function formatExpiry(expiresAt: string | null): string {
   return `${Math.floor(seconds / 60)}m`;
 }
 
-/**
- * Renders a proposal in the brand's terminal-derived style: a bracketed
- * header, then key/value detail lines in monospace. Now uses the real
- * Proposal type from @nemesis/db rather than the deleted mock shape.
- */
+function field(label: string, value: string): string {
+  return `<code>${escapeHtml(label.padEnd(12, " "))}</code> ${value}`;
+}
+
+function cleanSlug(value: string): string {
+  return value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-_]/g, "").slice(0, 42) || "agent";
+}
+
 export function formatProposalMessage(proposal: Proposal, agentName: string): string {
   const explainabilityDetails = proposal.details.filter((detail) => EXPLAINABILITY_LABELS.has(detail.label.toLowerCase()));
   const technicalDetails = proposal.details.filter((detail) => !EXPLAINABILITY_LABELS.has(detail.label.toLowerCase()));
@@ -41,35 +45,43 @@ export function formatProposalMessage(proposal: Proposal, agentName: string): st
   const executionLine = execution.executable
     ? `${execution.networkLabel} / ${execution.totalSteps > 1 ? `step ${Math.min(execution.currentStep, execution.totalSteps)}/${execution.totalSteps}` : "wallet signature"}`
     : `${execution.networkLabel} / review only`;
+
   const lines = [
-    `<code>[ NEMESIS / ${escapeHtml(agentName.toLowerCase().replace(/\s+/g, "-"))} ]</code>`,
+    `<code>[ NEMESIS / PROPOSAL / ${escapeHtml(cleanSlug(agentName))} ]</code>`,
     `<b>${escapeHtml(proposal.title)}</b>`,
-    "",
-    "<b>why</b>",
+    DIVIDER,
+    "<b>decision trace</b>",
     ...(explainabilityDetails.length > 0
-      ? explainabilityDetails.map((detail) => `${escapeHtml(detail.label)}: ${escapeHtml(detail.value)}`)
-      : [escapeHtml(proposal.proposedAction)]),
+      ? explainabilityDetails.map((detail) => field(detail.label, escapeHtml(detail.value)))
+      : [field("why", escapeHtml(proposal.proposedAction))]),
     "",
     "<b>observed inputs</b>",
-    ...technicalDetails.slice(0, 8).map((detail) => `${escapeHtml(detail.label)}: <b>${escapeHtml(detail.value)}</b>`),
+    ...(technicalDetails.length > 0
+      ? technicalDetails.slice(0, 8).map((detail) => field(detail.label, `<b>${escapeHtml(detail.value)}</b>`))
+      : [field("inputs", "not supplied")]),
     "",
-    `propose: <b>${escapeHtml(proposal.proposedAction)}</b>`,
-    `execution: <b>${escapeHtml(executionLine)}</b>`,
-    execution.expiresAt ? `payload ttl: <b>${escapeHtml(formatExpiry(execution.expiresAt))}</b>` : "payload ttl: <b>none</b>",
-    `gas est.: ${escapeHtml(proposal.estimatedGasUsd)}`,
+    "<b>proposal</b>",
+    field("action", `<b>${escapeHtml(proposal.proposedAction)}</b>`),
+    field("execution", `<b>${escapeHtml(executionLine)}</b>`),
+    field("payload ttl", `<b>${escapeHtml(formatExpiry(execution.expiresAt))}</b>`),
+    field("gas est", escapeHtml(proposal.estimatedGasUsd)),
     execution.executable
-      ? "approval: <b>your wallet signature is required - open dashboard, review wallet preview, then sign</b>"
-      : "approval: <b>review only - no wallet signature payload</b>",
+      ? field("approval", "<b>your wallet signature is required</b> - open dashboard, review preview, then sign")
+      : field("approval", "<b>review only</b> - no wallet signature payload"),
   ];
-  if (execution.reason) lines.push(`note: ${escapeHtml(execution.reason)}`);
+  if (execution.reason) lines.push(field("note", escapeHtml(execution.reason)));
+  lines.push(DIVIDER, "<i>agents propose. users approve. wallets sign.</i>");
   return lines.join("\n");
 }
 
 export function formatAgentLine(agent: Agent): string {
   return [
-    `<b>${escapeHtml(agent.name)}</b> - ${STATUS_LABELS[agent.status]}`,
-    `<code>${escapeHtml(agent.id)}</code>`,
-    escapeHtml(agent.lastEvent ?? "Not checked yet"),
-    `last checked ${escapeHtml(agent.lastCheckedAt ?? "never")}`,
+    `<code>[ NEMESIS / AGENT ]</code>`,
+    `<b>${escapeHtml(agent.name)}</b>`,
+    DIVIDER,
+    field("status", `<b>${STATUS_LABELS[agent.status]}</b>`),
+    field("agent", `<code>${escapeHtml(agent.id)}</code>`),
+    field("last check", escapeHtml(agent.lastCheckedAt ?? "never")),
+    field("last event", escapeHtml(agent.lastEvent ?? "not checked yet")),
   ].join("\n");
 }

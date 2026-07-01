@@ -19,7 +19,10 @@ export async function linkCommand(ctx: Context): Promise<void> {
   if (!code) {
     await ctx.reply(
       [
-        "Generate a linking code from the NEMESIS dashboard, then send:",
+        "<code>[ NEMESIS / LINK ]</code>",
+        "<b>code required</b>",
+        "<code>------------------------------</code>",
+        "Generate a fresh code from the dashboard, then send:",
         "<code>/link YOUR-CODE</code>",
       ].join("\n"),
       { parse_mode: "HTML", ...unlinkedWalletKeyboard() },
@@ -31,21 +34,25 @@ export async function linkCommand(ctx: Context): Promise<void> {
 
   if (!result.ok) {
     const messages: Record<string, string> = {
-      "not-found": "Code not found. Make sure you copied it correctly from the dashboard.",
-      "expired": "Code has expired (codes are valid for 10 minutes). Generate a new one from the dashboard.",
-      "already-used": "Code has already been used. Generate a new one from the dashboard.",
+      "not-found": "[ NEMESIS / LINK ]\nCode not found. Copy the fresh dashboard code exactly.",
+      "expired": "[ NEMESIS / LINK ]\nCode expired. Generate a new dashboard code and retry.",
+      "already-used": "[ NEMESIS / LINK ]\nCode already used. Generate a new dashboard code.",
     };
-    await ctx.reply(messages[result.reason] ?? "Something went wrong. Please try again.", unlinkedWalletKeyboard());
+    await ctx.reply(messages[result.reason] ?? "Something went wrong. Please try again.", { parse_mode: "HTML", ...unlinkedWalletKeyboard() });
     return;
   }
 
   const short = shortWallet(result.walletAddress);
   await ctx.reply(
     [
-      "<b>Linked.</b>",
-      `Wallet <code>${short}</code> is now connected to this chat.`,
-      "Agent proposals will be delivered here from now on.",
-      "Use /agents to list agents or /status to check runtime state.",
+      "<code>[ NEMESIS / LINKED ]</code>",
+      "<b>telegram relay armed</b>",
+      "<code>------------------------------</code>",
+      `wallet     <code>${short}</code>`,
+      "delivery   proposals will arrive here",
+      "approval   dashboard + wallet signature only",
+      "",
+      "Use <code>/agents</code> or <code>/status</code> to inspect your setup.",
     ].join("\n"),
     { parse_mode: "HTML", ...linkedWalletKeyboard() },
   );
@@ -60,14 +67,14 @@ export async function unlinkCommand(ctx: Context): Promise<void> {
   const wallet = await getWalletForTelegramChatId(chatId);
 
   if (!wallet) {
-    await ctx.reply("This chat is not linked to any wallet.", unlinkedWalletKeyboard());
+    await ctx.reply("<code>[ NEMESIS / UNLINK ]</code>\nThis chat is not linked to any wallet.", { parse_mode: "HTML", ...unlinkedWalletKeyboard() });
     return;
   }
 
   await pool.query("UPDATE users SET telegram_chat_id = NULL WHERE wallet_address = $1", [wallet]);
 
   const short = shortWallet(wallet);
-  await ctx.reply(`Wallet <code>${short}</code> has been unlinked. Proposals will no longer be sent here.`, {
+  await ctx.reply([`<code>[ NEMESIS / UNLINKED ]</code>`, `<b>relay removed</b>`, `<code>------------------------------</code>`, `wallet     <code>${short}</code>`, `delivery   stopped for this chat`].join("\n"), {
     parse_mode: "HTML",
     ...unlinkedWalletKeyboard(),
   });

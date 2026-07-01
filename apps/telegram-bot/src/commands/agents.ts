@@ -11,7 +11,7 @@ export async function agentsCommand(ctx: Context): Promise<void> {
 
   const wallet = await getWalletForTelegramChatId(chatId);
   if (!wallet) {
-    await ctx.reply("Link this chat from the dashboard first with /link <code>.", { parse_mode: "HTML", ...unlinkedWalletKeyboard() });
+    await ctx.reply("<code>[ NEMESIS / AGENTS ]</code>\nLink this chat from the dashboard first with <code>/link CODE</code>.", { parse_mode: "HTML", ...unlinkedWalletKeyboard() });
     return;
   }
 
@@ -19,14 +19,14 @@ export async function agentsCommand(ctx: Context): Promise<void> {
 
   if (agents.length === 0) {
     await ctx.reply(
-      "No agents deployed yet. Open the dashboard to deploy one.",
+      ["<code>[ NEMESIS / AGENTS ]</code>", "<b>no agents deployed</b>", "<code>------------------------------</code>", "Open the dashboard, choose a template, and deploy your first approval-first agent."].join("\n"),
       { parse_mode: "HTML", ...linkedWalletKeyboard() },
     );
     return;
   }
 
   await ctx.reply(
-    [`<code>[ NEMESIS / agents ]</code>`, `${agents.length} deployed agent${agents.length === 1 ? "" : "s"}.`].join("\n"),
+    [`<code>[ NEMESIS / AGENTS ]</code>`, `<b>${agents.length} deployed agent${agents.length === 1 ? "" : "s"}</b>`, `<code>------------------------------</code>`, `Use the buttons under each card to inspect, pause, or resume.`].join("\n"),
     { parse_mode: "HTML", ...linkedWalletKeyboard() },
   );
 
@@ -35,6 +35,6 @@ export async function agentsCommand(ctx: Context): Promise<void> {
   }
 
   if (agents.length > MAX_AGENT_CARDS) {
-    await ctx.reply(`Showing ${MAX_AGENT_CARDS} of ${agents.length}. Open the dashboard for the full list.`, linkedWalletKeyboard());
+    await ctx.reply([`<code>[ NEMESIS / AGENTS ]</code>`, `showing ${MAX_AGENT_CARDS} of ${agents.length}`, `Open the dashboard for the full list.`].join("\n"), { parse_mode: "HTML", ...linkedWalletKeyboard() });
   }
 }

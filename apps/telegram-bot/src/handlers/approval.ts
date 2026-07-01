@@ -39,7 +39,7 @@ export async function sendProposal(
 export async function demoCommand(ctx: Context): Promise<void> {
   const wallet = await getWalletForTelegramChatId(String(ctx.chat?.id ?? ""));
   if (!wallet) {
-    await ctx.reply("Link this chat from the dashboard first with /link <code>.");
+    await ctx.reply("<code>[ NEMESIS / DEMO ]</code>\nLink this chat from the dashboard first with <code>/link CODE</code>.", { parse_mode: "HTML" });
     return;
   }
 
@@ -47,7 +47,7 @@ export async function demoCommand(ctx: Context): Promise<void> {
   const agent = agents[0];
 
   if (!agent) {
-    await ctx.reply("No agents in your wallet yet. Deploy one from the dashboard first.");
+    await ctx.reply(["<code>[ NEMESIS / DEMO ]</code>", "<b>no agents deployed</b>", "<code>------------------------------</code>", "Deploy an agent from the dashboard first."].join("\n"), { parse_mode: "HTML" });
     return;
   }
 
@@ -112,7 +112,7 @@ export function registerApprovalHandlers(
       await skipProposal(proposalId);
       await ctx.answerCbQuery("Proposal expired");
       await ctx.editMessageReplyMarkup(undefined);
-      await ctx.reply("<code>&gt; expired</code>\nProposal is older than 24 hours and has been skipped for safety.", { parse_mode: "HTML" });
+      await ctx.reply(["<code>[ NEMESIS / EXPIRED ]</code>", "<b>proposal skipped for safety</b>", "<code>------------------------------</code>", "reason     older than 24 hours", "action     wait for a fresh proposal"].join("\n"), { parse_mode: "HTML" });
       return;
     }
 
@@ -127,15 +127,18 @@ export function registerApprovalHandlers(
     const dashboardUrl = dashboardProposalUrl(agent.id);
     await ctx.reply(
       [
-        execution.executable ? `<code>&gt; ready for wallet signature</code>` : `<code>&gt; review only</code>`,
-        agent ? `agent: <b>${escapeHtml(agent.name)}</b>` : "",
-        `proposal: <code>${proposalId}</code>`,
-        `network: <b>${escapeHtml(execution.networkLabel)}</b>`,
-        ``,
+        execution.executable ? `<code>[ NEMESIS / READY ]</code>` : `<code>[ NEMESIS / REVIEW ]</code>`,
+        execution.executable ? `<b>wallet signature required</b>` : `<b>review-only proposal</b>`,
+        `<code>------------------------------</code>`,
+        agent ? `agent      <b>${escapeHtml(agent.name)}</b>` : "",
+        `proposal   <code>${proposalId}</code>`,
+        `network    <b>${escapeHtml(execution.networkLabel)}</b>`,
+        `dashboard  ${escapeHtml(dashboardUrl)}`,
+        "",
         execution.executable
-          ? `<b>Open dashboard and sign from your own wallet:</b>\n${escapeHtml(dashboardUrl)}`
-          : `<i>No executable payload is attached. Review the proposal details in the dashboard.</i>\n${escapeHtml(dashboardUrl)}`,
-        ``,
+          ? "Open the dashboard, compare the wallet preview, then sign only if it matches."
+          : "No executable payload is attached. Review the proposal details in the dashboard.",
+        "",
         `<i>NEMESIS never signs or broadcasts from the server.</i>`
       ]
         .filter(Boolean)
@@ -175,6 +178,6 @@ export function registerApprovalHandlers(
     }
 
     await ctx.editMessageReplyMarkup(undefined);
-    await ctx.reply("<code>&gt; skipped</code>", { parse_mode: "HTML" });
+    await ctx.reply(["<code>[ NEMESIS / SKIPPED ]</code>", "<b>proposal dismissed</b>", "<code>------------------------------</code>", `proposal   <code>${proposalId}</code>`, "status     SKIPPED"].join("\n"), { parse_mode: "HTML" });
   });
 }

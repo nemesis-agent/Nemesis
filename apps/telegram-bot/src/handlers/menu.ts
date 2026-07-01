@@ -10,13 +10,13 @@ import { agentKeyboard, linkedWalletKeyboard, unlinkedWalletKeyboard } from "../
 async function getOwnedAgent(ctx: Context, agentId: string) {
   const wallet = await getWalletForTelegramChatId(String(ctx.chat?.id ?? ""));
   if (!wallet) {
-    await ctx.reply("Link this chat from the dashboard first with /link <code>.", { parse_mode: "HTML", ...unlinkedWalletKeyboard() });
+    await ctx.reply("<code>[ NEMESIS / MENU ]</code>\nLink this chat from the dashboard first with <code>/link CODE</code>.", { parse_mode: "HTML", ...unlinkedWalletKeyboard() });
     return null;
   }
 
   const agent = await getAgent(agentId);
   if (!agent || agent.walletAddress.toLowerCase() !== wallet.toLowerCase()) {
-    await ctx.reply(`No agent found with id <code>${escapeHtml(agentId)}</code>. Use /agents to list.`, { parse_mode: "HTML", ...linkedWalletKeyboard() });
+    await ctx.reply([`<code>[ NEMESIS / MENU ]</code>`, `No owned agent found for <code>${escapeHtml(agentId)}</code>.`, `Use <code>/agents</code> to list your agents.`].join("\n"), { parse_mode: "HTML", ...linkedWalletKeyboard() });
     return null;
   }
 
@@ -72,7 +72,7 @@ export function registerMenuHandlers(bot: Telegraf): void {
     }
     const updated = await setAgentStatus(agentId, "paused");
     await ctx.answerCbQuery("paused");
-    await ctx.reply(`<b>${escapeHtml(agent.name)}</b> is now paused.`, {
+    await ctx.reply([`<code>[ NEMESIS / PAUSED ]</code>`, `<b>${escapeHtml(agent.name)}</b>`, `<code>------------------------------</code>`, `status     PAUSED`].join("\n"), {
       parse_mode: "HTML",
       ...agentKeyboard(updated ?? { ...agent, status: "paused" }),
     });
@@ -88,7 +88,7 @@ export function registerMenuHandlers(bot: Telegraf): void {
     }
     const updated = await setAgentStatus(agentId, "active");
     await ctx.answerCbQuery("active");
-    await ctx.reply(`<b>${escapeHtml(agent.name)}</b> is now active.`, {
+    await ctx.reply([`<code>[ NEMESIS / ACTIVE ]</code>`, `<b>${escapeHtml(agent.name)}</b>`, `<code>------------------------------</code>`, `status     ACTIVE`].join("\n"), {
       parse_mode: "HTML",
       ...agentKeyboard(updated ?? { ...agent, status: "active" }),
     });
