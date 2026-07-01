@@ -1,0 +1,22 @@
+{
+  "name": "NEMESIS 3D model assets",
+  "sourceNote": "Original source GLB files were optimized for web delivery and are intentionally not shipped in public production paths.",
+  "variants": {
+    "primary": {
+      "desktop": "/models/nemesis/nemesis-web.glb",
+      "mobile": "/models/nemesis/nemesis-mobile.glb",
+      "lite": "/models/nemesis/nemesis-lite.glb"
+    },
+    "banner": {
+      "desktop": "/models/nemesis/nemesis-banner-3d-web.glb",
+      "mobile": "/models/nemesis/nemesis-banner-3d-mobile.glb",
+      "lite": "/models/nemesis/nemesis-banner-3d-lite.glb"
+    }
+  },
+  "loadingPolicy": {
+    "hero": "Use a poster/static image first; lazy-load 3D after the hero is visible or after user interaction.",
+    "desktop": "Prefer the desktop variant when connection and GPU look healthy.",
+    "mobile": "Prefer the lite variant by default; upgrade to mobile variant only after user interaction.",
+    "fallback": "If WebGL fails or prefers-reduced-motion is enabled, keep the static poster visible."
+  }
+}
