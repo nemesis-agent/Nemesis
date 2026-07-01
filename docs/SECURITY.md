@@ -49,7 +49,9 @@ Templates are intentionally constrained:
 
 Wallet-private surfaces remain wallet-scoped server-side. Client-facing dashboard cards receive masked wallet labels rather than full wallet rows, and mutation responses avoid returning full database records when the UI only needs identifiers.
 
-OpenRouter planning receives redacted user messages and coarse balance ranges instead of exact wallet balances. Operational logs and alert webhooks use redaction helpers for wallet addresses, transaction hashes, Telegram token patterns, API-key-like strings, and Telegram chat identifiers.
+The wallet dashboard is intentionally a private command center: it shows next safe action, runner health, proposal queue context, and agent execution state only after wallet authentication. Agent detail and proposal routes enforce ownership before returning private agent or proposal data.
+
+OpenRouter planning receives redacted user messages and coarse balance ranges instead of exact wallet balances. Talk with NEMESIS uses public product context and secret-refusal guards rather than private database context. Operational logs and alert webhooks use redaction helpers for wallet addresses, transaction hashes, Telegram token patterns, API-key-like strings, and Telegram chat identifiers.
 
 ## Operational Reliability
 
@@ -59,9 +61,9 @@ Base RPC reads support primary and fallback endpoints. Endpoint logs are host-re
 
 ## AI Safety Boundary
 
-OpenRouter-powered product and planning flows are restricted away from secrets and private runtime data. Talk with NEMESIS can answer general questions naturally, but it must not expose environment variables, private logs, user records, developer-only operational data, or hidden internal files.
+OpenRouter-powered product, chat, and planning flows are restricted away from secrets and private runtime data. Talk with NEMESIS can answer general questions naturally, but it must not expose environment variables, private logs, user records, developer-only operational data, hidden internal files, Telegram chat data, or wallet-private deployed-agent data.
 
-If required model credentials are missing, protected model routes fail closed rather than silently using mock production behavior.
+Chat quality is designed to be natural and useful, not hard-limited to only NEMESIS questions. The boundary is privacy and safety: secret-like input is refused, private operational context is not provided to the model, and missing model credentials fail closed rather than silently using mock production behavior.
 
 ## User Responsibility
 

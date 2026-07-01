@@ -33,7 +33,9 @@ Users can unlink Telegram with `/unlink`.
 
 ## AI And Prompt Data
 
-NEMESIS uses OpenRouter-powered flows for product Q&A and intent planning. These flows are designed to answer from public product context and structured user intent, not from private database dumps or secret runtime configuration.
+NEMESIS uses OpenRouter-powered flows for product Q&A and intent planning. These flows are designed to answer from public product context and structured user intent, not from private database dumps, wallet-private agent records, Telegram chat records, or secret runtime configuration.
+
+Talk with NEMESIS can answer natural general questions, but it does not receive private environment values, raw logs, hidden deployment data, private user records, or the user's Telegram chat data. Client and server checks reject common secret-like inputs.
 
 Users should avoid entering seed phrases, private keys, API keys, Telegram bot tokens, or unrelated sensitive personal information into any chat or intent field.
 
@@ -42,6 +44,7 @@ Users should avoid entering seed phrases, private keys, API keys, Telegram bot t
 NEMESIS minimizes user data sent across surfaces:
 
 - Dashboard cards use masked wallet labels and avoid serializing agent parameters or runtime state unless needed for the view.
+- Wallet-private dashboard and agent detail views require the authenticated wallet session before returning user-specific agent or proposal data.
 - Agent creation responses return only the created agent ID and name.
 - Intent planning sends a coarse Base balance range to OpenRouter instead of an exact wallet balance.
 - Operational logs and alerts redact wallet addresses, transaction hashes, Telegram tokens, API-key-like strings, and Telegram chat identifiers where practical.

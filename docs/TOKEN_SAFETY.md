@@ -10,8 +10,11 @@ Use only the official NEMESIS channels:
 - X: https://x.com/Nemesis_agent
 - GitHub: https://github.com/nemesis-agent/Nemesis
 - Telegram bot: https://t.me/NemesisAgentAppBot
+- Medium: https://medium.com/@nemesisagent1
 
-Check that the website domain, account name, and bot username match exactly. Treat shortened links, lookalike domains, copied screenshots, unofficial comments, unsolicited support messages, and unverified token claims as untrusted.
+Check that the website domain, account name, and bot username match exactly. Treat shortened links, lookalike domains, copied screenshots, unofficial comments, unsolicited support messages, old or deleted contract addresses, and unverified token claims as untrusted.
+
+NEMESIS docs and website should not list a contract address unless the owner explicitly re-publishes a live official address through official channels.
 
 ## What The Token Does Not Do
 

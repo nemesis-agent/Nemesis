@@ -13,6 +13,8 @@ Current product surfaces:
 - Solana wallet flow with Solflare-compatible connection support
 - 12 production templates, including 10 Base templates and 2 Solana templates
 - Talk with NEMESIS, powered by OpenRouter
+- optimized 3D hero, current NEMESIS banner/logo assets, and responsive premium visual staging
+- wallet command center with next safe action, runner health, agent execution mode, and proposal queue context
 - Telegram proposal delivery through `@NemesisAgentAppBot`
 - public-safe health/status endpoints for operational visibility
 
@@ -29,7 +31,7 @@ Primary dashboard actions:
 - pause and resume agents
 - review proposals before wallet signing
 
-The dashboard is wallet-scoped. A connected wallet should only see its own agents and proposals. The agent dashboard command center shows aggregate agent counts, pending proposal queue counts, and next review action without exposing raw proposal payloads or details in the overview.
+The dashboard is wallet-scoped. A connected wallet should only see its own agents and proposals. The agent dashboard command center shows aggregate agent counts, pending proposal queue counts, next safe action, runner health context, Telegram linking state, and each agent's chain, risk, execution mode, event state, and last checked timestamp without exposing raw private payloads in the overview.
 
 ## Wallets And Networks
 
@@ -78,9 +80,9 @@ The preview is not a profit, APY, win-rate, or performance claim. It exists to m
 
 ## Talk With NEMESIS
 
-Talk with NEMESIS is powered by OpenRouter. It can answer general questions naturally and can explain NEMESIS architecture, templates, safety boundaries, Telegram linking, Base, Solana, and product usage.
+Talk with NEMESIS is powered by OpenRouter. It can answer general questions naturally and can explain NEMESIS architecture, templates, safety boundaries, Telegram linking, Base, Solana, product usage, and general crypto automation concepts.
 
-It is intentionally protected. It should not expose private environment variables, secrets, database records, internal logs, unpublished operational details, or user-specific data.
+It is intentionally protected. Client-side and server-side guards reject secret-like input, and the model context is public-product oriented. It should not expose private environment variables, secrets, database records, internal logs, unpublished operational details, wallet-private agent data, Telegram chat data, or user-specific records.
 
 ## Telegram
 
@@ -157,6 +159,12 @@ NEMESIS exposes public-safe status checks at `/api/health` and `/api/status`. Th
 They report app version metadata, database latency, runner heartbeat age, Telegram polling lock state, and Base/Solana RPC probe status without returning API keys, bot tokens, raw database URLs, private user data, or full internal logs.
 
 A `healthy` response means the database, runner, Telegram bot, and RPC probes are current. A `degraded` response means the app is still reachable, but one operational dependency needs attention, such as a stale runner heartbeat, an RPC probe failure, or Telegram polling lock transition during deploy.
+
+## Public Website And Visual System
+
+The public website now uses the current NEMESIS identity across hero, metadata, social previews, documentation links, and product surfaces. The landing hero uses an optimized 3D NEMESIS model with responsive cursor-reactive movement, harmonized red/white lighting, reduced-motion fallback, and Base + Solana positioning. The goal is visual clarity without implying custody, automatic execution, or guaranteed outcomes.
+
+Public growth surfaces include FAQ, changelog, roadmap, development updates, docs, privacy, terms, security, and token-safety pages. These pages should stay product-focused and avoid internal deployment details, private logs, stale branding, dead contract addresses, or unsupported token claims.
 
 ## User Safety Rules
 

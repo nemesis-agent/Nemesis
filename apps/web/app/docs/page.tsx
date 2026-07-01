@@ -39,7 +39,16 @@ const DOC_SECTIONS = [
     title: "security model",
     body: [
       "NEMESIS is designed around non-custody, wallet ownership checks, explicit approval, and constrained templates. Sensitive routes are scoped to the authenticated wallet or linked Telegram account.",
+      "The wallet dashboard is a private command center: it requires wallet authentication before showing user-specific agents, proposal queue context, next safe action, runner health, and agent execution state.",
       "Never paste private keys, seed phrases, recovery phrases, API keys, bot tokens, or confidential personal data into the app, Telegram bot, or Talk with NEMESIS.",
+    ],
+  },
+  {
+    id: "visual-system",
+    title: "visual system",
+    body: [
+      "The public NEMESIS website uses the current logo, banner, and optimized 3D hero model. The hero is responsive, cursor-reactive on capable devices, and tuned around the black, white, and controlled red NEMESIS visual language.",
+      "Visual polish does not change the security model. NEMESIS remains approval-first: agents propose, users approve, wallets sign.",
     ],
   },
   {
@@ -112,8 +121,8 @@ const DOC_SECTIONS = [
     id: "talk-with-nemesis",
     title: "talk with NEMESIS",
     body: [
-      "Talk with NEMESIS is a public chat surface powered by OpenRouter. It can answer general questions naturally and can explain NEMESIS concepts, templates, safety boundaries, and usage flows.",
-      "It has no access to your wallet, database rows, Telegram chat, runtime agents, environment variables, private developer systems, or hidden internal files.",
+      "Talk with NEMESIS is a public chat surface powered by OpenRouter. It can answer general questions naturally and can explain NEMESIS concepts, templates, safety boundaries, usage flows, Base, Solana, and general crypto automation concepts.",
+      "It has no access to your wallet, database rows, Telegram chat, runtime agents, environment variables, private developer systems, hidden internal files, or wallet-private dashboard data.",
     ],
   },
   {

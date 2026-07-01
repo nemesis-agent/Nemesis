@@ -25,6 +25,9 @@ Agents monitor. Users approve. Your wallet remains the final signer.
 - Use OpenRouter-powered intelligence for planning and Talk with NEMESIS.
 - Show template detail pages with safety rails, explainability, parameter defaults, and proposal preview before deploy.
 - Separate review-only proposals from wallet-signable payloads with expiry, network, step, and approval guidance.
+- Show a polished wallet command center with next safe action, runner health, proposal queue context, and agent cards that distinguish chain, risk, execution mode, and last checked state.
+- Present the product with the current NEMESIS visual system: optimized 3D hero model, responsive cursor-reactive staging, Base + Solana positioning, and the latest banner/logo assets.
+- Keep Talk with NEMESIS as a public OpenRouter-powered chat surface that can answer naturally while blocking secrets and private runtime data.
 - Expose public-safe health summaries for database, runner, Telegram, Base RPC, and Solana RPC status.
 
 ## Why It Exists
@@ -105,6 +108,14 @@ Review-only does not mean disabled. It means NEMESIS explains the proposal and k
 A pending proposal can be either wallet-signable or review-only. Wallet-signable proposals are generated only for workflows with dedicated encoders and validation. They show the target network, signing step, expiry window, and approval summary before the wallet opens. Review-only proposals remain visible for manual inspection and do not trigger a wallet signing request.
 
 Expired executable payloads should be regenerated. NEMESIS does not ask users to sign stale route data.
+
+## Current UX Surfaces
+
+- Landing page: optimized 3D NEMESIS hero, Base + Solana trust chips, approval-first copy, docs, FAQ, roadmap, changelog, and development updates.
+- Deploy flow: wallet, plan, risk, execution coverage, approval summary, editable parameters, and final checklist before agent creation.
+- Template pages: execution confidence, wallet-signable/review-only state, observed inputs, approval checklist, safety rails, and proposal preview.
+- Dashboard: wallet-private agent list, next safe action, runner health context, Telegram linking, proposal lifecycle, and agent detail access.
+- Talk with NEMESIS: general-purpose OpenRouter chat with public product context and secret/privacy refusal boundaries.
 
 ## Troubleshooting
 
