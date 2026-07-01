@@ -13,10 +13,6 @@ export function shortWallet(wallet: string): string {
     : `${wallet.slice(0, 6)}...${wallet.slice(-4)}`;
 }
 
-function completedStepCount(proposal: Proposal): number {
-  const hashes = proposal.executionState?.completedTxHashes;
-  return Array.isArray(hashes) ? hashes.length : 0;
-}
 
 export function mainMenuKeyboard(linked: boolean) {
   return Markup.inlineKeyboard([
@@ -55,10 +51,8 @@ export function agentKeyboard(agent: Agent) {
 }
 
 export function proposalKeyboard(proposal: Proposal, agentId: string) {
-  const execution = summarizeExecutionPayload(proposal.unsignedTxPayload, completedStepCount(proposal));
-  const primaryLabel = execution.executable ? "review + sign in dashboard" : "review in dashboard";
   return Markup.inlineKeyboard([
-    [Markup.button.url(primaryLabel, dashboardProposalUrl(agentId))],
+    [Markup.button.url("open in dashboard", dashboardProposalUrl(agentId))],
     [Markup.button.callback("acknowledge", `approve:${proposal.id}`), Markup.button.callback("skip proposal", `skip:${proposal.id}`)],
   ]);
 }

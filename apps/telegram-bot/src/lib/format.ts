@@ -58,7 +58,7 @@ export function formatProposalMessage(proposal: Proposal, agentName: string): st
     execution.expiresAt ? `payload ttl: <b>${escapeHtml(formatExpiry(execution.expiresAt))}</b>` : "payload ttl: <b>none</b>",
     `gas est.: ${escapeHtml(proposal.estimatedGasUsd)}`,
     execution.executable
-      ? "approval: <b>open dashboard, review wallet preview, then sign</b>"
+      ? "approval: <b>your wallet signature is required - open dashboard, review wallet preview, then sign</b>"
       : "approval: <b>review only - no wallet signature payload</b>",
   ];
   if (execution.reason) lines.push(`note: ${escapeHtml(execution.reason)}`);

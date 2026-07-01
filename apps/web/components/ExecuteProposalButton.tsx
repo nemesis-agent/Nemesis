@@ -215,7 +215,7 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
     : summary.actionLabel;
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex w-full flex-col items-stretch gap-1 sm:w-auto sm:items-end">
       <Button
         variant="primary"
         onClick={handleExecute}
@@ -223,7 +223,7 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
       >
         {buttonText}
       </Button>
-      <span className="max-w-56 text-right font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+      <span className="max-w-full break-words text-left font-mono text-[10px] uppercase tracking-widest2 text-nm-muted sm:max-w-56 sm:text-right">
         {summary.networkLabel}
         {summary.totalSteps > 1 ? ` step ${Math.min(summary.currentStep, summary.totalSteps)}/${summary.totalSteps}` : ""}
         {expiryLabel ? ` / ${expiryLabel}` : ""}
@@ -240,7 +240,7 @@ export function ExecuteProposalButton({ proposal }: ExecuteProposalButtonProps) 
         </span>
       )}
       {(verificationError || summary.reason) && (
-        <span className="max-w-64 text-right text-[10px] text-nm-fragment-red font-mono lowercase">
+        <span className="max-w-full break-words text-left font-mono text-[10px] lowercase text-nm-fragment-red sm:max-w-64 sm:text-right">
           {verificationError ?? summary.reason}
         </span>
       )}

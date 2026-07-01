@@ -25,6 +25,19 @@ function getCompletedStepCount(proposal: Proposal): number {
   return Array.isArray(hashes) ? hashes.length : 0;
 }
 
+function getReviewOnlyReason(proposal: Proposal, fallbackReason: string | null): string {
+  const walletAction = proposal.details.find((detail) => detail.label.toLowerCase() === "wallet action")?.value;
+  if (walletAction) return walletAction;
+  return fallbackReason ?? "This template is currently review-only, so NEMESIS shows the proposal but does not open a wallet signing request.";
+}
+
+function lifecycleMessage(proposal: Proposal, execution: ReturnType<typeof summarizeExecutionPayload>, approvalLabel: string): string {
+  if (proposal.status !== "pending") return `Proposal marked ${proposal.status}.`;
+  if (execution.expired) return "Executable payload expired. Generate a fresh proposal before signing from your wallet.";
+  if (!execution.executable) return getReviewOnlyReason(proposal, execution.reason);
+  return `Ready for ${approvalLabel}. Confirm every wallet preview field before signing.`;
+}
+
 function formatExpiry(expiresAt: string | null): string {
   if (!expiresAt) return "not executable";
   const expiryMs = Date.parse(expiresAt);
@@ -40,12 +53,13 @@ export function ProposalRecordRow({ proposal }: ProposalRecordRowProps) {
   const technicalDetails = proposal.details.filter((detail) => !EXPLAINABILITY_LABELS.has(detail.label.toLowerCase()));
   const execution = summarizeExecutionPayload(proposal.unsignedTxPayload, getCompletedStepCount(proposal));
   const approvalLabel = execution.executable ? "wallet signature required" : "review only";
+  const lifecycleCopy = lifecycleMessage(proposal, execution, approvalLabel);
 
   return (
-    <div className="border border-nm-border p-4">
+    <div className="min-w-0 border border-nm-border p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="font-mono text-xs font-bold uppercase tracking-widest2 text-nm-fg">
+        <div className="min-w-0">
+          <p className="break-words font-mono text-xs font-bold uppercase tracking-widest2 text-nm-fg">
             {proposal.title}
           </p>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
@@ -61,9 +75,9 @@ export function ProposalRecordRow({ proposal }: ProposalRecordRowProps) {
 
       <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1">
         {technicalDetails.map((detail) => (
-          <span key={detail.label} className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+          <span key={detail.label} className="min-w-0 break-words font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
             {detail.label}:{" "}
-            <span className="text-nm-fg">{detail.value}</span>
+            <span className="break-words text-nm-fg">{detail.value}</span>
           </span>
         ))}
       </div>
@@ -75,7 +89,7 @@ export function ProposalRecordRow({ proposal }: ProposalRecordRowProps) {
             {explainabilityDetails.map((detail) => (
               <div key={detail.label}>
                 <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red">{detail.label}</p>
-                <p className="mt-1 text-sm leading-relaxed text-nm-muted">{detail.value}</p>
+                <p className="mt-1 break-words text-sm leading-relaxed text-nm-muted">{detail.value}</p>
               </div>
             ))}
           </div>
@@ -103,20 +117,26 @@ export function ProposalRecordRow({ proposal }: ProposalRecordRowProps) {
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-nm-muted">
+      <div className="mt-3 border border-nm-border/70 p-3">
+        <p className={`text-sm leading-relaxed ${execution.expired ? "text-nm-fragment-red" : "text-nm-muted"}`}>
+          {lifecycleCopy}
+        </p>
+      </div>
+
+      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="min-w-0 break-words text-sm text-nm-muted">
           {proposal.proposedAction}
-          <span className="ml-2 font-mono text-[10px] text-nm-muted">
+          <span className="ml-2 whitespace-nowrap font-mono text-[10px] text-nm-muted">
             gas ~{proposal.estimatedGasUsd}
           </span>
           {proposal.status === "pending" && execution.expiresAt && (
-            <span className="ml-2 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+            <span className={`ml-2 whitespace-nowrap font-mono text-[10px] uppercase tracking-widest2 ${execution.expired ? "text-nm-fragment-red" : "text-nm-muted"}`}>
               expires {formatExpiry(execution.expiresAt)}
             </span>
           )}
         </p>
         {proposal.txHash && (
-          <span className="font-mono text-[10px] uppercase tracking-widest2 text-nm-resolve">
+          <span className="break-all font-mono text-[10px] uppercase tracking-widest2 text-nm-resolve">
             tx {proposal.txHash.slice(0, 8)}...{proposal.txHash.slice(-6)}
           </span>
         )}

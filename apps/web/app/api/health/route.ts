@@ -213,6 +213,9 @@ async function measureDatabase(pool: Pool) {
   return { status: "connected", latencyMs: Date.now() - startedAt };
 }
 
+function healthCheckState(ok: boolean, degradedReason: string): { status: "ok" | "degraded"; reason: string } {
+  return ok ? { status: "ok", reason: "current" } : { status: "degraded", reason: degradedReason };
+}
 function deploymentInfo() {
   const commit = process.env.RAILWAY_GIT_COMMIT_SHA ?? process.env.GIT_COMMIT_SHA ?? "unknown";
   return {
@@ -238,12 +241,23 @@ export async function GET() {
 
     const runnerHealthy = runner.status === "healthy" && !runner.stale;
     const telegramHealthy = telegram.status === "healthy" && !telegram.stale;
-    const rpcHealthy = baseRpc.status === "healthy" && solanaRpc.status === "healthy";
+    const baseRpcHealthy = baseRpc.status === "healthy";
+    const solanaRpcHealthy = solanaRpc.status === "healthy";
+    const rpcHealthy = baseRpcHealthy && solanaRpcHealthy;
     const status = runnerHealthy && telegramHealthy && rpcHealthy ? "healthy" : "degraded";
+    const checks = {
+      database: healthCheckState(database.status === "connected", "database unavailable"),
+      runner: healthCheckState(runnerHealthy, runner.stale ? "runner heartbeat stale" : `runner ${runner.status}`),
+      telegram: healthCheckState(telegramHealthy, telegram.stale ? "telegram heartbeat stale" : `telegram ${telegram.status}`),
+      baseRpc: healthCheckState(baseRpcHealthy, baseRpc.status === "degraded" ? baseRpc.error ?? "base rpc degraded" : "base rpc unavailable"),
+      solanaRpc: healthCheckState(solanaRpcHealthy, solanaRpc.status === "degraded" ? solanaRpc.error ?? "solana rpc degraded" : "solana rpc unavailable"),
+    };
 
     return NextResponse.json({
       status,
       timestamp: new Date().toISOString(),
+      summary: status === "healthy" ? "all public checks are current" : "one or more public checks are degraded",
+      checks,
       app: deploymentInfo(),
       database,
       runner,

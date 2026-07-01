@@ -16,7 +16,10 @@ import { getTemplateById } from "@nemesis/templates";
 
 interface AgentDetailPageProps {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ proposal?: string }>;
 }
+
+type ProposalFilter = "all" | "pending" | "approved" | "skipped";
 
 // Reads live from Postgres - pause/resume mutate this row, and a scheduler
 // can add new proposals at any time, so this can never be statically
@@ -112,8 +115,21 @@ const STATUS_LABELS = {
   "awaiting-approval": "awaiting approval",
 } as const;
 
-export default async function AgentDetailPage({ params }: AgentDetailPageProps) {
+const PROPOSAL_FILTERS: Array<{ value: ProposalFilter; label: string }> = [
+  { value: "all", label: "all" },
+  { value: "pending", label: "pending" },
+  { value: "approved", label: "approved" },
+  { value: "skipped", label: "skipped" },
+];
+
+function normalizeProposalFilter(value: string | undefined): ProposalFilter {
+  return value === "pending" || value === "approved" || value === "skipped" ? value : "all";
+}
+
+export default async function AgentDetailPage({ params, searchParams }: AgentDetailPageProps) {
   const { id } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const proposalFilter = normalizeProposalFilter(resolvedSearchParams.proposal);
   const session = await getSession();
   const walletKeys = getSessionWalletKeys(session);
   if (walletKeys.length === 0) redirect("/");
@@ -127,6 +143,7 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
 
   const approvedCount = proposals.filter((p) => p.status === "approved").length;
   const pendingCount = proposals.filter((p) => p.status === "pending").length;
+  const filteredProposals = proposalFilter === "all" ? proposals : proposals.filter((proposal) => proposal.status === proposalFilter);
 
   return (
     <WalletSessionGate walletKeys={walletKeys}>
@@ -141,11 +158,11 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
 
       {/* Header */}
       <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-mono text-2xl font-bold uppercase tracking-widest2 text-nm-fg">
+        <div className="min-w-0">
+          <h1 className="break-words font-mono text-2xl font-bold uppercase tracking-widest2 text-nm-fg">
             {agent.name}
           </h1>
-          <p className="mt-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+          <p className="mt-1 break-all font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
             {agent.id} . {maskIdentifier(agent.walletAddress)}
           </p>
         </div>
@@ -261,7 +278,7 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
                   className="flex items-center justify-between gap-4 p-4"
                 >
                   <span className="text-sm text-nm-muted">{param.label}</span>
-                  <span className="shrink-0 font-mono text-xs text-nm-fg">
+                  <span className="min-w-0 break-words text-right font-mono text-xs text-nm-fg">
                     {String(value)}
                     {param.unit ? ` ${param.unit}` : ""}
                   </span>
@@ -278,8 +295,8 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
           last event
         </h2>
         <div className="mt-3 border border-nm-border p-4">
-          <p className="text-sm leading-relaxed text-nm-fg">{agent.lastEvent ?? "Not checked yet"}</p>
-          <p className="mt-2 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+          <p className="break-words text-sm leading-relaxed text-nm-fg">{agent.lastEvent ?? "Not checked yet"}</p>
+          <p className="mt-2 break-all font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
             {agent.lastCheckedAt ?? "never"}
           </p>
         </div>
@@ -287,9 +304,27 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
 
       {/* Proposal history */}
       <section className="mt-8">
-        <h2 className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">
-          proposal history
-        </h2>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">
+              proposal history
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-nm-muted">
+              Pending executable payloads can expire. Review-only proposals stay visible for manual wallet review and do not open a signing request.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {PROPOSAL_FILTERS.map((filter) => (
+              <Link
+                key={filter.value}
+                href={`/agents/${agent.id}${filter.value === "all" ? "" : `?proposal=${filter.value}`}`}
+                className={`border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 transition-colors ${proposalFilter === filter.value ? "border-nm-fragment-red text-nm-fragment-red" : "border-nm-border text-nm-muted hover:text-nm-fg"}`}
+              >
+                {filter.label}
+              </Link>
+            ))}
+          </div>
+        </div>
         {proposals.length === 0 ? (
           <div className="mt-3 border border-nm-border p-6 text-center">
             <p className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">
@@ -298,15 +333,19 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
           </div>
         ) : (
           <div className="mt-3 flex flex-col gap-3">
-            {proposals.map((proposal, index) => (
+            {filteredProposals.map((proposal, index) => (
               <ScrollReveal key={proposal.id} delayMs={index * 50}>
                 <ProposalRecordRow proposal={proposal} />
               </ScrollReveal>
             ))}
+            {filteredProposals.length === 0 && (
+              <div className="border border-nm-border p-6 text-center">
+                <p className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">no {proposalFilter} proposals</p>
+              </div>
+            )}
           </div>
         )}
       </section>
-
       {/* Actions */}
       <section className="mt-10">
         <FragmentDivider />
