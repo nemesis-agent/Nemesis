@@ -1,4 +1,4 @@
-import type { Telegraf, Context } from "telegraf";
+import { Markup, type Telegraf, type Context } from "telegraf";
 import {
   createProposal,
   getAgent,
@@ -127,23 +127,23 @@ export function registerApprovalHandlers(
     const dashboardUrl = dashboardProposalUrl(agent.id);
     await ctx.reply(
       [
-        execution.executable ? `<code>[ NEMESIS / READY ]</code>` : `<code>[ NEMESIS / REVIEW ]</code>`,
-        execution.executable ? `<b>wallet signature required</b>` : `<b>review-only proposal</b>`,
+        execution.executable ? `<code>[ NEMESIS / WALLET REVIEW ]</code>` : `<code>[ NEMESIS / PROPOSAL REVIEW ]</code>`,
+        execution.executable ? `<b>dashboard wallet preview required</b>` : `<b>review-only proposal acknowledged</b>`,
         `<code>------------------------------</code>`,
         agent ? `agent      <b>${escapeHtml(agent.name)}</b>` : "",
         `proposal   <code>${proposalId}</code>`,
         `network    <b>${escapeHtml(execution.networkLabel)}</b>`,
-        `dashboard  ${escapeHtml(dashboardUrl)}`,
+        `mode       <b>${execution.executable ? "wallet-signable" : "review-only"}</b>`,
         "",
         execution.executable
-          ? "Open the dashboard, compare the wallet preview, then sign only if it matches."
-          : "No executable payload is attached. Review the proposal details in the dashboard.",
+          ? "Next: open the dashboard, compare network, token, recipient, value, calldata, fee, and route, then sign only if everything matches."
+          : "Next: open the dashboard and review the proposal manually. No wallet popup is expected for this proposal.",
         "",
         `<i>NEMESIS never signs or broadcasts from the server.</i>`
       ]
         .filter(Boolean)
         .join("\n"),
-      { parse_mode: "HTML" },
+      { parse_mode: "HTML", ...Markup.inlineKeyboard([[Markup.button.url("open dashboard review", dashboardUrl)]]) },
     );
   });
 

@@ -12,6 +12,15 @@ export const metadata: Metadata = {
 const CHANGES = [
   {
     label: "current",
+    title: "agent dashboard and Telegram proposal UX phase 2",
+    items: [
+      "Agent dashboard now includes a wallet-private command center with aggregate agent and proposal queue counts before users open individual agent details.",
+      "Agent detail pages now show an operational brief with network, risk, execution mode, and signable versus review-only pending proposal split.",
+      "Telegram proposal messages now show a clearer review path, execution window, approval boundary, and dashboard review receipt after acknowledgement.",
+    ],
+  },
+  {
+    label: "current",
     title: "template detail and deploy flow polish",
     items: [
       "Template detail pages now include a template operating brief, deploy readiness, execution mode, risk gate, and four-step review path before users deploy.",

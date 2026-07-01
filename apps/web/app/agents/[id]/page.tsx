@@ -12,7 +12,8 @@ import { Pool } from "pg";
 import type { Agent, AgentStatus, Proposal, ProposalStatus } from "@nemesis/db";
 import { getSession, getSessionWalletKeys } from "@/lib/auth";
 import { maskIdentifier } from "@/lib/privacy";
-import { getTemplateById } from "@nemesis/templates";
+import { RISK_LABELS, getTemplateById, getTemplateChain, getTemplateExecutionCoverage } from "@nemesis/templates";
+import { summarizeExecutionPayload } from "@nemesis/execution";
 
 interface AgentDetailPageProps {
   params: Promise<{ id: string }>;
@@ -143,6 +144,11 @@ export default async function AgentDetailPage({ params, searchParams }: AgentDet
 
   const approvedCount = proposals.filter((p) => p.status === "approved").length;
   const pendingCount = proposals.filter((p) => p.status === "pending").length;
+  const skippedCount = proposals.filter((p) => p.status === "skipped").length;
+  const executablePendingCount = proposals.filter((proposal) => proposal.status === "pending" && summarizeExecutionPayload(proposal.unsignedTxPayload).executable).length;
+  const reviewOnlyPendingCount = pendingCount - executablePendingCount;
+  const chain = template ? getTemplateChain(template) : "unknown";
+  const executionCoverage = template ? getTemplateExecutionCoverage(template) : null;
   const filteredProposals = proposalFilter === "all" ? proposals : proposals.filter((proposal) => proposal.status === proposalFilter);
 
   return (
@@ -178,11 +184,12 @@ export default async function AgentDetailPage({ params, searchParams }: AgentDet
       </div>
 
       {/* Stats */}
-      <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-4">
+      <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4">
         {[
           { label: "proposals", value: proposals.length },
           { label: "approved", value: approvedCount },
           { label: "pending", value: pendingCount },
+          { label: "skipped", value: skippedCount },
         ].map((stat, index) => (
           <ScrollReveal key={stat.label} delayMs={index * 60}>
             <div className="border border-nm-border p-3 sm:p-4">
@@ -197,6 +204,37 @@ export default async function AgentDetailPage({ params, searchParams }: AgentDet
         ))}
       </div>
 
+      <section className="mt-6 border border-nm-border bg-nm-surface p-4" aria-label="agent operational brief">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="font-mono text-xs font-bold uppercase tracking-widest2 text-nm-fg">agent operational brief</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-nm-muted">
+              This wallet-private view shows the agent state, pending proposal queue, and the exact review surface before any wallet signing request.
+            </p>
+          </div>
+          <span className="w-fit border border-nm-border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+            wallet scoped
+          </span>
+        </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-4">
+          <div className="border border-nm-border/70 bg-nm-bg p-3">
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">network</p>
+            <p className="mt-1 font-mono text-xs uppercase tracking-widest2 text-nm-fg">{chain}</p>
+          </div>
+          <div className="border border-nm-border/70 bg-nm-bg p-3">
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">risk</p>
+            <p className="mt-1 font-mono text-xs uppercase tracking-widest2 text-nm-fg">{template ? RISK_LABELS[template.risk] : "unknown"}</p>
+          </div>
+          <div className="border border-nm-border/70 bg-nm-bg p-3">
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">execution</p>
+            <p className="mt-1 font-mono text-xs uppercase tracking-widest2 text-nm-fg">{executionCoverage ? executionCoverage.label : "unknown"}</p>
+          </div>
+          <div className="border border-nm-border/70 bg-nm-bg p-3">
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">queue</p>
+            <p className="mt-1 font-mono text-xs uppercase tracking-widest2 text-nm-fg">{executablePendingCount} sign / {reviewOnlyPendingCount} review</p>
+          </div>
+        </div>
+      </section>
       {/* Template info */}
       {template && (
         <section className="mt-10">

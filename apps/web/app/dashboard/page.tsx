@@ -10,7 +10,7 @@ import { WalletSessionGate } from "@/components/WalletSessionGate";
 import { Pool } from "pg";
 import { getSession, getSessionWalletKeys } from "@/lib/auth";
 import { maskIdentifier } from "@/lib/privacy";
-import type { AgentStatus } from "@nemesis/db";
+import type { AgentStatus, ProposalStatus } from "@nemesis/db";
 import type { AgentCardViewModel } from "@/components/AgentCard";
 
 // Reads live from Postgres on every request - agents can be paused/resumed
@@ -36,12 +36,24 @@ interface RuntimeHealthRow {
   last_heartbeat_at: Date;
 }
 
+interface ProposalSummaryRow {
+  status: ProposalStatus;
+  count: string;
+}
+
 interface DashboardRuntimeHealth {
   status: "starting" | "healthy" | "degraded" | "error" | "unknown" | "unavailable";
   stale: boolean;
   lastHeartbeatAt: string | null;
   ageSeconds: number | null;
   details: Record<string, unknown>;
+}
+
+interface DashboardProposalSummary {
+  total: number;
+  pending: number;
+  approved: number;
+  skipped: number;
 }
 
 const dashboardPool = new Pool({
@@ -72,6 +84,26 @@ async function listDashboardAgents(walletKeys: string[]): Promise<AgentCardViewM
     [walletKeys],
   );
   return (rows as AgentRow[]).map(rowToAgent);
+}
+
+async function getDashboardProposalSummary(walletKeys: string[]): Promise<DashboardProposalSummary> {
+  if (walletKeys.length === 0) return { total: 0, pending: 0, approved: 0, skipped: 0 };
+  const { rows } = await dashboardPool.query(
+    `SELECT p.status, COUNT(*)::text AS count
+     FROM proposals p
+     INNER JOIN agents a ON a.id = p.agent_id
+     WHERE a.wallet_address = ANY($1::text[])
+     GROUP BY p.status`,
+    [walletKeys],
+  );
+  const summary: DashboardProposalSummary = { total: 0, pending: 0, approved: 0, skipped: 0 };
+  for (const row of rows as ProposalSummaryRow[]) {
+    const count = Number(row.count);
+    if (!Number.isFinite(count)) continue;
+    summary[row.status] = count;
+    summary.total += count;
+  }
+  return summary;
 }
 
 function parseRuntimeDetails(value: string | null): Record<string, unknown> {
@@ -179,100 +211,150 @@ function RunnerHealthCard({ health }: { health: DashboardRuntimeHealth }) {
   );
 }
 
+function DashboardSummary({ agents, proposalSummary }: { agents: AgentCardViewModel[]; proposalSummary: DashboardProposalSummary }) {
+  const activeAgents = agents.filter((agent) => agent.status === "active").length;
+  const pausedAgents = agents.filter((agent) => agent.status === "paused").length;
+  const awaitingAgents = agents.filter((agent) => agent.status === "awaiting-approval").length;
+  const stats = [
+    { label: "agents", value: agents.length, note: `${activeAgents} active / ${pausedAgents} paused` },
+    { label: "pending", value: proposalSummary.pending, note: "review before signing" },
+    { label: "approved", value: proposalSummary.approved, note: "wallet-confirmed" },
+    { label: "attention", value: awaitingAgents, note: "agent state needs review" },
+  ];
+
+  return (
+    <section className="mt-8 border border-nm-border bg-nm-surface p-4" aria-label="agent dashboard command center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="font-mono text-xs font-bold uppercase tracking-widest2 text-nm-fg">agent dashboard command center</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-nm-muted">
+            Wallet-scoped overview of deployed agents, pending proposal queue, and the next review action. Counts are aggregated; proposal payloads stay inside the agent detail view.
+          </p>
+        </div>
+        <span className="w-fit border border-nm-border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+          wallet private
+        </span>
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-4">
+        {stats.map((stat) => (
+          <div key={stat.label} className="border border-nm-border/70 bg-nm-bg p-3">
+            <p className="font-mono text-2xl font-bold text-nm-fg">{stat.value}</p>
+            <p className="mt-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">{stat.label}</p>
+            <p className="mt-2 text-xs leading-relaxed text-nm-muted">{stat.note}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+        <p className="text-sm leading-relaxed text-nm-muted">
+          {proposalSummary.pending > 0
+            ? `You have ${proposalSummary.pending} pending proposal${proposalSummary.pending === 1 ? "" : "s"}. Open the related agent and compare the dashboard preview before signing.`
+            : "No pending proposals right now. Agents will keep monitoring and send Telegram alerts when a condition matches."}
+        </p>
+        <Button href={proposalSummary.pending > 0 ? "/dashboard#agents" : "/agents/new"} variant="secondary" magnetic>
+          {proposalSummary.pending > 0 ? "Review agents" : "Deploy agent"}
+        </Button>
+      </div>
+    </section>
+  );
+}
+
 export default async function DashboardPage() {
   const session = await getSession();
   const walletKeys = getSessionWalletKeys(session);
   if (walletKeys.length === 0) redirect("/");
 
-  const [agents, runnerHealth] = await Promise.all([
+  const [agents, proposalSummary, runnerHealth] = await Promise.all([
     listDashboardAgents(walletKeys),
+    getDashboardProposalSummary(walletKeys),
     getDashboardRuntimeHealth(),
   ]);
 
   return (
     <WalletSessionGate walletKeys={walletKeys}>
       <div className="mx-auto max-w-6xl px-6 py-16">
-      <div className="flex flex-wrap items-baseline justify-between gap-4">
-        <div>
-          <h1 className="font-mono text-2xl font-bold uppercase tracking-widest2 text-nm-fg">agents</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-nm-muted">
-            Agents deployed to your wallet. Proposals are sent to Telegram and listed here -
-            nothing moves without your approval.
-          </p>
+        <div className="flex flex-wrap items-baseline justify-between gap-4">
+          <div>
+            <h1 className="font-mono text-2xl font-bold uppercase tracking-widest2 text-nm-fg">agents</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-nm-muted">
+              Agents deployed to your wallet. Proposals are sent to Telegram and listed here -
+              nothing moves without your approval.
+            </p>
+          </div>
+          <Button href="/agents/new" variant="primary" magnetic>
+            Deploy agent
+          </Button>
         </div>
-        <Button href="/agents/new" variant="primary" magnetic>
-          Deploy agent
-        </Button>
-      </div>
 
-      <div className="mt-10">
-        <FragmentDivider />
-      </div>
+        <DashboardSummary agents={agents} proposalSummary={proposalSummary} />
 
-      <div className="mt-10 grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <div className="grid gap-4 sm:grid-cols-2">
-          {agents.map((agent, index) => (
-            <ScrollReveal key={agent.id} delayMs={index * 70}>
-              <AgentCard agent={agent} />
-            </ScrollReveal>
-          ))}
+        <div className="mt-10">
+          <FragmentDivider />
+        </div>
 
-          {agents.length === 0 && (
-            <div className="border border-nm-border bg-nm-bg p-8 sm:col-span-2">
-              <h2 className="font-mono text-sm font-bold uppercase tracking-widest2 text-nm-fg mb-6">
-                Onboarding: 3 Steps to Automation
-              </h2>
-              
-              <div className="flex flex-col gap-6">
-                <div className="flex gap-4 items-start">
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center border border-nm-resolve text-nm-resolve font-mono text-xs">
-                    1
-                  </div>
-                  <div>
-                    <h3 className="font-mono text-xs uppercase text-nm-fg">Connect Wallet</h3>
-                    <p className="mt-1 text-sm text-nm-muted">Your wallet is connected and signed via SIWE. You&apos;re ready for step 2.</p>
-                  </div>
-                </div>
+        <div id="agents" className="mt-10 grid gap-6 lg:grid-cols-[2fr_1fr]">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {agents.map((agent, index) => (
+              <ScrollReveal key={agent.id} delayMs={index * 70}>
+                <AgentCard agent={agent} />
+              </ScrollReveal>
+            ))}
 
-                <div className="flex gap-4 items-start">
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center border border-nm-fragment-blue text-nm-fragment-blue font-mono text-xs">
-                    2
-                  </div>
-                  <div>
-                    <h3 className="font-mono text-xs uppercase text-nm-fg">Link Telegram</h3>
-                    <p className="mt-1 text-sm text-nm-muted">Use the panel on the right to link your Telegram. This is where you will receive and approve transaction proposals.</p>
-                  </div>
-                </div>
+            {agents.length === 0 && (
+              <div className="border border-nm-border bg-nm-bg p-8 sm:col-span-2">
+                <h2 className="mb-6 font-mono text-sm font-bold uppercase tracking-widest2 text-nm-fg">
+                  Onboarding: 3 Steps to Automation
+                </h2>
 
-                <div className="flex gap-4 items-start">
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center border border-nm-fragment-red text-nm-fragment-red font-mono text-xs">
-                    3
+                <div className="flex flex-col gap-6">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center border border-nm-resolve font-mono text-xs text-nm-resolve">
+                      1
+                    </div>
+                    <div>
+                      <h3 className="font-mono text-xs uppercase text-nm-fg">Connect Wallet</h3>
+                      <p className="mt-1 text-sm text-nm-muted">Your wallet is connected and signed via SIWE. You&apos;re ready for step 2.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-mono text-xs uppercase text-nm-fg">Deploy first agent</h3>
-                    <p className="mt-1 text-sm text-nm-muted">Tell NEMESIS what you want to monitor. It will suggest a production-ready agent plan for your review.</p>
-                    <Link
-                      href="/agents/new"
-                      className="mt-3 inline-block font-mono text-xs uppercase tracking-widest2 text-nm-fg border border-nm-border px-4 py-2 hover:bg-nm-surface transition-colors"
-                    >
-                      Deploy your first agent -&gt;
-                    </Link>
+
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center border border-nm-fragment-blue font-mono text-xs text-nm-fragment-blue">
+                      2
+                    </div>
+                    <div>
+                      <h3 className="font-mono text-xs uppercase text-nm-fg">Link Telegram</h3>
+                      <p className="mt-1 text-sm text-nm-muted">Use the panel on the right to link your Telegram. This is where you will receive and approve transaction proposals.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center border border-nm-fragment-red font-mono text-xs text-nm-fragment-red">
+                      3
+                    </div>
+                    <div>
+                      <h3 className="font-mono text-xs uppercase text-nm-fg">Deploy first agent</h3>
+                      <p className="mt-1 text-sm text-nm-muted">Tell NEMESIS what you want to monitor. It will suggest a production-ready agent plan for your review.</p>
+                      <Link
+                        href="/agents/new"
+                        className="mt-3 inline-block border border-nm-border px-4 py-2 font-mono text-xs uppercase tracking-widest2 text-nm-fg transition-colors hover:bg-nm-surface"
+                      >
+                        Deploy your first agent -&gt;
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        <div className="grid gap-4">
-          <ScrollReveal delayMs={120}>
-            <RunnerHealthCard health={runnerHealth} />
-          </ScrollReveal>
-          <ScrollReveal delayMs={170}>
-            <ConnectTelegramCard />
-          </ScrollReveal>
+          <div className="grid gap-4">
+            <ScrollReveal delayMs={120}>
+              <RunnerHealthCard health={runnerHealth} />
+            </ScrollReveal>
+            <ScrollReveal delayMs={170}>
+              <ConnectTelegramCard />
+            </ScrollReveal>
+          </div>
         </div>
-      </div>
       </div>
     </WalletSessionGate>
   );

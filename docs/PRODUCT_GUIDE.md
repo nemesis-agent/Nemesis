@@ -29,7 +29,7 @@ Primary dashboard actions:
 - pause and resume agents
 - review proposals before wallet signing
 
-The dashboard is wallet-scoped. A connected wallet should only see its own agents and proposals.
+The dashboard is wallet-scoped. A connected wallet should only see its own agents and proposals. The agent dashboard command center shows aggregate agent counts, pending proposal queue counts, and next review action without exposing raw proposal payloads or details in the overview.
 
 ## Wallets And Networks
 
@@ -84,7 +84,7 @@ It is intentionally protected. It should not expose private environment variable
 
 ## Telegram
 
-Telegram is used for proposal delivery and command convenience. Users generate a short-lived link code from the dashboard. Open the Telegram bot from the dashboard, then send the code with `/link`.
+Telegram is used for proposal delivery and command convenience. Users generate a short-lived link code from the dashboard. Open the Telegram bot from the dashboard, then send the code with `/link`. Telegram proposal messages show a review path, execution window, approval boundary, and dashboard CTA; final signing still happens from the user wallet.
 
 Official bot: [@NemesisAgentAppBot](https://t.me/NemesisAgentAppBot)
 

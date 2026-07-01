@@ -30,6 +30,7 @@
     "audit:template-detail": "node tools/audit-template-detail.mjs",
     "audit:deploy-flow": "node tools/audit-deploy-flow.mjs",
     "audit:proposal-visualization": "node tools/audit-proposal-visualization.mjs",
+    "audit:dashboard-telegram": "node tools/audit-dashboard-telegram-phase2.mjs",
     "audit:copy-metadata": "node tools/audit-copy-metadata.mjs",
     "test:p0": "node --no-warnings --experimental-strip-types tests/execution-policy.test.ts",
     "test:e2e": "playwright test"

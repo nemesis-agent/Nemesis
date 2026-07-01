@@ -65,14 +65,14 @@ export function AgentCard({ agent }: AgentCardProps) {
           href={`/agents/${agent.id}`}
           className="card-arrow font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red"
         >
-          view agent →
+          {"view agent ->"}
         </Link>
         {template && (
           <Link
             href={`/templates/${template.id}`}
             className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted transition-colors duration-200 hover:text-nm-fg"
           >
-            view template →
+            {"view template ->"}
           </Link>
         )}
       </div>

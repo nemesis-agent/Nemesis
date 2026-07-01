@@ -23,7 +23,7 @@ const DOC_SECTIONS = [
     title: "how to deploy an agent",
     body: [
       "Open deploy, connect the wallet you want to use, choose a template or describe intent, review the wallet/plan/risk/approval checklist, inspect the selected template network and execution mode, complete any required risk acknowledgement, and approve deployment only after the filled summary matches what you want.",
-      "After deployment, the agent appears in your wallet dashboard. Proposals remain separate from final wallet signing, so you can decline by simply not approving the transaction.",
+      "After deployment, the agent appears in your wallet dashboard. The dashboard command center shows aggregate proposal queue counts, while each agent detail page shows network, risk, execution mode, and pending signable versus review-only split. Proposals remain separate from final wallet signing, so you can decline by simply not approving the transaction.",
     ],
   },
   {
@@ -46,7 +46,7 @@ const DOC_SECTIONS = [
     id: "telegram-linking",
     title: "telegram linking",
     body: [
-      "Telegram is optional. Generate a short-lived link code from the dashboard, open the NEMESIS bot, and send the link command shown on screen. The bot can then route proposals and status responses to that Telegram chat.",
+      "Telegram is optional. Generate a short-lived link code from the dashboard, open the NEMESIS bot, and send the link command shown on screen. The bot can then route proposals and status responses to that Telegram chat, including a review path, execution window, approval boundary, and dashboard review button.",
       "The bot does not receive private keys and cannot sign transactions. It is a notification and approval companion, not a custody surface.",
     ],
   },
