@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import type { AgentStatus } from "@nemesis/db";
-import { getTemplateById } from "@nemesis/templates";
+import { RISK_LABELS, getTemplateById, getTemplateChain, getTemplateExecutionCoverage } from "@nemesis/templates";
 
 const STATUS_STYLES: Record<AgentStatus, string> = {
   active:              "text-nm-resolve border-nm-resolve",
@@ -14,7 +14,18 @@ const STATUS_LABELS: Record<AgentStatus, string> = {
   paused:              "paused",
   "awaiting-approval": "awaiting approval",
 };
-
+function formatLastChecked(value: string | null) {
+  if (!value) return "never checked";
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return "unknown";
+  const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
 export interface AgentCardViewModel {
   id: string;
   walletLabel: string;
@@ -31,6 +42,13 @@ interface AgentCardProps {
 
 export function AgentCard({ agent }: AgentCardProps) {
   const template = getTemplateById(agent.templateId);
+  const chain = template ? getTemplateChain(template) : "unknown";
+  const execution = template ? getTemplateExecutionCoverage(template) : null;
+  const nextAction = agent.status === "paused"
+    ? "resume when ready"
+    : agent.status === "awaiting-approval"
+      ? "review pending state"
+      : "monitoring for matches";
 
   return (
     <div className="card-premium corner-fragment group border border-nm-border p-5">
@@ -53,12 +71,37 @@ export function AgentCard({ agent }: AgentCardProps) {
         </span>
       </div>
 
-      <p className="mt-4 text-sm leading-relaxed text-nm-muted transition-colors duration-300 group-hover:text-nm-fg/70">
-        {agent.lastEvent ?? "Not checked yet"}
-      </p>
-      <p className="mt-2 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-        last checked {agent.lastCheckedAt ?? "never"}
-      </p>
+      <div className="mt-4 grid gap-2 border-y border-nm-border/60 py-3">
+        <div className="grid gap-1 sm:grid-cols-[76px_1fr]">
+          <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">event</p>
+          <p className="text-sm leading-relaxed text-nm-muted transition-colors duration-300 group-hover:text-nm-fg/70">
+            {agent.lastEvent ?? "Waiting for first monitoring cycle."}
+          </p>
+        </div>
+        <div className="grid gap-1 sm:grid-cols-[76px_1fr]">
+          <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">next</p>
+          <p className="text-sm leading-relaxed text-nm-fg">{nextAction}</p>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <span className="border border-nm-border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+          {chain}
+        </span>
+        {template && (
+          <span className="border border-nm-border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+            {RISK_LABELS[template.risk]} risk
+          </span>
+        )}
+        {execution && (
+          <span className={`border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 ${execution.mode === "wallet-signable" ? "border-nm-fragment-blue text-nm-fragment-blue" : "border-nm-border text-nm-muted"}`}>
+            {execution.mode === "wallet-signable" ? "wallet-signable" : "review-only"}
+          </span>
+        )}
+        <span className="border border-nm-border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+          {formatLastChecked(agent.lastCheckedAt)}
+        </span>
+      </div>
 
       <div className="mt-4 flex flex-wrap gap-4">
         <Link

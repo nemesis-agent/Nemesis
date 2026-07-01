@@ -4,7 +4,7 @@ import { generateText } from "ai";
 
 import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { redactForLog } from "@/lib/privacy";
-import { TEMPLATES, getTemplateChain, isTemplateProductionReady } from "@nemesis/templates";
+import { TEMPLATES, getTemplateChain, getTemplateExecutionCoverage, isTemplateProductionReady } from "@nemesis/templates";
 
 const openrouterApiKey = process.env.OPENROUTER_API_KEY;
 const openrouterModel = process.env.OPENROUTER_MODEL ?? "xiaomi/mimo-v2.5";
@@ -37,6 +37,7 @@ function publicTemplateContext() {
       description: parameter.description,
     })),
     protocols: template.protocols,
+    execution: getTemplateExecutionCoverage(template),
     riskNote: template.riskNote,
   }));
 }
@@ -48,6 +49,7 @@ const PUBLIC_PRODUCT_CONTEXT = {
     "Users connect and authenticate with their own wallet.",
     "The NEMESIS planner can translate natural-language intent into structured template suggestions.",
     "Every template monitors one condition and proposes one action.",
+    "Wallet-signable templates can prepare guarded payloads for final wallet approval; review-only templates explain the proposal without opening a signing request.",
     "Agents monitor and prepare proposals; they never hold signing authority.",
     "The user's own wallet remains the final signer and broadcaster.",
     "Proposals can appear in the dashboard and through an optionally linked Telegram chat.",
@@ -141,8 +143,8 @@ async function generateNemesisReply(instructions: string, messages: SafeMessage[
         model: openrouter(openrouterModel),
         instructions,
         messages,
-        maxOutputTokens: 1_200,
-        temperature: 0.35,
+        maxOutputTokens: 1_600,
+        temperature: 0.42,
         timeout: { totalMs: MODEL_TIMEOUT_MS },
       });
 
@@ -218,7 +220,7 @@ Security boundary:
 - Never provide personalized financial advice or guarantee outcomes.
 - Explain risky crypto or automation topics with clear limitations.
 - Distinguish monitoring/proposal generation from final wallet signing when discussing NEMESIS.
-- Keep answers concise but substantive, normally 2-6 short paragraphs. Use the user's language when practical. Finish every answer completely within the output limit.
+- Keep answers concise but substantive, normally 2-7 short paragraphs. Use the user's language when practical. Finish every answer completely within the output limit.
 - Use plain text only without Markdown formatting or HTML. Do not invent links.
 
 PUBLIC_PRODUCT_CONTEXT:

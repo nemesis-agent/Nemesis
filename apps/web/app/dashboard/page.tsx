@@ -221,6 +221,26 @@ function DashboardSummary({ agents, proposalSummary }: { agents: AgentCardViewMo
     { label: "approved", value: proposalSummary.approved, note: "wallet-confirmed" },
     { label: "attention", value: awaitingAgents, note: "agent state needs review" },
   ];
+  const nextAction = proposalSummary.pending > 0
+    ? {
+        label: "review queue",
+        body: `You have ${proposalSummary.pending} pending proposal${proposalSummary.pending === 1 ? "" : "s"}. Open the related agent, compare observed inputs with the wallet preview, then approve only if it still matches your intent.`,
+        href: "/dashboard#agents",
+        cta: "Review agents",
+      }
+    : agents.length === 0
+      ? {
+          label: "first setup",
+          body: "Deploy your first monitoring agent, then link Telegram so proposal notifications reach the right wallet-owned chat.",
+          href: "/agents/new",
+          cta: "Deploy agent",
+        }
+      : {
+          label: "monitoring",
+          body: "No pending proposals right now. Keep Telegram linked and review each agent card for last event, execution mode, and next action.",
+          href: "/agents/new",
+          cta: "Add agent",
+        };
 
   return (
     <section className="mt-8 border border-nm-border bg-nm-surface p-4" aria-label="agent dashboard command center">
@@ -244,14 +264,13 @@ function DashboardSummary({ agents, proposalSummary }: { agents: AgentCardViewMo
           </div>
         ))}
       </div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
-        <p className="text-sm leading-relaxed text-nm-muted">
-          {proposalSummary.pending > 0
-            ? `You have ${proposalSummary.pending} pending proposal${proposalSummary.pending === 1 ? "" : "s"}. Open the related agent and compare the dashboard preview before signing.`
-            : "No pending proposals right now. Agents will keep monitoring and send Telegram alerts when a condition matches."}
-        </p>
-        <Button href={proposalSummary.pending > 0 ? "/dashboard#agents" : "/agents/new"} variant="secondary" magnetic>
-          {proposalSummary.pending > 0 ? "Review agents" : "Deploy agent"}
+      <div className="mt-4 grid gap-3 border border-nm-border/70 bg-nm-bg p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red">next safe action - {nextAction.label}</p>
+          <p className="mt-2 text-sm leading-relaxed text-nm-muted">{nextAction.body}</p>
+        </div>
+        <Button href={nextAction.href} variant="secondary" magnetic>
+          {nextAction.cta}
         </Button>
       </div>
     </section>

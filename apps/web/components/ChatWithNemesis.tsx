@@ -21,11 +21,14 @@ const INTRO_MESSAGE: ChatMessage = {
 };
 
 const SUGGESTED_PROMPTS = [
-  "What is NEMESIS?",
-  "How does approval-first execution work?",
-  "Can I ask general questions here?",
+  "Explain NEMESIS like I am new.",
+  "Which templates are wallet-signable?",
+  "How do Base and Solana proposals differ?",
   "What should I never paste into this chat?",
+  "Help me think through a safe agent setup.",
 ];
+
+const SECRET_LIKE_INPUT = /(-----BEGIN [A-Z ]*PRIVATE KEY-----|\b(?:sk-or-v1-|sk-[a-z0-9_-]{16,})|\b\d{8,12}:[A-Za-z0-9_-]{25,}|(?:seed|recovery|mnemonic|private\s*key)\s*[:=])/i;
 
 export function ChatWithNemesis() {
   const [messages, setMessages] = useState<ChatMessage[]>([INTRO_MESSAGE]);
@@ -49,6 +52,21 @@ export function ChatWithNemesis() {
     const trimmed = raw.trim();
     if (!trimmed || stage === "thinking") return;
 
+    if (SECRET_LIKE_INPUT.test(trimmed)) {
+      const timestamp = Date.now();
+      setMessages((current) => [
+        ...current,
+        { id: `user-${timestamp}`, role: "user", content: "[redacted sensitive input]" },
+        {
+          id: `guard-${timestamp}`,
+          role: "agent",
+          content:
+            "Do not paste API keys, bot tokens, private keys, seed phrases, recovery phrases, or other credentials here. Revoke anything you already exposed, then ask again without the secret.",
+        },
+      ]);
+      setInput("");
+      return;
+    }
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       role: "user",
@@ -86,7 +104,7 @@ export function ChatWithNemesis() {
         {
           id: `error-${Date.now()}`,
           role: "agent",
-          content: error instanceof Error ? error.message : "NEMESIS could not answer right now.",
+          content: error instanceof Error ? `${error.message} Try again in a moment, or ask a shorter version while the brain reconnects.` : "NEMESIS could not answer right now. Try again in a moment.",
         },
       ]);
     } finally {
@@ -123,6 +141,7 @@ export function ChatWithNemesis() {
         {stage === "thinking" && (
           <div className="max-w-[88%]">
             <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">nemesis</p>
+            <p className="mt-1 text-sm leading-relaxed text-nm-muted">thinking with public NEMESIS context...</p>
             <div className="mt-3 w-32">
               <FragmentDivider segments={12} loading />
             </div>
