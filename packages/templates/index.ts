@@ -1,6 +1,62 @@
-import type { AgentTemplate, TemplateExplainability } from "./types";
+import type { AgentTemplate, TemplateExecutionCoverage, TemplateExplainability } from "./types";
 
 type AgentTemplateDraft = Omit<AgentTemplate, "explainability"> & { explainability?: Partial<TemplateExplainability> };
+
+const WALLET_SIGNABLE_TEMPLATE_IDS = [
+  "dip-buyer",
+  "limit-order",
+  "profit-taker",
+  "portfolio-rebalancer",
+  "solana-dip-buyer",
+  "solana-profit-taker",
+] as const;
+
+const WALLET_SIGNABLE_TEMPLATE_ID_SET = new Set<string>(WALLET_SIGNABLE_TEMPLATE_IDS);
+
+const EXECUTION_COVERAGE_OVERRIDES: Record<string, TemplateExecutionCoverage> = {
+  "dip-buyer": {
+    mode: "wallet-signable",
+    label: "Base wallet-signable",
+    wallet: "Base wallet",
+    payload: "USDC approval plus Uniswap V3 USDC -> WETH swap",
+    boundary: "Only ETH_USD routes with verified wallet balance can prepare signing payloads.",
+  },
+  "limit-order": {
+    mode: "wallet-signable",
+    label: "Base wallet-signable",
+    wallet: "Base wallet",
+    payload: "Uniswap V3 ETH <-> USDC swap, with exact stored payload validation",
+    boundary: "Only ETH_USD buy or sell orders are signable; unsupported assets stay review-only.",
+  },
+  "profit-taker": {
+    mode: "wallet-signable",
+    label: "Base wallet-signable",
+    wallet: "Base wallet",
+    payload: "Uniswap V3 WETH/ETH -> USDC swap",
+    boundary: "Keeps the configured ETH reserve and requires final wallet signature.",
+  },
+  "portfolio-rebalancer": {
+    mode: "wallet-signable",
+    label: "Base wallet-signable",
+    wallet: "Base wallet",
+    payload: "Uniswap V3 ETH <-> USDC rebalance swap",
+    boundary: "Only the ETH/USDC allocation drift path is signable in v1.",
+  },
+  "solana-dip-buyer": {
+    mode: "wallet-signable",
+    label: "Solana wallet-signable",
+    wallet: "Solflare",
+    payload: "Jupiter USDC -> SOL swap envelope",
+    boundary: "Requires a live Jupiter quote and a matching Solana wallet before signing.",
+  },
+  "solana-profit-taker": {
+    mode: "wallet-signable",
+    label: "Solana wallet-signable",
+    wallet: "Solflare",
+    payload: "Jupiter SOL -> USDC swap envelope",
+    boundary: "Keeps a SOL fee reserve and requires final Solflare approval.",
+  },
+};
 
 function defaultObservedFields(template: AgentTemplateDraft): string[] {
   const fields = template.parameters.slice(0, 5).map((param) => param.label);
@@ -617,7 +673,21 @@ export const TEMPLATES: AgentTemplate[] = TEMPLATE_DRAFTS.map(withExplainability
 export const isTemplateProductionReady = (template: AgentTemplate): boolean =>
   template.runtimeStatus === "production";
 
-export const getTemplateChain = (template: AgentTemplate) => template.chain ?? "base";
+export const getTemplateChain = (template: Pick<AgentTemplate, "chain">) => template.chain ?? "base";
+
+export const getWalletSignableTemplateIds = (): readonly string[] => WALLET_SIGNABLE_TEMPLATE_IDS;
+
+export const isTemplateWalletSignable = (templateId: string): boolean =>
+  WALLET_SIGNABLE_TEMPLATE_ID_SET.has(templateId);
+
+export const getTemplateExecutionCoverage = (template: Pick<AgentTemplate, "id" | "chain">): TemplateExecutionCoverage =>
+  EXECUTION_COVERAGE_OVERRIDES[template.id] ?? {
+    mode: "review-only",
+    label: "Review-only proposal",
+    wallet: getTemplateChain(template),
+    payload: "Plain-language proposal only",
+    boundary: "No signing payload is prepared until a dedicated encoder and policy test exist for this template.",
+  };
 
 export const getTemplateUnavailableReason = (template: AgentTemplate): string =>
   template.disabledReason ??
@@ -687,5 +757,5 @@ export function validateTemplateParameters(
   return { ok: true, parameters };
 }
 
-export type { AgentTemplate, TemplateCategory, RiskLevel, TemplateRuntimeStatus, BaseProtocol, SolanaProtocol, TemplateProtocol, TemplateChain, TemplateParameter, TemplateExplainability } from "./types";
+export type { AgentTemplate, TemplateCategory, RiskLevel, TemplateRuntimeStatus, BaseProtocol, SolanaProtocol, TemplateProtocol, TemplateChain, TemplateParameter, TemplateExplainability, TemplateExecutionCoverage, TemplateExecutionMode } from "./types";
 export { TEMPLATE_CATEGORIES, RISK_LABELS } from "./types";

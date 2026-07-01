@@ -91,6 +91,14 @@ const DOC_SECTIONS = [
     ],
   },
   {
+    id: "execution-coverage",
+    title: "execution coverage",
+    body: [
+      "Wallet-signable coverage is limited to workflows with dedicated encoders and exact validation: Base dip buyer, limit order, profit taker, portfolio rebalancer, plus Solana dip buyer and Solana profit taker.",
+      "Ape agent, pool sniper, launch flipper, auto compound, gas optimizer, and airdrop farmer remain review-only. They can notify and explain, but they do not open a signing request until a dedicated encoder and policy test exist for that exact action.",
+    ],
+  },
+  {
     id: "troubleshooting",
     title: "troubleshooting",
     body: [

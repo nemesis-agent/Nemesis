@@ -62,6 +62,16 @@ NEMESIS ships with 12 production templates:
 
 High-risk and degen templates require explicit acknowledgement before deploy.
 
+### Wallet-signable coverage
+
+NEMESIS prepares signing payloads only where dedicated encoders and validators exist:
+
+- Base wallet-signable: Dip buyer, Limit order agent, Profit taker, Portfolio rebalancer.
+- Solana wallet-signable: Solana dip buyer, Solana profit taker.
+- Review-only: Ape agent, Pool sniper, Launch flipper, Auto compound, Gas optimizer, Airdrop farmer.
+
+Review-only does not mean disabled. It means NEMESIS explains the proposal and keeps the final action manual until an exact encoder and confirmation policy exist for that workflow.
+
 ## Security Model
 
 - Non-custodial: NEMESIS never asks for seed phrases or private keys.

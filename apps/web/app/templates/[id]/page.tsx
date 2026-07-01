@@ -9,7 +9,7 @@ import { RiskBanner } from "@/components/RiskBanner";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { SimulationView } from "@/components/SimulationView";
 import { fillApprovalSummary } from "@/lib/format-template";
-import { RISK_LABELS, TEMPLATE_CATEGORIES, TEMPLATES, getTemplateById, getTemplateChain, getTemplateUnavailableReason, isTemplateProductionReady } from "@nemesis/templates";
+import { RISK_LABELS, TEMPLATE_CATEGORIES, TEMPLATES, getTemplateById, getTemplateChain, getTemplateExecutionCoverage, getTemplateUnavailableReason, isTemplateProductionReady } from "@nemesis/templates";
 
 interface TemplateDetailPageProps {
   params: Promise<{ id: string }>;
@@ -64,6 +64,7 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
 
   const isProductionReady = isTemplateProductionReady(template);
   const chain = getTemplateChain(template);
+  const execution = getTemplateExecutionCoverage(template);
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
@@ -106,6 +107,27 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
             <p className="mt-1 font-mono text-xs uppercase tracking-widest2 text-nm-fg">{item.value}</p>
           </div>
         ))}
+      </section>
+
+      <section className="mt-8">
+        <h2 className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">execution coverage</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <div className="border border-nm-border bg-nm-surface p-3">
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">mode</p>
+            <p className="mt-1 font-mono text-xs uppercase tracking-widest2 text-nm-fg">{execution.label}</p>
+          </div>
+          <div className="border border-nm-border bg-nm-surface p-3">
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">wallet</p>
+            <p className="mt-1 font-mono text-xs uppercase tracking-widest2 text-nm-fg">{execution.wallet}</p>
+          </div>
+          <div className="border border-nm-border bg-nm-surface p-3">
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">payload</p>
+            <p className="mt-1 text-sm leading-relaxed text-nm-fg">{execution.payload}</p>
+          </div>
+        </div>
+        <p className="mt-3 border border-nm-border bg-nm-bg p-3 text-sm leading-relaxed text-nm-muted">
+          {execution.boundary}
+        </p>
       </section>
 
       <div className="mt-8">

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import type { AgentTemplate } from "@nemesis/templates";
-import { RISK_LABELS, getTemplateChain, isTemplateProductionReady } from "@nemesis/templates";
+import { RISK_LABELS, getTemplateChain, getTemplateExecutionCoverage, isTemplateProductionReady } from "@nemesis/templates";
 
 const RISK_STYLES: Record<AgentTemplate["risk"], string> = {
   low:   "text-nm-resolve border-nm-resolve",
@@ -16,6 +16,7 @@ interface TemplateCardProps {
 
 export function TemplateCard({ template }: TemplateCardProps) {
   const isProductionReady = isTemplateProductionReady(template);
+  const execution = getTemplateExecutionCoverage(template);
 
   return (
     <Link
@@ -39,6 +40,9 @@ export function TemplateCard({ template }: TemplateCardProps) {
             <span className="border border-nm-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
               {getTemplateChain(template)}
             </span>
+            <span className="border border-nm-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+              {execution.mode === "wallet-signable" ? "signable" : "review"}
+            </span>
             {!isProductionReady && (
               <span className="border border-nm-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
                 gated
@@ -48,6 +52,9 @@ export function TemplateCard({ template }: TemplateCardProps) {
         </div>
         <p className="mt-3 text-sm leading-relaxed text-nm-muted transition-colors duration-300 group-hover:text-nm-fg/70">
           {template.summary}
+        </p>
+        <p className="mt-3 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+          {execution.label}
         </p>
       </div>
 

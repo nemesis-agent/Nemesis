@@ -15,6 +15,7 @@ const runner = read("apps/telegram-bot/src/runner.ts");
 const uniswap = read("apps/telegram-bot/src/lib/uniswap-base.ts");
 const confirmBase = read("apps/web/app/api/proposals/[id]/confirm/route.ts");
 const executeButton = read("apps/web/components/ExecuteProposalButton.tsx");
+const templates = read("packages/templates/index.ts");
 
 function functionBlock(name) {
   const start = runner.indexOf(`async function ${name}`);
@@ -30,6 +31,45 @@ check("Base swap payload builders remain constrained to known contracts", () => 
   assert(uniswap.includes("buildEthToUsdcSwapPayload"), "ETH -> USDC builder missing");
   assert(uniswap.includes("buildUsdcApproveAndSwapToEthPayload"), "USDC -> ETH builder missing");
   assert(uniswap.includes("Slippage bps outside safe range"), "slippage guard missing");
+});
+
+check("template execution coverage matrix is explicit", () => {
+  for (const id of ["dip-buyer", "limit-order", "profit-taker", "portfolio-rebalancer", "solana-dip-buyer", "solana-profit-taker"]) {
+    assert(templates.includes(`"${id}"`), `${id} missing from execution coverage source`);
+  }
+  assert(templates.includes("WALLET_SIGNABLE_TEMPLATE_IDS"), "wallet-signable template source of truth missing");
+  assert(templates.includes("getTemplateExecutionCoverage"), "execution coverage helper missing");
+  assert(templates.includes("Review-only proposal"), "review-only default coverage missing");
+  assert(templates.includes("No signing payload is prepared until a dedicated encoder"), "review-only boundary missing");
+});
+
+check("dip buyer can prepare guarded ETH buy payloads", () => {
+  const block = functionBlock("evaluateDipBuyer");
+  assert(block.includes("ticker === \"ETH_USD\""), "dip buyer must only prepare Base ETH route payloads");
+  assert(block.includes("getUsdcBalance"), "dip buyer must check USDC balance before payload preparation");
+  assert(block.includes("buildUsdcApproveAndSwapToEthPayload"), "dip buyer must use dedicated USDC buy encoder");
+  assert(block.includes("insufficient USDC balance"), "dip buyer must disclose insufficient balance review-only state");
+});
+
+check("limit order can prepare guarded ETH buy and sell payloads", () => {
+  const block = functionBlock("evaluateLimitOrder");
+  assert(block.includes("buildEthToUsdcSwapPayload"), "limit order sell side missing");
+  assert(block.includes("buildUsdcApproveAndSwapToEthPayload"), "limit order buy side missing");
+  assert(block.includes("MIN_BASE_ETH_RESERVE"), "limit order sell must protect ETH reserve");
+  assert(block.includes("getUsdcBalance"), "limit order buy must check USDC balance");
+  assert(block.includes("review only - insufficient balance or unsupported asset"), "limit order must disclose review-only fallback");
+});
+
+check("Solana executable templates use Jupiter envelopes and protected reserves", () => {
+  const dipBlock = functionBlock("evaluateSolanaDipBuyer");
+  assert(dipBlock.includes("buildSolanaUsdcToSolSwapPayload"), "Solana dip buyer must use dedicated Jupiter buy encoder");
+  assert(dipBlock.includes("getSolanaUsdcBalanceAtomic"), "Solana dip buyer must check USDC balance");
+  assert(dipBlock.includes("sign Jupiter USDC -> SOL swap in Solflare"), "Solana dip buyer wallet action label missing");
+
+  const profitBlock = functionBlock("evaluateSolanaProfitTaker");
+  assert(profitBlock.includes("MIN_SOL_RESERVE_LAMPORTS"), "Solana profit taker must protect SOL reserve");
+  assert(profitBlock.includes("buildSolanaSolToUsdcSwapPayload"), "Solana profit taker must use dedicated Jupiter sell encoder");
+  assert(profitBlock.includes("sign Jupiter SOL -> USDC swap in Solflare"), "Solana profit taker wallet action label missing");
 });
 
 check("profit taker can prepare guarded ETH sell payloads", () => {
@@ -50,7 +90,7 @@ check("portfolio rebalancer supports both Base rebalance directions", () => {
 });
 
 check("review-only templates still do not generate arbitrary calldata", () => {
-  for (const fn of ["evaluateApeAgent", "evaluatePoolSniper", "evaluateAutoCompound", "evaluateAirdropFarmer", "evaluateLaunchFlipper"]) {
+  for (const fn of ["evaluateApeAgent", "evaluatePoolSniper", "evaluateAutoCompound", "evaluateAirdropFarmer", "evaluateLaunchFlipper", "evaluateGasOptimizer"]) {
     const block = functionBlock(fn);
     assert(!block.includes("unsignedTxPayload"), `${fn} must remain review-only until dedicated encoder coverage exists`);
   }

@@ -6,6 +6,16 @@ export type TemplateRuntimeStatus = "production" | "gated";
 
 export type TemplateChain = "base" | "solana";
 
+export type TemplateExecutionMode = "wallet-signable" | "review-only";
+
+export interface TemplateExecutionCoverage {
+  mode: TemplateExecutionMode;
+  label: string;
+  wallet: string;
+  payload: string;
+  boundary: string;
+}
+
 export type BaseProtocol =
   | "uniswap"
   | "aerodrome"

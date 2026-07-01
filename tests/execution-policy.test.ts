@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -161,4 +162,21 @@ test("execution summary classifies review-only and Solana payloads", () => {
   assert.equal(solana.kind, "solana");
   assert.equal(solana.networkLabel, "Solana");
   assert.equal(solana.actionLabel, "Sign Jupiter swap");
+});
+test("template execution coverage matrix is explicit and review-only templates stay bounded", () => {
+  const templatesSource = readFileSync("packages/templates/index.ts", "utf8");
+  for (const id of [
+    "dip-buyer",
+    "limit-order",
+    "portfolio-rebalancer",
+    "profit-taker",
+    "solana-dip-buyer",
+    "solana-profit-taker",
+  ]) {
+    assert.match(templatesSource, new RegExp(`"${id}"`), `${id} must be listed as wallet-signable`);
+  }
+  assert.match(templatesSource, /getTemplateExecutionCoverage/, "coverage helper must be exported");
+  assert.match(templatesSource, /Review-only proposal/, "review-only fallback must stay explicit");
+  assert.match(templatesSource, /dedicated encoder and policy test/, "review-only boundary must stay explicit");
+  assert.match(templatesSource, /Plain-language proposal only/, "review-only payload copy must stay explicit");
 });

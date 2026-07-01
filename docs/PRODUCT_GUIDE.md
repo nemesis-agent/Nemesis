@@ -105,7 +105,13 @@ Every proposal should be reviewed before signing. Users should verify the networ
 
 If a proposal looks wrong, stale, unexpected, or too risky, skip it.
 
-Executable payload coverage is intentionally narrow. Base ETH/USDC limit, dip, profit-taking, and portfolio rebalance proposals can prepare wallet-signable payloads when parameters and balances are clear. Solana dip and profit proposals can prepare Jupiter transactions. Launch discovery, pool discovery, yield review, gas review, airdrop review, and launch-flipper exits stay review-only until dedicated encoders and checks are added for those exact workflows.
+Executable payload coverage is intentionally narrow and explicit:
+
+- Base wallet-signable: Dip buyer, Limit order agent, Profit taker, Portfolio rebalancer.
+- Solana wallet-signable: Solana dip buyer, Solana profit taker.
+- Review-only: Ape agent, Pool sniper, Launch flipper, Auto compound, Gas optimizer, Airdrop farmer.
+
+Wallet-signable proposals still require current balances, supported assets, fresh route data, exact stored payload validation, and final wallet approval. Review-only proposals explain what happened but do not open a wallet signing request until a dedicated encoder and confirmation policy exist for that exact workflow.
 
 ## Proposal Explainability
 
