@@ -69,12 +69,12 @@ function enhanceMaterials(root: Object3D, T: typeof import("three")) {
         emissive?: import("three").Color;
         emissiveIntensity?: number;
       };
-      if (mat.color) mat.color.lerp(new T.Color(0xffc1bd), 0.18);
-      if (typeof mat.roughness === "number") mat.roughness = Math.min(0.66, mat.roughness);
-      if (typeof mat.metalness === "number") mat.metalness = Math.max(0.24, mat.metalness);
+      if (mat.color) mat.color.lerp(new T.Color(0xd8aaa4), 0.3);
+      if (typeof mat.roughness === "number") mat.roughness = Math.max(0.62, Math.min(0.86, mat.roughness));
+      if (typeof mat.metalness === "number") mat.metalness = Math.min(0.16, mat.metalness);
       if (mat.emissive) {
-        mat.emissive = new T.Color(0x2f0708);
-        mat.emissiveIntensity = 0.24;
+        mat.emissive = new T.Color(0x1a0405);
+        mat.emissiveIntensity = 0.16;
       }
       material.needsUpdate = true;
     }
@@ -138,24 +138,24 @@ export function HeroModelStage() {
         renderer.setSize(mount.clientWidth, mount.clientHeight);
         renderer.outputColorSpace = T.SRGBColorSpace;
         renderer.toneMapping = T.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.24;
-        renderer.domElement.style.opacity = "0.94";
-        renderer.domElement.style.filter = "contrast(1.28) saturate(1.62) drop-shadow(0 34px 96px rgba(226,82,79,0.32))";
+        renderer.toneMappingExposure = 0.96;
+        renderer.domElement.style.opacity = "0.88";
+        renderer.domElement.style.filter = "brightness(0.86) contrast(1.18) saturate(1.2) drop-shadow(0 30px 92px rgba(226,82,79,0.24))";
         mount.appendChild(renderer.domElement);
 
-        const key = new T.DirectionalLight(0xffffff, 2.85);
+        const key = new T.DirectionalLight(0xf7dfd6, 1.72);
         key.position.set(2.8, 4.2, 5.8);
         scene.add(key);
-        const rim = new T.DirectionalLight(0xe2524f, 3.2);
+        const rim = new T.DirectionalLight(0xe2524f, 3.55);
         rim.position.set(-4.2, 1.7, 3.8);
         scene.add(rim);
-        const red = new T.PointLight(0xe2524f, 13.2, 11, 1.8);
+        const red = new T.PointLight(0xe2524f, 10.8, 11, 1.8);
         red.position.set(-3.3, 0.8, 3.2);
         scene.add(red);
-        const blue = new T.PointLight(0x4a8fd9, 9.6, 10, 2);
+        const blue = new T.PointLight(0x4a8fd9, 5.8, 10, 2);
         blue.position.set(3.2, -0.6, 3.4);
         scene.add(blue);
-        scene.add(new T.AmbientLight(0xffffff, 0.58));
+        scene.add(new T.AmbientLight(0xbfa09c, 0.34));
 
         const loader = new loaderModule.GLTFLoader();
         const gltf = await loader.loadAsync(modelUrl);
@@ -214,9 +214,9 @@ export function HeroModelStage() {
           model.position.y = baseModelY + pulse * 0.028 + pointerY * -0.075;
           haloMaterial.opacity = 0.24 + Math.max(0, pulse) * 0.1;
           halo.scale.setScalar(1 + pulse * 0.012);
-          red.intensity = 12.4 + sweep * 2.1;
-          blue.intensity = 8.8 - sweep * 1.5;
-          rim.intensity = 2.8 + Math.max(0, sweep) * 0.9;
+          red.intensity = 10.2 + sweep * 1.6;
+          blue.intensity = 5.4 - sweep * 0.9;
+          rim.intensity = 3.05 + Math.max(0, sweep) * 0.7;
           red.position.x = -3.3 + pointerX * 0.72;
           blue.position.x = 3.2 + pointerX * 0.56;
           camera.position.x += (pointerX * 0.34 - camera.position.x) * 0.06;
@@ -266,11 +266,12 @@ export function HeroModelStage() {
 
   return (
     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(226,82,79,0.22),transparent_34%),radial-gradient(circle_at_58%_46%,rgba(74,143,217,0.14),transparent_30%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(226,82,79,0.18),transparent_32%),radial-gradient(circle_at_58%_46%,rgba(74,143,217,0.08),transparent_30%)]" />
       <div ref={mountRef} className="absolute inset-x-[-16%] inset-y-[-2%] opacity-95 sm:inset-x-[-8%] lg:inset-x-[0%]" />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,5,5,0.20)_0%,rgba(5,5,5,0.28)_48%,rgba(5,5,5,0.88)_100%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(5,5,5,0.18)_46%,rgba(5,5,5,0.82)_100%)]" />
-
+      <div className="absolute inset-0 mix-blend-color bg-[radial-gradient(circle_at_50%_42%,rgba(156,28,30,0.22),transparent_34%),linear-gradient(180deg,rgba(5,5,5,0.02)_0%,rgba(82,13,15,0.14)_46%,rgba(5,5,5,0.68)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,5,5,0.46)_0%,transparent_27%,transparent_73%,rgba(5,5,5,0.46)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,5,5,0.28)_0%,rgba(5,5,5,0.34)_48%,rgba(5,5,5,0.9)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(5,5,5,0.2)_46%,rgba(5,5,5,0.84)_100%)]" />
     </div>
   );
 }
