@@ -63,16 +63,18 @@ function enhanceMaterials(root: Object3D, T: typeof import("three")) {
     for (const material of materials as Material[]) {
       if (!material) continue;
       const mat = material as Material & {
+        color?: import("three").Color;
         metalness?: number;
         roughness?: number;
         emissive?: import("three").Color;
         emissiveIntensity?: number;
       };
-      if (typeof mat.roughness === "number") mat.roughness = Math.min(0.82, mat.roughness + 0.08);
-      if (typeof mat.metalness === "number") mat.metalness = Math.max(0.08, mat.metalness);
+      if (mat.color) mat.color.lerp(new T.Color(0xffd2d0), 0.08);
+      if (typeof mat.roughness === "number") mat.roughness = Math.min(0.74, mat.roughness + 0.02);
+      if (typeof mat.metalness === "number") mat.metalness = Math.max(0.18, mat.metalness);
       if (mat.emissive) {
-        mat.emissive = new T.Color(0x120303);
-        mat.emissiveIntensity = 0.1;
+        mat.emissive = new T.Color(0x210606);
+        mat.emissiveIntensity = 0.16;
       }
       material.needsUpdate = true;
     }
@@ -136,22 +138,24 @@ export function HeroModelStage() {
         renderer.setSize(mount.clientWidth, mount.clientHeight);
         renderer.outputColorSpace = T.SRGBColorSpace;
         renderer.toneMapping = T.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.08;
-        renderer.domElement.style.opacity = "0.86";
-        renderer.domElement.style.filter = "contrast(1.18) saturate(1.28) drop-shadow(0 30px 86px rgba(226,82,79,0.22))";
-        renderer.domElement.style.mixBlendMode = "screen";
+        renderer.toneMappingExposure = 1.16;
+        renderer.domElement.style.opacity = "0.9";
+        renderer.domElement.style.filter = "contrast(1.2) saturate(1.45) drop-shadow(0 32px 92px rgba(226,82,79,0.25))";
         mount.appendChild(renderer.domElement);
 
-        const key = new T.DirectionalLight(0xffffff, 2.35);
+        const key = new T.DirectionalLight(0xffffff, 2.55);
         key.position.set(2.8, 4.2, 5.8);
         scene.add(key);
-        const red = new T.PointLight(0xe2524f, 9.5, 10, 1.8);
-        red.position.set(-3.3, 0.8, 2.8);
+        const rim = new T.DirectionalLight(0xe2524f, 2.4);
+        rim.position.set(-4.2, 1.7, 3.8);
+        scene.add(rim);
+        const red = new T.PointLight(0xe2524f, 11, 11, 1.8);
+        red.position.set(-3.3, 0.8, 3.2);
         scene.add(red);
-        const blue = new T.PointLight(0x4a8fd9, 6.8, 10, 2);
+        const blue = new T.PointLight(0x4a8fd9, 7.8, 10, 2);
         blue.position.set(3.2, -0.6, 3.4);
         scene.add(blue);
-        scene.add(new T.AmbientLight(0xffffff, 0.62));
+        scene.add(new T.AmbientLight(0xffffff, 0.68));
 
         const loader = new loaderModule.GLTFLoader();
         const gltf = await loader.loadAsync(modelUrl);
@@ -162,11 +166,15 @@ export function HeroModelStage() {
         frameModel(model, T, window.innerWidth);
         scene.add(model);
         const baseModelY = model.position.y;
+        const baseRotationX = model.rotation.x;
+        const baseRotationY = model.rotation.y;
+        const baseRotationZ = model.rotation.z;
         setState("ready");
 
+        const haloMaterial = new T.MeshBasicMaterial({ color: 0xe2524f, transparent: true, opacity: 0.28 });
         const halo = new T.Mesh(
           new T.TorusGeometry(1.85, 0.006, 8, 128),
-          new T.MeshBasicMaterial({ color: 0xe2524f, transparent: true, opacity: 0.36 }),
+          haloMaterial,
         );
         halo.rotation.set(Math.PI / 2, 0, 0);
         halo.position.set(0, -1.08, -0.24);
@@ -196,15 +204,21 @@ export function HeroModelStage() {
           if (!renderer) return;
           raf = window.requestAnimationFrame(tick);
           t += 0.006;
-          const drift = Math.sin(t * 1.7) * 0.018;
-          model.rotation.y += 0.00065;
-          model.rotation.x += ((-pointerY * 0.08 - 0.035) - model.rotation.x) * 0.045;
-          model.rotation.z += ((pointerX * 0.045 + 0.008) - model.rotation.z) * 0.045;
-          model.position.y = baseModelY + Math.sin(t) * 0.038 + pointerY * -0.045;
-          halo.rotation.z -= 0.004;
-          halo.scale.setScalar(1 + drift);
-          camera.position.x += (pointerX * 0.22 - camera.position.x) * 0.045;
-          camera.position.y += (-pointerY * 0.12 + 0.08 - camera.position.y) * 0.045;
+          const pulse = Math.sin(t * 1.9);
+          const sweep = Math.sin(t * 1.2);
+          model.rotation.x += ((baseRotationX - pointerY * 0.09) - model.rotation.x) * 0.05;
+          model.rotation.y += ((baseRotationY + pointerX * 0.12) - model.rotation.y) * 0.05;
+          model.rotation.z += ((baseRotationZ + pointerX * 0.035) - model.rotation.z) * 0.05;
+          model.position.y = baseModelY + pulse * 0.032 + pointerY * -0.055;
+          haloMaterial.opacity = 0.24 + Math.max(0, pulse) * 0.1;
+          halo.scale.setScalar(1 + pulse * 0.012);
+          red.intensity = 10.2 + sweep * 1.6;
+          blue.intensity = 7.2 - sweep * 1.2;
+          rim.intensity = 2.1 + Math.max(0, sweep) * 0.75;
+          red.position.x = -3.3 + pointerX * 0.38;
+          blue.position.x = 3.2 + pointerX * 0.3;
+          camera.position.x += (pointerX * 0.24 - camera.position.x) * 0.05;
+          camera.position.y += (-pointerY * 0.14 + 0.08 - camera.position.y) * 0.05;
           camera.lookAt(0, 0, 0);
           renderer.render(scene, camera);
         };
