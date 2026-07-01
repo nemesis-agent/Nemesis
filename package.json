@@ -28,6 +28,7 @@
     "audit:observability": "node tools/audit-observability.mjs",
     "audit:explainability": "node tools/audit-explainability.mjs",
     "audit:template-detail": "node tools/audit-template-detail.mjs",
+    "audit:deploy-flow": "node tools/audit-deploy-flow.mjs",
     "audit:proposal-visualization": "node tools/audit-proposal-visualization.mjs",
     "audit:copy-metadata": "node tools/audit-copy-metadata.mjs",
     "test:p0": "node --no-warnings --experimental-strip-types tests/execution-policy.test.ts",

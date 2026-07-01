@@ -12,7 +12,7 @@ import { RiskBanner } from "@/components/RiskBanner";
 import { fillApprovalSummary } from "@/lib/format-template";
 import { useSiweAuth } from "@/lib/use-siwe-auth";
 import { useSolanaAuth } from "@/lib/use-solana-auth";
-import { getTemplateById, getTemplateChain, getTemplateUnavailableReason, isTemplateProductionReady, type AgentTemplate } from "@nemesis/templates";
+import { RISK_LABELS, getTemplateById, getTemplateChain, getTemplateExecutionCoverage, getTemplateUnavailableReason, isTemplateProductionReady, type AgentTemplate } from "@nemesis/templates";
 
 type MessageRole = "agent" | "user";
 
@@ -109,6 +109,7 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
       
       const res = await fetch("/api/intent", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: apiMessages }),
       });
@@ -190,6 +191,7 @@ export function DeployChat({ initialTemplateId }: DeployChatProps) {
     try {
       const res = await fetch("/api/agents", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ templateId: plan.template.id, parameters: plan.params }),
       });
@@ -370,15 +372,73 @@ function DeploymentPlanCard({
   pendingParams,
   onChangeParam,
 }: DeploymentPlanCardProps) {
+  const execution = getTemplateExecutionCoverage(template);
+  const productionReady = isTemplateProductionReady(template);
+  const finalReviewItems = [
+    "Confirm the filled plan uses the exact parameters you want.",
+    "Confirm the wallet and network match the agent you are deploying.",
+    "Confirm you understand every proposal still needs wallet approval.",
+  ];
+
   return (
     <div className="mt-3 border border-nm-border bg-nm-surface p-4">
-      <p className="font-mono text-xs font-bold uppercase tracking-widest2 text-nm-fg">{template.name}</p>
-      <p className="mt-2 text-sm leading-relaxed text-nm-muted">{fillApprovalSummary(template, pendingParams)}</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="font-mono text-xs font-bold uppercase tracking-widest2 text-nm-fg">{template.name}</p>
+          <p className="mt-2 text-sm leading-relaxed text-nm-muted">{fillApprovalSummary(template, pendingParams)}</p>
+        </div>
+        <span className={`w-fit shrink-0 border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 ${productionReady ? "border-nm-resolve text-nm-resolve" : "border-nm-fragment-red text-nm-fragment-red"}`}>
+          {productionReady ? "ready" : "gated"}
+        </span>
+      </div>
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-4">
+        <div className="border border-nm-border/70 p-3">
+          <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">chain</p>
+          <p className="mt-1 font-mono text-xs uppercase tracking-widest2 text-nm-fg">{getTemplateChain(template)}</p>
+        </div>
+        <div className="border border-nm-border/70 p-3">
+          <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">risk</p>
+          <p className="mt-1 font-mono text-xs uppercase tracking-widest2 text-nm-fg">{RISK_LABELS[template.risk]}</p>
+        </div>
+        <div className="border border-nm-border/70 p-3">
+          <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">execution</p>
+          <p className="mt-1 font-mono text-xs uppercase tracking-widest2 text-nm-fg">{execution.label}</p>
+        </div>
+        <div className="border border-nm-border/70 p-3">
+          <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">wallet</p>
+          <p className="mt-1 font-mono text-xs uppercase tracking-widest2 text-nm-fg">{execution.wallet}</p>
+        </div>
+      </div>
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr]">
+        <div className="border border-nm-border/70 p-3">
+          <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">deploy review path</p>
+          <div className="mt-2 grid gap-2">
+            {[
+              { label: "1 plan", value: "read filled summary" },
+              { label: "2 parameters", value: "edit and validate" },
+              { label: "3 deploy", value: "create monitoring agent" },
+              { label: "4 proposals", value: "wallet approval still required" },
+            ].map((item) => (
+              <div key={item.label} className="flex justify-between gap-3 border-t border-nm-border pt-2 first:border-t-0 first:pt-0">
+                <span className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red">{item.label}</span>
+                <span className="text-right text-xs text-nm-muted">{item.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="border border-nm-border/70 p-3">
+          <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">final checklist</p>
+          <ul className="mt-2 grid gap-1 text-sm leading-relaxed text-nm-muted">
+            {finalReviewItems.map((item) => (
+              <li key={item}>- {item}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        <span className="border border-nm-border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-          {getTemplateChain(template)}
-        </span>
         {template.protocols.map((protocol) => (
           <span
             key={protocol}

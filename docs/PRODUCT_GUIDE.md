@@ -65,6 +65,8 @@ High-risk and degen templates include risk acknowledgement gates before deploy.
 Template detail pages are designed to explain a template before a user deploys it. Each page now shows:
 
 - chain, risk level, and production/gated state
+- a template operating brief with deploy readiness, execution mode, risk gate, and review surface
+- a four-step template review path: inspect, configure, deploy, approve
 - single condition, single proposal, and wallet-signed approval model
 - safety rails for no custody, no private keys, and no silent signing
 - observed fields and approval checklist
@@ -98,6 +100,12 @@ Available commands:
 - `/resume <agent_id>`
 
 Commands only operate on the wallet linked to that Telegram chat.
+
+## Deploy Flow
+
+The deploy page starts with a wallet, plan, risk, and approval checklist before the chat planner. When a template is selected, users also see network, risk gate, and execution mode before approving agent creation.
+
+The final deployment plan card repeats the filled approval summary, chain, risk, execution coverage, wallet mode, deploy review path, editable parameters, and final checklist. Creating an agent still does not sign or broadcast a transaction; proposals remain separate wallet approvals.
 
 ## Proposal Review
 

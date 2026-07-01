@@ -12,6 +12,15 @@ export const metadata: Metadata = {
 const CHANGES = [
   {
     label: "current",
+    title: "template detail and deploy flow polish",
+    items: [
+      "Template detail pages now include a template operating brief, deploy readiness, execution mode, risk gate, and four-step review path before users deploy.",
+      "Deploy now opens with a wallet, plan, risk, and approval checklist plus selected template network, risk, and execution context.",
+      "Deployment plan cards now show chain, risk, execution coverage, wallet mode, deploy review path, and a final checklist before agent creation.",
+    ],
+  },
+  {
+    label: "current",
     title: "proposal lifecycle and status polish",
     items: [
       "Agent detail pages now include proposal status filters for all, pending, approved, and skipped proposals.",

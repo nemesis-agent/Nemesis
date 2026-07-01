@@ -9,7 +9,7 @@ const templatePage = read("apps/web/app/templates/[id]/page.tsx");
 const simulation = read("apps/web/components/SimulationView.tsx");
 
 check("template detail exposes production safety and approval context", () => {
-  for (const text of ["safety rails", "one condition, one proposed action", "no custody and no private keys", "nothing signs without wallet approval", "review before deploy"]) {
+  for (const text of ["safety rails", "one condition, one proposed action", "no custody and no private keys", "nothing signs without wallet approval", "review before deploy", "template operating brief", "template review path", "deploy readiness", "execution mode", "risk gate"]) {
     assert(templatePage.includes(text), `template page missing ${text}`);
   }
   assert(templatePage.includes("wallet-signed"), "template page must state wallet-signed approval model");

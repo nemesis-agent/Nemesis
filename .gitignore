@@ -29,3 +29,6 @@ npm-debug.log*
 .DS_Store
 .vscode/
 *.tsbuildinfo
+
+# Test artifacts
+test-results/

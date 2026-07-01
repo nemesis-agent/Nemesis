@@ -65,6 +65,18 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
   const isProductionReady = isTemplateProductionReady(template);
   const chain = getTemplateChain(template);
   const execution = getTemplateExecutionCoverage(template);
+  const operatingBrief = [
+    { label: "deploy readiness", value: isProductionReady ? "production ready" : "gated", tone: isProductionReady ? "resolve" : "risk" },
+    { label: "execution mode", value: execution.label, tone: "default" },
+    { label: "risk gate", value: `${RISK_LABELS[template.risk]} risk`, tone: template.risk === "high" || template.risk === "degen" ? "risk" : "default" },
+    { label: "review surface", value: "filled plan + checklist", tone: "default" },
+  ];
+  const reviewPath = [
+    { label: "1 inspect", value: "read condition, action, and simulation" },
+    { label: "2 configure", value: "edit defaults before deployment" },
+    { label: "3 deploy", value: "create a monitoring agent only" },
+    { label: "4 approve", value: "sign proposals from your wallet" },
+  ];
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
@@ -95,6 +107,42 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
       </div>
 
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-nm-muted">{template.summary}</p>
+
+      <section className="mt-8 border border-nm-border bg-nm-surface p-4" aria-label="template operating brief">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="font-mono text-xs uppercase tracking-widest2 text-nm-fg">template operating brief</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-nm-muted">
+              This template monitors one condition, prepares one proposed action, and keeps the final transaction behind wallet approval.
+            </p>
+          </div>
+          <span className={`w-fit shrink-0 border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 ${isProductionReady ? "border-nm-resolve text-nm-resolve" : "border-nm-fragment-red text-nm-fragment-red"}`}>
+            {isProductionReady ? "ready" : "gated"}
+          </span>
+        </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-4">
+          {operatingBrief.map((item) => (
+            <div key={item.label} className="border border-nm-border/70 bg-nm-bg p-3">
+              <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">{item.label}</p>
+              <p className={`mt-1 font-mono text-xs uppercase tracking-widest2 ${item.tone === "resolve" ? "text-nm-resolve" : item.tone === "risk" ? "text-nm-fragment-red" : "text-nm-fg"}`}>
+                {item.value}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-4 border border-nm-border bg-nm-bg p-4" aria-label="template review path">
+        <h2 className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">template review path</h2>
+        <div className="mt-3 grid gap-2 sm:grid-cols-4">
+          {reviewPath.map((item) => (
+            <div key={item.label} className="border border-nm-border/70 p-3">
+              <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red">{item.label}</p>
+              <p className="mt-2 text-xs leading-relaxed text-nm-muted">{item.value}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section className="mt-8 grid gap-3 sm:grid-cols-3">
         {[

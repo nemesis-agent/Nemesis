@@ -172,6 +172,9 @@ check("deploy flow remains approval-first and risk gated", () => {
   assert(deploy.includes("RiskAcknowledgmentModal"), "High/degen plans must be gated by risk modal");
   assert(deploy.includes("isTemplateProductionReady"), "Gated templates must not deploy");
   assert(deploy.includes("/api/agents"), "Deploy flow must call server-side agent creation");
+  assert(deploy.includes("deploy review path"), "Deploy flow must show the deploy review path");
+  assert(deploy.includes("final checklist"), "Deploy flow must show a final checklist");
+  assert(deploy.includes("getTemplateExecutionCoverage"), "Deploy flow must expose execution coverage context");
 });
 
 check("proposal execution checks Base and Solana confirmation paths", () => {

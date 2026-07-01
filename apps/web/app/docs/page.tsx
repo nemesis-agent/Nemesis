@@ -22,7 +22,7 @@ const DOC_SECTIONS = [
     id: "deploy-agent",
     title: "how to deploy an agent",
     body: [
-      "Open deploy, connect the wallet you want to use, choose a template or describe intent, review the proposed configuration, complete any required risk acknowledgement, and approve deployment only after the summary matches what you want.",
+      "Open deploy, connect the wallet you want to use, choose a template or describe intent, review the wallet/plan/risk/approval checklist, inspect the selected template network and execution mode, complete any required risk acknowledgement, and approve deployment only after the filled summary matches what you want.",
       "After deployment, the agent appears in your wallet dashboard. Proposals remain separate from final wallet signing, so you can decline by simply not approving the transaction.",
     ],
   },
@@ -30,7 +30,7 @@ const DOC_SECTIONS = [
     id: "template-details",
     title: "template detail pages",
     body: [
-      "Each template detail page explains the chain, risk level, production state, condition, proposed action, safety rails, observed fields, approval checklist, parameter defaults, and plan preview before deployment.",
+      "Each template detail page explains the chain, risk level, production state, template operating brief, deploy readiness, execution mode, risk gate, four-step review path, condition, proposed action, safety rails, observed fields, approval checklist, parameter defaults, and plan preview before deployment.",
       "The proposal preview is an example review surface, not a performance claim. It avoids APY, win-rate, and fake backtest language so users understand the approval flow without being pushed by misleading metrics.",
     ],
   },

@@ -49,7 +49,7 @@ export function RiskAcknowledgmentModal({ template, onConfirm, onCancel }: RiskA
         className="modal-panel-in w-full max-w-md border border-nm-fragment-red bg-nm-bg p-6"
       >
         <p id={titleId} className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red">
-          {RISK_LABELS[template.risk]} risk — read before deploying
+          {RISK_LABELS[template.risk]} risk - read before deploying
         </p>
 
         <h2 className="mt-2 font-mono text-sm font-bold uppercase tracking-widest2 text-nm-fg">
