@@ -9,7 +9,10 @@ const RISK_STYLES: Record<AgentTemplate["risk"], string> = {
   high:  "text-nm-fragment-red border-nm-fragment-red",
   degen: "text-nm-fragment-red border-nm-fragment-red",
 };
-
+function compactText(value: string, max = 112) {
+  if (value.length <= max) return value;
+  return `${value.slice(0, max - 1).trimEnd()}...`;
+}
 interface TemplateCardProps {
   template: AgentTemplate;
 }
@@ -17,6 +20,8 @@ interface TemplateCardProps {
 export function TemplateCard({ template }: TemplateCardProps) {
   const isProductionReady = isTemplateProductionReady(template);
   const execution = getTemplateExecutionCoverage(template);
+  const chain = getTemplateChain(template);
+  const signable = execution.mode === "wallet-signable";
 
   return (
     <Link
@@ -38,10 +43,10 @@ export function TemplateCard({ template }: TemplateCardProps) {
               {RISK_LABELS[template.risk]}
             </span>
             <span className="border border-nm-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-              {getTemplateChain(template)}
+              {chain}
             </span>
             <span className="border border-nm-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-              {execution.mode === "wallet-signable" ? "signable" : "review"}
+              {signable ? "signable" : "review"}
             </span>
             {!isProductionReady && (
               <span className="border border-nm-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
@@ -53,9 +58,24 @@ export function TemplateCard({ template }: TemplateCardProps) {
         <p className="mt-3 text-sm leading-relaxed text-nm-muted transition-colors duration-300 group-hover:text-nm-fg/70">
           {template.summary}
         </p>
-        <p className="mt-3 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
-          {execution.label}
-        </p>
+        <div className="mt-4 grid gap-2 border-y border-nm-border/60 py-3">
+          <div className="grid gap-1 sm:grid-cols-[72px_1fr]">
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red">trigger</p>
+            <p className="text-xs leading-relaxed text-nm-muted">{compactText(template.condition)}</p>
+          </div>
+          <div className="grid gap-1 sm:grid-cols-[72px_1fr]">
+            <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-blue">proposal</p>
+            <p className="text-xs leading-relaxed text-nm-muted">{compactText(template.action)}</p>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className={`border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 ${signable ? "border-nm-fragment-blue text-nm-fragment-blue" : "border-nm-border text-nm-muted"}`}>
+            {execution.label}
+          </span>
+          <span className="border border-nm-border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+            {execution.wallet}
+          </span>
+        </div>
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2">

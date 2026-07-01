@@ -65,6 +65,12 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
   const isProductionReady = isTemplateProductionReady(template);
   const chain = getTemplateChain(template);
   const execution = getTemplateExecutionCoverage(template);
+  const signable = execution.mode === "wallet-signable";
+  const executionConfidence = [
+    { label: "wallet surface", value: signable ? "opens wallet approval" : "dashboard + telegram review" },
+    { label: "payload status", value: signable ? "guarded payload available" : "no signing payload generated" },
+    { label: "user check", value: "condition, amount, wallet preview" },
+  ];
   const operatingBrief = [
     { label: "deploy readiness", value: isProductionReady ? "production ready" : "gated", tone: isProductionReady ? "resolve" : "risk" },
     { label: "execution mode", value: execution.label, tone: "default" },
@@ -158,7 +164,25 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
       </section>
 
       <section className="mt-8">
-        <h2 className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">execution coverage</h2>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="font-mono text-xs uppercase tracking-widest2 text-nm-muted">execution coverage</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-nm-muted">
+              This is the exact execution boundary for this template. Signable templates still require your wallet; review-only templates never trigger a wallet popup.
+            </p>
+          </div>
+          <span className={`w-fit border px-2 py-1 font-mono text-[10px] uppercase tracking-widest2 ${signable ? "border-nm-fragment-blue text-nm-fragment-blue" : "border-nm-border text-nm-muted"}`}>
+            {signable ? "wallet approval available" : "review-only"}
+          </span>
+        </div>
+        <div className="mt-4 grid gap-px border border-nm-border bg-nm-border/80 sm:grid-cols-3">
+          {executionConfidence.map((item) => (
+            <div key={item.label} className="bg-nm-bg p-3">
+              <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">{item.label}</p>
+              <p className="mt-1 text-sm leading-relaxed text-nm-fg">{item.value}</p>
+            </div>
+          ))}
+        </div>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           <div className="border border-nm-border bg-nm-surface p-3">
             <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">mode</p>

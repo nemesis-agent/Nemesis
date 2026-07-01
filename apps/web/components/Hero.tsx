@@ -20,18 +20,19 @@ export function Hero() {
         }}
       />
 
-      <div className="relative z-10 mx-auto max-w-6xl px-6 pt-24 pb-8 sm:pt-32 sm:pb-12">
+      <div className="relative z-10 mx-auto max-w-6xl px-6 pt-24 pb-10 sm:pt-32 sm:pb-14">
         <div className="absolute left-6 top-24 hidden h-4 w-4 border-l border-t border-nm-muted/50 sm:block" aria-hidden="true" />
         <div className="absolute right-6 top-24 hidden h-4 w-4 border-r border-t border-nm-muted/50 sm:block" aria-hidden="true" />
         <div className="absolute bottom-8 left-6 hidden h-4 w-4 border-b border-l border-nm-muted/50 sm:block" aria-hidden="true" />
         <div className="absolute bottom-8 right-6 hidden h-4 w-4 border-b border-r border-nm-muted/50 sm:block" aria-hidden="true" />
 
         <div className="relative flex min-h-[700px] flex-col items-center justify-center text-center sm:min-h-[780px] lg:min-h-[850px]">
+          <div className="pointer-events-none absolute inset-x-[-10%] top-[14%] h-[58%] border-y border-nm-border/30 bg-[linear-gradient(90deg,transparent,rgba(5,5,5,0.42),transparent)]" aria-hidden="true" />
           <div className="pointer-events-none absolute inset-x-0 top-[16%] h-[52%] bg-[radial-gradient(ellipse_at_center,rgba(5,5,5,0.2),transparent_66%)]" aria-hidden="true" />
 
           <div className="relative z-10 flex flex-col items-center">
             <div
-              className="network-badge fade-in-up mb-8 inline-flex items-center gap-2 overflow-hidden border border-nm-border bg-nm-surface/80 px-4 py-1.5 backdrop-blur-md"
+              className="network-badge fade-in-up mb-8 inline-flex items-center gap-2 overflow-hidden border border-nm-border bg-nm-surface/88 px-4 py-1.5 shadow-[0_18px_60px_rgba(0,0,0,0.45)] backdrop-blur-md"
               style={{ animationDelay: "0ms" }}
             >
               <span className="status-pulse h-1.5 w-1.5 bg-nm-resolve" aria-hidden="true" />
@@ -79,7 +80,7 @@ export function Hero() {
             </div>
 
             <div
-              className="fade-in-up mt-14 grid grid-cols-3 gap-px border border-nm-border bg-nm-border/80 backdrop-blur-md sm:w-auto"
+              className="fade-in-up mt-14 grid grid-cols-3 gap-px border border-nm-border bg-nm-border/80 shadow-[0_28px_110px_rgba(0,0,0,0.55)] backdrop-blur-md sm:w-auto"
               style={{ animationDelay: "420ms" }}
             >
               {[
@@ -95,11 +96,22 @@ export function Hero() {
                 </div>
               ))}
             </div>
+
+            <div
+              className="fade-in-up mt-6 flex max-w-3xl flex-wrap justify-center gap-2"
+              style={{ animationDelay: "500ms" }}
+            >
+              {["your keys", "approval-first", "base + solana", "openrouter brain"].map((item) => (
+                <span key={item} className="border border-nm-border/80 bg-nm-bg/72 px-3 py-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted backdrop-blur-md">
+                  {item}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="relative z-10 -mt-10 sm:-mt-14">
+      <div className="relative z-10 -mt-8 sm:-mt-12">
         <HeroTicker />
       </div>
 
