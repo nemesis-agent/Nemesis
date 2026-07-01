@@ -80,7 +80,7 @@ CREATE INDEX IF NOT EXISTS idx_rate_limits_reset_at ON rate_limits(reset_at);
 `;
 
 // Initialize schema on import
-if (DATABASE_URL) {
+if (DATABASE_URL && process.env.NEMESIS_SKIP_DB_INIT !== "1") {
   pool.query(SCHEMA)
     .then(() => {
       return pool.query(`

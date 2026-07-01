@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const publicRoutes = ["/", "/docs", "/templates", "/roadmap", "/changelog", "/updates"];
+const e2eOrigin = "http://127.0.0.1:3100";
 
 for (const route of publicRoutes) {
   test(`${route} renders without deprecated contract or server error`, async ({ page }) => {
@@ -26,7 +27,7 @@ test("private dashboard requires wallet authentication", async ({ page }) => {
 });
 
 test("mutating APIs reject unauthenticated requests", async ({ request }) => {
-  const headers = { origin: "http://127.0.0.1:3000", "content-type": "application/json" };
+  const headers = { origin: e2eOrigin, "content-type": "application/json" };
   const createAgent = await request.post("/api/agents", {
     headers,
     data: { templateId: "dip-buyer", parameters: {} },
