@@ -119,7 +119,7 @@ Executable payload coverage is intentionally narrow and explicit:
 - Solana wallet-signable: Solana dip buyer, Solana profit taker.
 - Review-only: Ape agent, Pool sniper, Launch flipper, Auto compound, Gas optimizer, Airdrop farmer.
 
-Wallet-signable proposals still require current balances, supported assets, fresh route data, exact stored payload validation, and final wallet approval. Review-only proposals explain what happened but do not open a wallet signing request until a dedicated encoder and confirmation policy exist for that exact workflow.
+Wallet-signable proposals still require current balances, supported assets, fresh route data, exact stored payload validation, transaction timestamp checks inside the proposal execution window, duplicate confirmation rejection, and final wallet approval. Review-only proposals explain what happened but do not open a wallet signing request until a dedicated encoder and confirmation policy exist for that exact workflow.
 
 ## Proposal Explainability
 

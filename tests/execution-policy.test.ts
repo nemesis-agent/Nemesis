@@ -5,6 +5,8 @@ import test from "node:test";
 import {
   SOLANA_USDC_MINT,
   SOL_MINT,
+  executionWindowContainsTimestamp,
+  isValidEvmTransactionHash,
   summarizeExecutionPayload,
   validateBaseExecutionPayload,
   validateSolanaExecutionPayload,
@@ -90,6 +92,26 @@ test("Base policy rejects approval and swap amount mismatch", () => {
   const result = validateBaseExecutionPayload(JSON.stringify(payload), WALLET, Date.parse(payload.createdAt) + 1);
   assert.equal(result.ok, false);
   if (!result.ok) assert.match(result.error, /exactly match/i);
+});
+
+test("execution confirmation policy rejects malformed and stale confirmations", () => {
+  const envelope = {
+    createdAt: new Date(NOW).toISOString(),
+    expiresAt: new Date(NOW + 10 * 60_000).toISOString(),
+  };
+
+  assert.equal(isValidEvmTransactionHash(`0x${"a".repeat(64)}`), true);
+  assert.equal(isValidEvmTransactionHash("0x1234"), false);
+  assert.equal(isValidEvmTransactionHash(`0x${"z".repeat(64)}`), false);
+  assert.equal(executionWindowContainsTimestamp(envelope, NOW + 5 * 60_000).ok, true);
+
+  const tooEarly = executionWindowContainsTimestamp(envelope, NOW - 91_000);
+  assert.equal(tooEarly.ok, false);
+  if (!tooEarly.ok) assert.match(tooEarly.error, /outside/i);
+
+  const tooLate = executionWindowContainsTimestamp(envelope, NOW + 10 * 60_000 + 91_000);
+  assert.equal(tooLate.ok, false);
+  if (!tooLate.ok) assert.match(tooLate.error, /outside/i);
 });
 
 function solanaPayload(overrides: Record<string, unknown> = {}) {

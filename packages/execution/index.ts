@@ -7,10 +7,12 @@ export const UNISWAP_V3_SWAP_ROUTER_02_BASE = "0x2626664c2603336E57B271c5C0b26F4
 export const SOL_MINT = "So11111111111111111111111111111111111111112";
 export const SOLANA_USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 export const EXECUTION_TTL_MS = 10 * 60 * 1000;
+export const EXECUTION_CONFIRMATION_GRACE_MS = 90 * 1000;
 const MAX_EXECUTION_TTL_MS = 15 * 60 * 1000;
 const MAX_USDC_ATOMIC = 1_000_000n * 1_000_000n;
 const MAX_WEI = 10_000n * 10n ** 18n;
 const EVM_ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
+const EVM_TX_HASH_RE = /^0x[a-fA-F0-9]{64}$/;
 const HEX_RE = /^0x(?:[a-fA-F0-9]{2})*$/;
 
 const ERC20_ABI = [{
@@ -87,6 +89,29 @@ function validWindow(createdAt: unknown, expiresAt: unknown, nowMs: number): boo
     && expires > nowMs
     && expires > created
     && expires - created <= MAX_EXECUTION_TTL_MS;
+}
+
+export function isValidEvmTransactionHash(value: unknown): value is `0x${string}` {
+  return typeof value === "string" && EVM_TX_HASH_RE.test(value);
+}
+
+export function executionWindowContainsTimestamp(
+  envelope: { createdAt: string; expiresAt: string },
+  observedMs: number,
+  graceMs: number = EXECUTION_CONFIRMATION_GRACE_MS,
+): ValidationResult<{ createdMs: number; expiresMs: number; observedMs: number }> {
+  const createdMs = Date.parse(envelope.createdAt);
+  const expiresMs = Date.parse(envelope.expiresAt);
+  if (!Number.isFinite(createdMs) || !Number.isFinite(expiresMs) || !Number.isFinite(observedMs)) {
+    return fail("Execution confirmation timestamp is invalid.");
+  }
+  if (expiresMs <= createdMs || expiresMs - createdMs > MAX_EXECUTION_TTL_MS) {
+    return fail("Execution payload window is invalid.");
+  }
+  if (observedMs < createdMs - graceMs || observedMs > expiresMs + graceMs) {
+    return fail("Transaction timestamp is outside the proposal execution window.");
+  }
+  return { ok: true, value: { createdMs, expiresMs, observedMs } };
 }
 
 export function createBaseExecutionEnvelope(

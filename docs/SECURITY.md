@@ -30,7 +30,7 @@ Mutating web routes reject unexpected cross-origin requests when an `Origin` hea
 
 Where executable payloads are prepared, confirmation endpoints compare the submitted transaction against stored proposal data before marking a proposal approved.
 
-Validation includes ownership and transaction-shape checks such as signer, network, target, value, calldata, or Solana transaction message data where applicable. Multi-step Base proposals track completed hashes so approvals advance one stored step at a time.
+Validation includes ownership and transaction-shape checks such as signer, network, target, value, calldata, strict transaction hash shape, block timestamp inside the proposal execution window, failed-transaction rejection, or Solana transaction message data where applicable. Base proposals track completed hashes so approvals advance one stored step at a time and duplicate confirmations are rejected.
 
 Executable payloads are only prepared for workflows with dedicated encoders and clear input bounds. Unsupported workflows remain proposal review-only rather than generating arbitrary calldata.
 

@@ -6,7 +6,7 @@ import { Connection, VersionedTransactionResponse } from "@solana/web3.js";
 import { rejectCrossOrigin, requireSolanaAuth, walletOwnsAgent } from "@/lib/auth";
 import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { approveProposal, getAgent, getProposal } from "@nemesis/db";
-import { validateSolanaExecutionPayload } from "@nemesis/execution";
+import { executionWindowContainsTimestamp, validateSolanaExecutionPayload } from "@nemesis/execution";
 
 const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL ?? process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com";
 const connection = new Connection(SOLANA_RPC_URL, "confirmed");
@@ -89,6 +89,19 @@ export async function POST(
 
   if (!tx) {
     return NextResponse.json({ error: "Confirmed Solana transaction could not be loaded yet." }, { status: 425 });
+  }
+
+  if (tx.meta?.err) {
+    return NextResponse.json({ error: "Solana transaction failed on-chain." }, { status: 400 });
+  }
+
+  if (typeof tx.blockTime !== "number") {
+    return NextResponse.json({ error: "Confirmed Solana transaction timestamp could not be loaded yet." }, { status: 425 });
+  }
+
+  const timingValidation = executionWindowContainsTimestamp(payload, tx.blockTime * 1000);
+  if (!timingValidation.ok) {
+    return NextResponse.json({ error: timingValidation.error }, { status: 400 });
   }
 
   if (!transactionIncludesSigner(tx, auth.wallet.solanaAddress)) {

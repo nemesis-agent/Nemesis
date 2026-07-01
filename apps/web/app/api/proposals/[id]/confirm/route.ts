@@ -6,8 +6,8 @@ import { baseChain } from "@/lib/base-chain";
 import { rejectCrossOrigin, requireAnyWalletAuth, walletOwnsAgent } from "@/lib/auth";
 import { enforceRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { redactForLog } from "@/lib/privacy";
-import { approveProposal, getProposal, getAgent, recordProposalExecutionStep } from "@nemesis/db";
-import { validateBaseExecutionPayload } from "@nemesis/execution";
+import { getProposal, getAgent, recordProposalExecutionStep } from "@nemesis/db";
+import { executionWindowContainsTimestamp, isValidEvmTransactionHash, validateBaseExecutionPayload } from "@nemesis/execution";
 
 const publicClient = createPublicClient({
   chain: baseChain,
@@ -45,7 +45,7 @@ export async function POST(
   }
 
   const { txHash } = body ?? {};
-  if (!txHash || !txHash.startsWith("0x")) {
+  if (!isValidEvmTransactionHash(txHash)) {
     return NextResponse.json({ error: "Valid txHash is required." }, { status: 400 });
   }
 
@@ -67,7 +67,7 @@ export async function POST(
 
     // 2. Viem Server-Side Verification (Quant Grade Security)
     const receipt = await publicClient.waitForTransactionReceipt({
-      hash: txHash as `0x${string}`,
+      hash: txHash,
       confirmations: 1, // Require 1 confirmation. For strict reorg protection, increase this.
     });
 
@@ -75,7 +75,11 @@ export async function POST(
       return NextResponse.json({ error: "Transaction reverted on-chain." }, { status: 400 });
     }
 
-    const tx = await publicClient.getTransaction({ hash: txHash as `0x${string}` });
+    if (receipt.transactionHash.toLowerCase() !== txHash.toLowerCase()) {
+      return NextResponse.json({ error: "Transaction receipt does not match submitted hash." }, { status: 400 });
+    }
+
+    const tx = await publicClient.getTransaction({ hash: txHash });
 
     // Anti-spoofing: ensure signer and transaction payload match this proposal.
     if (auth.wallet.chain !== "base" || tx.from.toLowerCase() !== auth.wallet.address.toLowerCase()) {
@@ -97,8 +101,19 @@ export async function POST(
     if (!payloadValidation.ok) {
       return NextResponse.json({ error: payloadValidation.error }, { status: 400 });
     }
+    const block = await publicClient.getBlock({ blockNumber: receipt.blockNumber });
+    const blockTimestamp = Number(block.timestamp) * 1000;
+    const timingValidation = executionWindowContainsTimestamp(payloadValidation.value, blockTimestamp);
+    if (!timingValidation.ok) {
+      return NextResponse.json({ error: timingValidation.error }, { status: 400 });
+    }
+
     const steps = payloadValidation.value.steps;
     const completedTxHashes = getCompletedStepHashes(proposal.executionState);
+    if (completedTxHashes.some((hash) => hash.toLowerCase() === txHash.toLowerCase())) {
+      return NextResponse.json({ error: "Transaction hash was already recorded for this proposal." }, { status: 409 });
+    }
+
     const expectedPayload = steps[completedTxHashes.length];
     if (!expectedPayload) {
       return NextResponse.json({ error: "All proposal steps are already confirmed." }, { status: 400 });
@@ -120,15 +135,13 @@ export async function POST(
     // 3. Update Database
     const nextCompletedTxHashes = [...completedTxHashes, txHash];
     const complete = nextCompletedTxHashes.length >= steps.length;
-    const updated = steps.length === 1
-      ? await approveProposal(proposalId, txHash)
-      : await recordProposalExecutionStep(
-          proposalId,
-          { completedTxHashes: nextCompletedTxHashes, completedSteps: nextCompletedTxHashes.length },
-          txHash,
-          complete,
-          completedTxHashes.length,
-        );
+    const updated = await recordProposalExecutionStep(
+      proposalId,
+      { completedTxHashes: nextCompletedTxHashes, completedSteps: nextCompletedTxHashes.length },
+      txHash,
+      complete,
+      completedTxHashes.length,
+    );
     if (!updated) {
       return NextResponse.json({ error: "Failed to update database." }, { status: 500 });
     }

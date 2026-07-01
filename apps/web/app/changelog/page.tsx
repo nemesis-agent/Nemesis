@@ -12,6 +12,15 @@ export const metadata: Metadata = {
 const CHANGES = [
   {
     label: "current",
+    title: "execution safety hardening",
+    items: [
+      "Base confirmations now require strict transaction hash shape, receipt/hash matching, block timestamp validation inside the proposal execution window, duplicate confirmation rejection, and step-by-step execution state recording.",
+      "Solana confirmations now reject failed on-chain transactions and require confirmed block time inside the proposal execution window before marking a proposal approved.",
+      "Execution policy tests and audit checks now cover confirmation replay boundaries so guarded wallet-signable flows stay narrow and reviewable.",
+    ],
+  },
+  {
+    label: "current",
     title: "agent dashboard and Telegram proposal UX phase 2",
     items: [
       "Agent dashboard now includes a wallet-private command center with aggregate agent and proposal queue counts before users open individual agent details.",
