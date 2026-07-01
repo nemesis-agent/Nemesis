@@ -7,13 +7,16 @@ import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 
 type LoadState = "idle" | "loading" | "ready" | "fallback";
 
+type ModelVariantSet = {
+  desktop: string;
+  mobile: string;
+  lite: string;
+};
+
 type ModelManifest = {
   variants: {
-    primary: {
-      desktop: string;
-      mobile: string;
-      lite: string;
-    };
+    primary: ModelVariantSet;
+    banner?: ModelVariantSet;
   };
 };
 
@@ -23,6 +26,11 @@ const FALLBACK_MANIFEST: ModelManifest = {
       desktop: "/models/nemesis/nemesis-web.glb",
       mobile: "/models/nemesis/nemesis-mobile.glb",
       lite: "/models/nemesis/nemesis-lite.glb",
+    },
+    banner: {
+      desktop: "/models/nemesis/nemesis-banner-3d-web.glb",
+      mobile: "/models/nemesis/nemesis-banner-3d-mobile.glb",
+      lite: "/models/nemesis/nemesis-banner-3d-lite.glb",
     },
   },
 };
@@ -37,9 +45,11 @@ function chooseModelUrl(manifest: ModelManifest): string {
     : undefined;
   const constrainedNetwork = connection?.saveData || ["slow-2g", "2g", "3g"].includes(connection?.effectiveType ?? "");
 
-  if (constrainedNetwork || memory <= 4 || width < 720) return manifest.variants.primary.lite;
-  if (width >= 1680 && memory >= 8) return manifest.variants.primary.desktop;
-  return manifest.variants.primary.mobile;
+  const heroVariant = manifest.variants.banner ?? manifest.variants.primary;
+
+  if (constrainedNetwork || memory <= 4 || width < 720) return heroVariant.lite;
+  if (width >= 1680 && memory >= 8) return heroVariant.desktop;
+  return heroVariant.mobile;
 }
 
 function enhanceMaterials(root: Object3D, T: typeof import("three")) {
@@ -74,14 +84,14 @@ function frameModel(model: Group, T: typeof import("three"), viewportWidth: numb
   const size = box.getSize(new T.Vector3());
   const center = box.getCenter(new T.Vector3());
   const maxAxis = Math.max(size.x, size.y, size.z) || 1;
-  const targetHeight = viewportWidth < 720 ? 3.15 : 4.65;
+  const targetHeight = viewportWidth < 720 ? 3.7 : 6.25;
   const scale = targetHeight / maxAxis;
 
   model.position.sub(center.multiplyScalar(scale));
   model.scale.setScalar(scale);
-  model.position.x += viewportWidth < 720 ? 0 : 1.05;
-  model.position.y += viewportWidth < 720 ? -0.58 : -0.32;
-  model.rotation.set(-0.04, -0.62, 0.01);
+  model.position.x += viewportWidth < 720 ? 0 : 0.1;
+  model.position.y += viewportWidth < 720 ? -0.42 : -0.22;
+  model.rotation.set(-0.035, -0.2, 0.008);
 }
 
 export function HeroModelStage() {
@@ -117,31 +127,31 @@ export function HeroModelStage() {
         const modelUrl = chooseModelUrl(manifest);
 
         const scene = new T.Scene();
-        scene.fog = new T.FogExp2(0x050505, 0.085);
+        scene.fog = new T.FogExp2(0x050505, 0.055);
         const camera = new T.PerspectiveCamera(36, mount.clientWidth / Math.max(1, mount.clientHeight), 0.1, 100);
-        camera.position.set(0.1, 0.12, 8.65);
+        camera.position.set(0, 0.08, 8.2);
 
         renderer = new T.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
         renderer.setSize(mount.clientWidth, mount.clientHeight);
         renderer.outputColorSpace = T.SRGBColorSpace;
         renderer.toneMapping = T.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 0.92;
-        renderer.domElement.style.opacity = "0.68";
-        renderer.domElement.style.filter = "contrast(1.08) saturate(0.82) drop-shadow(0 24px 70px rgba(226,82,79,0.16))";
+        renderer.toneMappingExposure = 1.08;
+        renderer.domElement.style.opacity = "0.86";
+        renderer.domElement.style.filter = "contrast(1.18) saturate(1.28) drop-shadow(0 30px 86px rgba(226,82,79,0.22))";
         renderer.domElement.style.mixBlendMode = "screen";
         mount.appendChild(renderer.domElement);
 
-        const key = new T.DirectionalLight(0xffffff, 2.15);
+        const key = new T.DirectionalLight(0xffffff, 2.35);
         key.position.set(2.8, 4.2, 5.8);
         scene.add(key);
-        const red = new T.PointLight(0xe2524f, 7.2, 9, 1.8);
+        const red = new T.PointLight(0xe2524f, 9.5, 10, 1.8);
         red.position.set(-3.3, 0.8, 2.8);
         scene.add(red);
-        const blue = new T.PointLight(0x4a8fd9, 3.8, 8, 2);
+        const blue = new T.PointLight(0x4a8fd9, 6.8, 10, 2);
         blue.position.set(3.2, -0.6, 3.4);
         scene.add(blue);
-        scene.add(new T.AmbientLight(0xffffff, 0.48));
+        scene.add(new T.AmbientLight(0xffffff, 0.62));
 
         const loader = new loaderModule.GLTFLoader();
         const gltf = await loader.loadAsync(modelUrl);
@@ -156,18 +166,17 @@ export function HeroModelStage() {
 
         const halo = new T.Mesh(
           new T.TorusGeometry(1.85, 0.006, 8, 128),
-          new T.MeshBasicMaterial({ color: 0xe2524f, transparent: true, opacity: 0.24 }),
+          new T.MeshBasicMaterial({ color: 0xe2524f, transparent: true, opacity: 0.36 }),
         );
         halo.rotation.set(Math.PI / 2, 0, 0);
-        halo.position.set(0.98, -1.26, -0.24);
+        halo.position.set(0, -1.08, -0.24);
         scene.add(halo);
 
         let pointerX = 0;
         let pointerY = 0;
         const onPointerMove = (event: PointerEvent) => {
-          const rect = mount.getBoundingClientRect();
-          pointerX = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
-          pointerY = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+          pointerX = (event.clientX / Math.max(1, window.innerWidth) - 0.5) * 2;
+          pointerY = (event.clientY / Math.max(1, window.innerHeight) - 0.5) * 2;
         };
 
         const onResize = () => {
@@ -179,7 +188,7 @@ export function HeroModelStage() {
           renderer.setSize(width, height);
         };
 
-        mount.addEventListener("pointermove", onPointerMove);
+        window.addEventListener("pointermove", onPointerMove);
         window.addEventListener("resize", onResize);
 
         let t = 0;
@@ -188,14 +197,14 @@ export function HeroModelStage() {
           raf = window.requestAnimationFrame(tick);
           t += 0.006;
           const drift = Math.sin(t * 1.7) * 0.018;
-          model.rotation.y += 0.0011;
-          model.rotation.x += ((-pointerY * 0.028 - 0.04) - model.rotation.x) * 0.035;
-          model.rotation.z += ((pointerX * 0.018 + 0.01) - model.rotation.z) * 0.035;
-          model.position.y = baseModelY + Math.sin(t) * 0.026;
+          model.rotation.y += 0.00065;
+          model.rotation.x += ((-pointerY * 0.08 - 0.035) - model.rotation.x) * 0.045;
+          model.rotation.z += ((pointerX * 0.045 + 0.008) - model.rotation.z) * 0.045;
+          model.position.y = baseModelY + Math.sin(t) * 0.038 + pointerY * -0.045;
           halo.rotation.z -= 0.004;
           halo.scale.setScalar(1 + drift);
-          camera.position.x += (0.1 + pointerX * 0.07 - camera.position.x) * 0.03;
-          camera.position.y += (-pointerY * 0.035 + 0.12 - camera.position.y) * 0.03;
+          camera.position.x += (pointerX * 0.22 - camera.position.x) * 0.045;
+          camera.position.y += (-pointerY * 0.12 + 0.08 - camera.position.y) * 0.045;
           camera.lookAt(0, 0, 0);
           renderer.render(scene, camera);
         };
@@ -203,7 +212,7 @@ export function HeroModelStage() {
 
         cleanup = () => {
           window.cancelAnimationFrame(raf);
-          mount.removeEventListener("pointermove", onPointerMove);
+          window.removeEventListener("pointermove", onPointerMove);
           window.removeEventListener("resize", onResize);
           scene.traverse((object) => {
             const mesh = object as Mesh;
@@ -241,10 +250,10 @@ export function HeroModelStage() {
 
   return (
     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_62%_44%,rgba(226,82,79,0.14),transparent_28%),radial-gradient(circle_at_70%_50%,rgba(74,143,217,0.08),transparent_24%)]" />
-      <div ref={mountRef} className="absolute inset-y-[3%] left-[-18%] right-[-18%] opacity-90 sm:left-[2%] sm:right-[-10%] lg:left-[20%] lg:right-[-4%]" />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,5,5,0.92)_0%,rgba(5,5,5,0.48)_42%,rgba(5,5,5,0.74)_100%),linear-gradient(180deg,rgba(5,5,5,0.16)_0%,rgba(5,5,5,0.42)_58%,rgba(5,5,5,0.9)_100%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_62%_46%,transparent_0%,rgba(5,5,5,0.24)_40%,rgba(5,5,5,0.8)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(226,82,79,0.18),transparent_34%),radial-gradient(circle_at_58%_46%,rgba(74,143,217,0.10),transparent_30%)]" />
+      <div ref={mountRef} className="absolute inset-x-[-16%] inset-y-[-2%] opacity-95 sm:inset-x-[-8%] lg:inset-x-[0%]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,5,5,0.20)_0%,rgba(5,5,5,0.28)_48%,rgba(5,5,5,0.88)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(5,5,5,0.18)_46%,rgba(5,5,5,0.82)_100%)]" />
 
     </div>
   );
