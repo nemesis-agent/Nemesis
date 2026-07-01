@@ -83,6 +83,24 @@ const DOC_SECTIONS = [
     ],
   },
   {
+    id: "proposal-lifecycle",
+    title: "proposal lifecycle",
+    body: [
+      "A proposal starts as pending. If a dedicated encoder exists, the dashboard can show a wallet-signable payload with network, step, expiry, and approval guidance. If no encoder exists, the proposal remains review-only and no wallet signing request is opened.",
+      "Executable payloads can expire because market routes, balances, prices, blockhashes, and slippage windows change. Expired proposals should be treated as stale and regenerated rather than signed manually from old data.",
+    ],
+  },
+  {
+    id: "troubleshooting",
+    title: "troubleshooting",
+    body: [
+      "If Telegram does not receive proposals, generate a fresh code from the dashboard, open @NemesisAgentAppBot, and send the full /link command before the code expires.",
+      "If an agent says a pending proposal already exists, review or skip the current pending item before expecting a new one. NEMESIS avoids stacking duplicate proposals for the same agent.",
+      "If a wallet button is missing, the proposal is review-only for now. If a wallet button is disabled or marked expired, wait for a fresh proposal so the wallet preview uses current route data.",
+      "If health shows degraded, the app may still be reachable while a runner heartbeat, Telegram polling lock, or Base/Solana RPC probe needs time to recover or fail over.",
+    ],
+  },
+  {
     id: "talk-with-nemesis",
     title: "talk with NEMESIS",
     body: [

@@ -118,6 +118,24 @@ Every NEMESIS proposal is designed to answer four questions before a user signs 
 
 The dashboard separates decision trace details from technical inputs, and Telegram proposal messages include the same approval boundary. NEMESIS may prepare guarded payloads where available, but the user still reviews the wallet preview and signs from their own wallet only if the proposal matches their intent.
 
+## Proposal Lifecycle And Troubleshooting
+
+Proposal states are intentionally simple:
+
+- `pending`: waiting for user review, wallet signing, or manual skip
+- `approved`: the user approved and the stored confirmation checks passed
+- `skipped`: the user or linked Telegram flow dismissed the proposal
+
+Pending proposals can be wallet-signable or review-only. Wallet-signable proposals show network, step count, expiry, and approval copy in the dashboard. Review-only proposals explain why no signing button is shown.
+
+Common troubleshooting paths:
+
+- Telegram not linked: generate a fresh link code from the wallet dashboard and send the displayed `/link` command to the official bot.
+- Pending proposal already exists: review, approve, or skip the current pending proposal first. The runner avoids duplicate pending proposals for the same agent.
+- Payload expired: wait for a fresh proposal instead of signing stale route data.
+- Wallet mismatch: connect the same wallet that deployed the agent and owns the proposal.
+- Health degraded: check `/api/health` for public-safe dependency status. Degraded means reachable but one dependency is stale, rate-limited, or recovering.
+
 ## Operational Status
 
 NEMESIS exposes public-safe status checks at `/api/health` and `/api/status`. These endpoints are designed for operational visibility, not for exposing private configuration.

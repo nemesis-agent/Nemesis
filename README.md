@@ -24,6 +24,8 @@ Agents monitor. Users approve. Your wallet remains the final signer.
 - Support Solana wallet flows including Solflare-compatible connections.
 - Use OpenRouter-powered intelligence for planning and Talk with NEMESIS.
 - Show template detail pages with safety rails, explainability, parameter defaults, and proposal preview before deploy.
+- Separate review-only proposals from wallet-signable payloads with expiry, network, step, and approval guidance.
+- Expose public-safe health summaries for database, runner, Telegram, Base RPC, and Solana RPC status.
 
 ## Why It Exists
 
@@ -87,6 +89,19 @@ High-risk and degen templates require explicit acknowledgement before deploy.
 - [Security Model](./docs/SECURITY.md)
 - [Privacy Notes](./docs/PRIVACY.md)
 - [Token Safety](./docs/TOKEN_SAFETY.md)
+
+## Proposal Lifecycle
+
+A pending proposal can be either wallet-signable or review-only. Wallet-signable proposals are generated only for workflows with dedicated encoders and validation. They show the target network, signing step, expiry window, and approval summary before the wallet opens. Review-only proposals remain visible for manual inspection and do not trigger a wallet signing request.
+
+Expired executable payloads should be regenerated. NEMESIS does not ask users to sign stale route data.
+
+## Troubleshooting
+
+- Telegram not linked: generate a fresh dashboard code, open [@NemesisAgentAppBot](https://t.me/NemesisAgentAppBot), and send the full `/link` command before the code expires.
+- Pending proposal already exists: review, approve, or skip the existing pending proposal before waiting for the next cycle.
+- No wallet button: the template is review-only until a dedicated encoder is shipped for that workflow.
+- Health degraded: check `/api/health` for public-safe database, runner, Telegram, Base RPC, and Solana RPC status.
 
 ## Release Status
 

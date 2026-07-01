@@ -12,6 +12,15 @@ export const metadata: Metadata = {
 const CHANGES = [
   {
     label: "current",
+    title: "proposal lifecycle and status polish",
+    items: [
+      "Agent detail pages now include proposal status filters for all, pending, approved, and skipped proposals.",
+      "Proposal rows now explain wallet-signable, review-only, expired, and completed states more clearly before a user signs anything.",
+      "Public docs and health output now include clearer troubleshooting for Telegram linking, duplicate pending proposals, expired payloads, and degraded service checks.",
+    ],
+  },
+  {
+    label: "current",
     title: "template detail polish and docs sync",
     items: [
       "Template detail pages now show safety rails, approval boundary, observed fields, approval checklist, parameter defaults, and proposal preview before deployment.",
