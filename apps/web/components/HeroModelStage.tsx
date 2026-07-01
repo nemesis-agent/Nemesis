@@ -86,14 +86,14 @@ function frameModel(model: Group, T: typeof import("three"), viewportWidth: numb
   const size = box.getSize(new T.Vector3());
   const center = box.getCenter(new T.Vector3());
   const maxAxis = Math.max(size.x, size.y, size.z) || 1;
-  const targetHeight = viewportWidth < 720 ? 3.55 : 5.85;
+  const targetHeight = viewportWidth < 720 ? 3.25 : 5.15;
   const scale = targetHeight / maxAxis;
 
   model.position.sub(center.multiplyScalar(scale));
   model.scale.setScalar(scale);
-  model.position.x += viewportWidth < 720 ? 0 : 0.1;
-  model.position.y += viewportWidth < 720 ? -0.42 : -0.22;
-  model.rotation.set(-0.035, 1.34, 0.008);
+  model.position.x += viewportWidth < 720 ? 0 : 0.02;
+  model.position.y += viewportWidth < 720 ? -0.52 : -0.48;
+  model.rotation.set(-0.035, -1.78, 0.008);
 }
 
 export function HeroModelStage() {
@@ -207,9 +207,9 @@ export function HeroModelStage() {
           const pulse = Math.sin(t * 1.9);
           const sweep = Math.sin(t * 1.2);
           model.rotation.x += ((baseRotationX - pointerY * 0.09) - model.rotation.x) * 0.05;
-          model.rotation.y += ((baseRotationY + pointerX * 0.075) - model.rotation.y) * 0.05;
-          model.rotation.z += ((baseRotationZ + pointerX * 0.025) - model.rotation.z) * 0.05;
-          model.position.y = baseModelY + pulse * 0.032 + pointerY * -0.055;
+          model.rotation.y += ((baseRotationY + pointerX * 0.055) - model.rotation.y) * 0.05;
+          model.rotation.z += ((baseRotationZ + pointerX * 0.018) - model.rotation.z) * 0.05;
+          model.position.y = baseModelY + pulse * 0.026 + pointerY * -0.04;
           haloMaterial.opacity = 0.24 + Math.max(0, pulse) * 0.1;
           halo.scale.setScalar(1 + pulse * 0.012);
           red.intensity = 12.4 + sweep * 2.1;
@@ -217,8 +217,8 @@ export function HeroModelStage() {
           rim.intensity = 2.8 + Math.max(0, sweep) * 0.9;
           red.position.x = -3.3 + pointerX * 0.38;
           blue.position.x = 3.2 + pointerX * 0.3;
-          camera.position.x += (pointerX * 0.24 - camera.position.x) * 0.05;
-          camera.position.y += (-pointerY * 0.14 + 0.08 - camera.position.y) * 0.05;
+          camera.position.x += (pointerX * 0.16 - camera.position.x) * 0.05;
+          camera.position.y += (-pointerY * 0.09 + 0.08 - camera.position.y) * 0.05;
           camera.lookAt(0, 0, 0);
           renderer.render(scene, camera);
         };
