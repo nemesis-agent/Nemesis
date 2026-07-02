@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const publicRoutes = ["/", "/docs", "/templates", "/roadmap", "/changelog", "/updates"];
+const publicRoutes = ["/", "/docs", "/templates", "/roadmap", "/changelog", "/updates", "/terms", "/privacy"];
 const e2eOrigin = "http://127.0.0.1:3100";
 
 for (const route of publicRoutes) {
@@ -14,9 +14,9 @@ for (const route of publicRoutes) {
 
 test("mobile public pages do not overflow horizontally", async ({ page }, testInfo) => {
   test.skip(!testInfo.project.name.startsWith("mobile"));
-  for (const route of ["/", "/templates", "/docs"]) {
+  for (const route of publicRoutes) {
     await page.goto(route);
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    const overflow = await page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - document.documentElement.clientWidth);
     expect(overflow, `${route} horizontal overflow`).toBeLessThanOrEqual(1);
   }
 });

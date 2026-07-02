@@ -20,13 +20,13 @@ export function Hero() {
         }}
       />
 
-      <div className="relative z-10 mx-auto max-w-6xl px-6 pt-24 pb-10 sm:pt-32 sm:pb-14">
+      <div className="relative z-10 mx-auto max-w-6xl px-4 pt-20 pb-10 sm:px-6 sm:pt-32 sm:pb-14">
         <div className="absolute left-6 top-24 hidden h-4 w-4 border-l border-t border-nm-muted/50 sm:block" aria-hidden="true" />
         <div className="absolute right-6 top-24 hidden h-4 w-4 border-r border-t border-nm-muted/50 sm:block" aria-hidden="true" />
         <div className="absolute bottom-8 left-6 hidden h-4 w-4 border-b border-l border-nm-muted/50 sm:block" aria-hidden="true" />
         <div className="absolute bottom-8 right-6 hidden h-4 w-4 border-b border-r border-nm-muted/50 sm:block" aria-hidden="true" />
 
-        <div className="relative flex min-h-[700px] flex-col items-center justify-center text-center sm:min-h-[780px] lg:min-h-[850px]">
+        <div className="relative flex min-h-[640px] flex-col items-center justify-center text-center sm:min-h-[780px] lg:min-h-[850px]">
           <div className="pointer-events-none absolute inset-x-[-10%] top-[14%] h-[58%] border-y border-nm-border/30 bg-[linear-gradient(90deg,transparent,rgba(5,5,5,0.42),transparent)]" aria-hidden="true" />
           <div className="pointer-events-none absolute inset-x-0 top-[16%] h-[52%] bg-[radial-gradient(ellipse_at_center,rgba(5,5,5,0.2),transparent_66%)]" aria-hidden="true" />
 
@@ -41,7 +41,7 @@ export function Hero() {
               </span>
             </div>
 
-            <h1 className="glitch-wordmark font-mono text-[clamp(3.35rem,12vw,8rem)] font-bold leading-none tracking-widest2 [text-shadow:0_14px_48px_rgba(0,0,0,0.92)]">
+            <h1 className="glitch-wordmark max-w-full font-mono text-[clamp(2.55rem,14vw,8rem)] font-bold leading-none tracking-widest2 [text-shadow:0_14px_48px_rgba(0,0,0,0.92)] sm:text-[clamp(3.35rem,12vw,8rem)]">
               <span className="glitch-layer glitch-layer--red" aria-hidden="true">
                 NEMESIS
               </span>
@@ -52,14 +52,14 @@ export function Hero() {
             </h1>
 
             <p
-              className="fade-in-up mt-8 font-mono text-sm uppercase tracking-widest2 text-nm-muted [text-shadow:0_8px_24px_rgba(0,0,0,0.86)] sm:text-base"
+              className="fade-in-up mt-7 font-mono text-xs uppercase tracking-widest2 text-nm-muted [text-shadow:0_8px_24px_rgba(0,0,0,0.86)] sm:mt-8 sm:text-base"
               style={{ animationDelay: "120ms" }}
             >
               chaos in. <span className="text-nm-fg">order out.</span>
             </p>
 
             <p
-              className="fade-in-up mt-6 max-w-2xl text-base leading-relaxed text-nm-muted [text-shadow:0_8px_28px_rgba(0,0,0,0.9)] sm:text-lg"
+              className="fade-in-up mt-5 max-w-2xl text-sm leading-relaxed text-nm-muted [text-shadow:0_8px_28px_rgba(0,0,0,0.9)] sm:mt-6 sm:text-lg"
               style={{ animationDelay: "220ms" }}
             >
               Deploy autonomous agents that watch the market and propose action on your behalf.
@@ -80,7 +80,7 @@ export function Hero() {
             </div>
 
             <div
-              className="fade-in-up mt-14 grid grid-cols-3 gap-px border border-nm-border bg-nm-border/80 shadow-[0_28px_110px_rgba(0,0,0,0.55)] backdrop-blur-md sm:w-auto"
+              className="fade-in-up mt-12 grid w-full max-w-sm grid-cols-1 gap-px border border-nm-border bg-nm-border/80 shadow-[0_28px_110px_rgba(0,0,0,0.55)] backdrop-blur-md min-[420px]:grid-cols-3 sm:mt-14 sm:w-auto sm:max-w-none"
               style={{ animationDelay: "420ms" }}
             >
               {[
@@ -88,7 +88,7 @@ export function Hero() {
                 { value: "0", label: "funds custodied" },
                 { value: "100%", label: "approval-first" },
               ].map((stat) => (
-                <div key={stat.label} className="bg-nm-bg/86 px-5 py-5 text-center sm:px-8">
+                <div key={stat.label} className="bg-nm-bg/86 px-5 py-4 text-center sm:px-8 sm:py-5">
                   <p className="font-mono text-xl font-bold text-nm-fg sm:text-2xl">{stat.value}</p>
                   <p className="mt-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
                     {stat.label}
@@ -115,7 +115,7 @@ export function Hero() {
         <HeroTicker />
       </div>
 
-      <div className="relative z-10 mx-auto mt-0 max-w-6xl px-6">
+      <div className="relative z-10 mx-auto mt-0 max-w-6xl px-4 sm:px-6">
         <FragmentDivider />
       </div>
     </section>

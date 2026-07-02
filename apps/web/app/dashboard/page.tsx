@@ -109,10 +109,36 @@ async function getDashboardProposalSummary(walletKeys: string[]): Promise<Dashbo
 function parseRuntimeDetails(value: string | null): Record<string, unknown> {
   if (!value) return {};
   try {
-    return JSON.parse(value) as Record<string, unknown>;
+    const parsed = JSON.parse(value) as unknown;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
   } catch {
     return {};
   }
+}
+
+function publicRuntimeValue(value: unknown): unknown {
+  if (typeof value === "string") return value.slice(0, 120);
+  if (typeof value === "number" || typeof value === "boolean" || value === null) return value;
+  return undefined;
+}
+
+function pickDashboardRuntimeDetails(details: Record<string, unknown>): Record<string, unknown> {
+  const allowed = [
+    "event",
+    "activeAgents",
+    "proposedAgents",
+    "durationMs",
+    "executableProposals",
+    "reviewOnlyProposals",
+    "skippedPending",
+  ];
+  const picked: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (!(key in details)) continue;
+    const value = publicRuntimeValue(details[key]);
+    if (value !== undefined) picked[key] = value;
+  }
+  return picked;
 }
 
 async function getDashboardRuntimeHealth(): Promise<DashboardRuntimeHealth> {
@@ -132,7 +158,7 @@ async function getDashboardRuntimeHealth(): Promise<DashboardRuntimeHealth> {
       stale: ageMs > RUNNER_STALE_AFTER_MS,
       lastHeartbeatAt: row.last_heartbeat_at.toISOString(),
       ageSeconds: Math.max(0, Math.round(ageMs / 1000)),
-      details: parseRuntimeDetails(row.details),
+      details: pickDashboardRuntimeDetails(parseRuntimeDetails(row.details)),
     };
   } catch {
     return { status: "unavailable", stale: true, lastHeartbeatAt: null, ageSeconds: null, details: {} };
@@ -155,6 +181,7 @@ function RunnerHealthCard({ health }: { health: DashboardRuntimeHealth }) {
   const executableProposals = typeof health.details.executableProposals === "number" ? health.details.executableProposals : null;
   const reviewOnlyProposals = typeof health.details.reviewOnlyProposals === "number" ? health.details.reviewOnlyProposals : null;
   const skippedPending = typeof health.details.skippedPending === "number" ? health.details.skippedPending : null;
+  const durationMs = typeof health.details.durationMs === "number" ? health.details.durationMs : null;
 
   return (
     <div className="border border-nm-border bg-nm-bg p-6">
@@ -184,6 +211,12 @@ function RunnerHealthCard({ health }: { health: DashboardRuntimeHealth }) {
           <div className="flex justify-between gap-4 border-t border-nm-border pt-3">
             <dt className="font-mono uppercase tracking-widest2 text-nm-muted">active</dt>
             <dd className="text-right text-nm-fg">{activeAgents}</dd>
+          </div>
+        )}
+        {durationMs !== null && (
+          <div className="flex justify-between gap-4 border-t border-nm-border pt-3">
+            <dt className="font-mono uppercase tracking-widest2 text-nm-muted">duration</dt>
+            <dd className="text-right text-nm-fg">{durationMs}ms</dd>
           </div>
         )}
         {proposedAgents !== null && (
@@ -255,7 +288,7 @@ function DashboardSummary({ agents, proposalSummary }: { agents: AgentCardViewMo
           wallet private
         </span>
       </div>
-      <div className="mt-4 grid gap-2 sm:grid-cols-4">
+      <div className="mt-4 grid gap-2 min-[420px]:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <div key={stat.label} className="border border-nm-border/70 bg-nm-bg p-3">
             <p className="font-mono text-2xl font-bold text-nm-fg">{stat.value}</p>
@@ -290,7 +323,7 @@ export default async function DashboardPage() {
 
   return (
     <WalletSessionGate walletKeys={walletKeys}>
-      <div className="mx-auto max-w-6xl px-6 py-16">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
         <div className="flex flex-wrap items-baseline justify-between gap-4">
           <div>
             <h1 className="font-mono text-2xl font-bold uppercase tracking-widest2 text-nm-fg">agents</h1>
@@ -310,8 +343,8 @@ export default async function DashboardPage() {
           <FragmentDivider />
         </div>
 
-        <div id="agents" className="mt-10 grid gap-6 lg:grid-cols-[2fr_1fr]">
-          <div className="grid gap-4 sm:grid-cols-2">
+        <div id="agents" className="mt-10 grid max-w-full gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2">
             {agents.map((agent, index) => (
               <ScrollReveal key={agent.id} delayMs={index * 70}>
                 <AgentCard agent={agent} />
@@ -365,7 +398,7 @@ export default async function DashboardPage() {
             )}
           </div>
 
-          <div className="grid gap-4">
+          <div className="grid min-w-0 gap-4">
             <ScrollReveal delayMs={120}>
               <RunnerHealthCard health={runnerHealth} />
             </ScrollReveal>

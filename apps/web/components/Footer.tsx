@@ -10,7 +10,7 @@ export function Footer() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
           <span>nemesis - the market&apos;s reckoning</span>
           <div className="hidden h-3 w-px bg-nm-border sm:block" aria-hidden="true" />
-          <div className="flex items-center gap-5">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
             <a href="/docs" className="text-nm-muted transition-colors hover:text-nm-fg">docs</a>
             <a href="/changelog" className="text-nm-muted transition-colors hover:text-nm-fg">changelog</a>
             <a href="/roadmap" className="text-nm-muted transition-colors hover:text-nm-fg">roadmap</a>
@@ -29,7 +29,7 @@ export function Footer() {
             </a>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex max-w-full flex-wrap gap-2">
           {BADGES.map((badge) => (
             <span key={badge} className="max-w-full break-words border border-nm-border px-2 py-1 text-[10px] normal-case tracking-normal">
               {badge}

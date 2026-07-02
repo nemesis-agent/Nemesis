@@ -35,6 +35,9 @@ check("health endpoint is healthy and database-connected", async () => {
   if (typeof body.database.latencyMs !== "number") {
     throw new Error("health body is missing database.latencyMs");
   }
+  if (!body.monitor?.severity || !Array.isArray(body.monitor?.degradedServices) || !body.monitor?.nextAction) {
+    throw new Error("health body is missing production monitoring summary");
+  }
   if (!body.runner || typeof body.runner.stale !== "boolean") {
     throw new Error("health body is missing runner state");
   }

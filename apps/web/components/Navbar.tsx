@@ -41,10 +41,10 @@ export function Navbar() {
 
   return (
     <header className="relative border-b border-nm-border bg-nm-bg">
-      <div className="relative z-50 mx-auto flex max-w-6xl items-center justify-between gap-6 px-6 py-4">
+      <div className="relative z-50 mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:gap-6 sm:px-6">
         <Link
           href="/"
-          className="group flex items-center gap-3 font-mono text-sm font-bold tracking-widest2 text-nm-fg"
+          className="group flex min-w-0 items-center gap-2 font-mono text-sm font-bold tracking-widest2 text-nm-fg sm:gap-3"
           aria-label="NEMESIS home"
           onClick={() => setMenuOpen(false)}
         >
@@ -87,7 +87,7 @@ export function Navbar() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <NetworkPulse />
           <WalletConnectButton />
 
@@ -131,7 +131,7 @@ export function Navbar() {
           <nav
             id="mobile-nav-panel"
             aria-label="Mobile"
-            className="mobile-menu-in absolute inset-x-0 top-full z-50 border-b border-nm-border bg-nm-bg md:hidden"
+            className="mobile-menu-in absolute inset-x-0 top-full z-50 max-w-full overflow-hidden border-b border-nm-border bg-nm-bg md:hidden"
           >
             <div className="flex flex-col px-6 py-2">
               {NAV_LINKS.map((link) => (

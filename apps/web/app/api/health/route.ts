@@ -77,6 +77,10 @@ function pickPublicDetails(details: Record<string, unknown>): Record<string, unk
     "pollingState",
     "attempt",
     "baseRpcEndpoints",
+    "executableProposals",
+    "reviewOnlyProposals",
+    "skippedPending",
+    "cycleCompletedAt",
   ];
   const picked: Record<string, unknown> = {};
   for (const key of allowed) {
@@ -216,6 +220,24 @@ async function measureDatabase(pool: Pool) {
 function healthCheckState(ok: boolean, degradedReason: string): { status: "ok" | "degraded"; reason: string } {
   return ok ? { status: "ok", reason: "current" } : { status: "degraded", reason: degradedReason };
 }
+
+function degradedServices(checks: Record<string, { status: "ok" | "degraded"; reason: string }>): string[] {
+  return Object.entries(checks)
+    .filter(([, check]) => check.status === "degraded")
+    .map(([name]) => name);
+}
+
+function monitoringSummary(status: "healthy" | "degraded", checks: Record<string, { status: "ok" | "degraded"; reason: string }>) {
+  const degraded = degradedServices(checks);
+  return {
+    severity: status === "healthy" ? "ok" : degraded.includes("database") ? "critical" : "warning",
+    degradedServices: degraded,
+    nextAction: degraded.length === 0
+      ? "no action required"
+      : `check ${degraded.join(", ")} before scaling public traffic`,
+  };
+}
+
 function deploymentInfo() {
   const commit = process.env.RAILWAY_GIT_COMMIT_SHA ?? process.env.GIT_COMMIT_SHA ?? "unknown";
   return {
@@ -258,6 +280,7 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       summary: status === "healthy" ? "all public checks are current" : "one or more public checks are degraded",
       checks,
+      monitor: monitoringSummary(status, checks),
       app: deploymentInfo(),
       database,
       runner,

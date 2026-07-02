@@ -12,6 +12,7 @@ check("health endpoint exposes public-safe observability fields", () => {
   assert(health.includes("probeBaseRpc"), "health must probe Base RPC");
   assert(health.includes("probeSolanaRpc"), "health must probe Solana RPC");
   assert(health.includes("pickPublicDetails"), "health must sanitize runtime health details");
+  assert(health.includes("monitoringSummary"), "health must expose actionable production monitor summary");
   assert(health.includes("Cache-Control"), "health must be no-store");
   assert(!health.includes("TELEGRAM_BOT_TOKEN"), "health must not reference Telegram token");
   assert(!health.includes("OPENROUTER_API_KEY"), "health must not reference OpenRouter key");
@@ -35,7 +36,7 @@ check("telegram lock state is recorded for health", () => {
 
 check("production smoke validates observability shape", () => {
   const smoke = read("tools/smoke-production.mjs");
-  for (const field of ["body.app", "body.database.latencyMs", "body.runner", "body.telegram", "body.rpc?.base", "body.rpc?.solana"]) {
+  for (const field of ["body.app", "body.monitor?.severity", "body.database.latencyMs", "body.runner", "body.telegram", "body.rpc?.base", "body.rpc?.solana"]) {
     assert(smoke.includes(field), `smoke must validate ${field}`);
   }
 });

@@ -78,20 +78,20 @@ export function WalletConnectButton() {
           <div ref={menuRef} className="relative">
             <button
               type="button"
-              className="flex h-10 min-w-[132px] items-center justify-between gap-2 border border-nm-border bg-nm-surface px-3 font-mono text-[10px] uppercase tracking-widest2 text-nm-fg transition-colors hover:border-nm-fg"
+              className="flex h-10 w-11 items-center justify-center gap-2 border border-nm-border bg-nm-surface px-0 font-mono text-[10px] uppercase tracking-widest2 text-nm-fg transition-colors hover:border-nm-fg sm:w-auto sm:min-w-[132px] sm:justify-between sm:px-3"
               onClick={() => setOpen((value) => !value)}
               aria-haspopup="menu"
               aria-expanded={open}
             >
               <span className="flex min-w-0 items-center gap-2">
                 <Wallet aria-hidden="true" size={14} />
-                <span className="truncate">{summary}</span>
+                <span className="hidden truncate sm:inline">{summary}</span>
               </span>
-              <ChevronDown aria-hidden="true" size={13} className={open ? "rotate-180" : ""} />
+              <ChevronDown aria-hidden="true" size={13} className={`hidden sm:block ${open ? "rotate-180" : ""}`} />
             </button>
 
             {open && (
-              <div role="menu" className="absolute right-0 top-full z-[70] mt-2 w-64 border border-nm-border bg-nm-bg p-2 shadow-2xl">
+              <div role="menu" className="fixed inset-x-4 top-20 z-[70] border border-nm-border bg-nm-bg p-2 shadow-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-64">
                 <p className="px-2 py-2 font-mono text-[9px] uppercase tracking-widest2 text-nm-muted">select network wallet</p>
                 <button
                   type="button"

@@ -26,14 +26,14 @@ export function TemplateCard({ template }: TemplateCardProps) {
   return (
     <Link
       href={`/templates/${template.id}`}
-      className="card-premium corner-fragment group flex flex-col justify-between border border-nm-border p-5"
+      className="card-premium corner-fragment group flex min-w-0 flex-col justify-between border border-nm-border p-5"
     >
       <div>
         {/* Left accent bar that draws down on hover */}
         <div className="card-accent-bar" aria-hidden="true" />
 
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="font-mono text-sm font-bold uppercase tracking-widest2 text-nm-fg transition-colors duration-200 group-hover:text-white">
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <h3 className="min-w-0 break-words font-mono text-sm font-bold uppercase tracking-widest2 text-nm-fg transition-colors duration-200 group-hover:text-white">
             {template.name}
           </h3>
           <div className="flex shrink-0 flex-col items-end gap-1">
@@ -55,17 +55,17 @@ export function TemplateCard({ template }: TemplateCardProps) {
             )}
           </div>
         </div>
-        <p className="mt-3 text-sm leading-relaxed text-nm-muted transition-colors duration-300 group-hover:text-nm-fg/70">
+        <p className="mt-3 break-words text-sm leading-relaxed text-nm-muted transition-colors duration-300 group-hover:text-nm-fg/70">
           {template.summary}
         </p>
-        <div className="mt-4 grid gap-2 border-y border-nm-border/60 py-3">
+        <div className="mt-4 grid min-w-0 gap-2 border-y border-nm-border/60 py-3">
           <div className="grid gap-1 sm:grid-cols-[72px_1fr]">
             <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-red">trigger</p>
-            <p className="text-xs leading-relaxed text-nm-muted">{compactText(template.condition)}</p>
+            <p className="break-words text-xs leading-relaxed text-nm-muted">{compactText(template.condition)}</p>
           </div>
           <div className="grid gap-1 sm:grid-cols-[72px_1fr]">
             <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-fragment-blue">proposal</p>
-            <p className="text-xs leading-relaxed text-nm-muted">{compactText(template.action)}</p>
+            <p className="break-words text-xs leading-relaxed text-nm-muted">{compactText(template.action)}</p>
           </div>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">

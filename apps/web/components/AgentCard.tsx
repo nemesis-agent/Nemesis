@@ -55,12 +55,12 @@ export function AgentCard({ agent }: AgentCardProps) {
       {/* Left accent bar */}
       <div className="card-accent-bar" aria-hidden="true" />
 
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="font-mono text-sm font-bold uppercase tracking-widest2 text-nm-fg transition-colors duration-200 group-hover:text-white">
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="break-words font-mono text-sm font-bold uppercase tracking-widest2 text-nm-fg transition-colors duration-200 group-hover:text-white">
             {agent.name}
           </h3>
-          <p className="mt-1 font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
+          <p className="mt-1 break-all font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">
             {agent.id} - {agent.walletLabel}
           </p>
         </div>
@@ -71,10 +71,10 @@ export function AgentCard({ agent }: AgentCardProps) {
         </span>
       </div>
 
-      <div className="mt-4 grid gap-2 border-y border-nm-border/60 py-3">
+      <div className="mt-4 grid min-w-0 gap-2 border-y border-nm-border/60 py-3">
         <div className="grid gap-1 sm:grid-cols-[76px_1fr]">
           <p className="font-mono text-[10px] uppercase tracking-widest2 text-nm-muted">event</p>
-          <p className="text-sm leading-relaxed text-nm-muted transition-colors duration-300 group-hover:text-nm-fg/70">
+          <p className="break-words text-sm leading-relaxed text-nm-muted transition-colors duration-300 group-hover:text-nm-fg/70">
             {agent.lastEvent ?? "Waiting for first monitoring cycle."}
           </p>
         </div>
