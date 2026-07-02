@@ -24,7 +24,7 @@ check("template registry exposes explainability metadata", () => {
 
 check("runner stores public-safe proposal decision traces", () => {
   assert(runner.includes("enrichProposalDetails(result, agent)"), "runner must enrich proposals before DB insert");
-  for (const label of ["why", "observed", "approval check", "limitation"]) {
+  for (const label of ["why", "confidence", "risk flags", "market context", "observed", "approval check", "skip condition", "limitation"]) {
     assert(runner.includes(label), `runner must include ${label} detail`);
   }
   assert(!runner.includes("process.env.OPENROUTER_API_KEY"), "proposal explainability must not expose OpenRouter key");
@@ -37,12 +37,18 @@ check("dashboard proposal view separates explainability from technical inputs", 
   assert(proposalRow.includes("observed inputs"), "proposal row must render observed input cards");
   assert(proposalRow.includes("approval checklist"), "proposal row must render approval checklist");
   assert(proposalRow.includes("wallet signature required"), "proposal row must state wallet approval requirement");
+  for (const label of ["confidence", "risk flags", "market context", "skip condition"]) {
+    assert(proposalRow.includes(label), `proposal row must recognize ${label}`);
+  }
 });
 
 check("telegram proposal copy includes why, observed inputs, and approval boundary", () => {
   assert(telegramFormat.includes("observed inputs"), "Telegram proposal must show observed inputs");
   assert(telegramFormat.includes("your wallet signature is required"), "Telegram proposal must state approval boundary");
   assert(telegramFormat.includes("EXPLAINABILITY_LABELS"), "Telegram proposal must recognize explainability detail labels");
+  for (const label of ["confidence", "risk flags", "market context", "skip condition"]) {
+    assert(telegramFormat.includes(label), `Telegram proposal must recognize ${label}`);
+  }
 });
 
 check("template and agent pages show explainability before user approval", () => {

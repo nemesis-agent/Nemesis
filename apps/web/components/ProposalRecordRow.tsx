@@ -14,7 +14,7 @@ const STATUS_LABELS: Record<ProposalStatus, string> = {
   skipped: "skipped",
 };
 
-const EXPLAINABILITY_LABELS = new Set(["why", "observed", "approval check", "limitation"]);
+const EXPLAINABILITY_LABELS = new Set(["why", "confidence", "risk flags", "market context", "observed", "approval check", "skip condition", "limitation"]);
 const PRIORITY_DETAIL_LABELS = new Set(["wallet action", "asset", "chain", "current price", "target price", "review amount", "prepared buy", "prepared sell", "trigger", "drift"]);
 
 interface ProposalRecordRowProps {

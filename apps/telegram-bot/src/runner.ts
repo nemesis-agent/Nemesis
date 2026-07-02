@@ -45,7 +45,7 @@ const PRODUCTION_TEMPLATES = new Set([
   "solana-profit-taker",
 ]);
 const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-const EXPLAINABILITY_DETAIL_LABELS = new Set(["why", "observed", "approval check", "limitation"]);
+const EXPLAINABILITY_DETAIL_LABELS = new Set(["why", "confidence", "risk flags", "market context", "observed", "approval check", "skip condition", "limitation"]);
 let cycleCount = 0;
 
 class BaseRpcHttpError extends Error {
@@ -229,14 +229,100 @@ function enrichProposalDetails(result: EvaluationResult, agent: Agent): Proposal
 
   const explanation: ProposalDetail[] = [
     { label: "why", value: result.lastEvent || result.action },
+    { label: "confidence", value: inferProposalConfidence(result, agent) },
+    { label: "risk flags", value: inferRiskFlags(result, agent) },
+    { label: "market context", value: inferMarketContext(result, agent) },
     { label: "observed", value: observed || "condition matched the configured agent parameters" },
     { label: "approval check", value: "review chain, amount, asset, destination, and wallet preview before signing" },
+    { label: "skip condition", value: inferSkipCondition(result, agent) },
     { label: "limitation", value: agent.templateId.includes("solana") ? "Solana proposal only moves after your Solflare signature" : "Base proposal only moves after your wallet signature" },
   ];
 
   return [...result.details, ...explanation.filter((detail) => !existingLabels.has(detail.label))];
 }
 
+
+function detailValue(result: EvaluationResult, label: string): string | undefined {
+  return result.details.find((detail) => detail.label.toLowerCase() === label.toLowerCase())?.value;
+}
+
+function numericDetail(result: EvaluationResult, label: string): number | undefined {
+  const value = detailValue(result, label);
+  if (!value) return undefined;
+  const match = value.replace(/,/g, "").match(/-?\d+(\.\d+)?/);
+  if (!match) return undefined;
+  const numeric = Number(match[0]);
+  return Number.isFinite(numeric) ? numeric : undefined;
+}
+
+function inferProposalConfidence(result: EvaluationResult, agent: Agent): string {
+  const executable = Boolean(result.unsignedTxPayload);
+  const walletAction = detailValue(result, "wallet action") ?? "";
+  const source = detailValue(result, "source");
+  const riskSignals = inferRiskFlagList(result, agent);
+  const hasBalanceIssue = walletAction.toLowerCase().includes("insufficient") || walletAction.toLowerCase().includes("below protected reserve");
+  const confidence = executable && riskSignals.length <= 1
+    ? "high"
+    : source || !hasBalanceIssue
+      ? "medium"
+      : "low";
+  const reason = executable
+    ? "wallet payload prepared and stored for preview validation"
+    : hasBalanceIssue
+      ? "condition matched, but wallet balance/reserve prevented a signing payload"
+      : "condition matched; review-only boundary is active";
+  return `${confidence} - ${reason}`;
+}
+
+function inferRiskFlagList(result: EvaluationResult, agent: Agent): string[] {
+  const flags: string[] = [];
+  const templateId = agent.templateId;
+  const walletAction = (detailValue(result, "wallet action") ?? "").toLowerCase();
+  const liquidity = numericDetail(result, "liquidity");
+  const gain = numericDetail(result, "gain") ?? numericDetail(result, "change");
+  const drift = numericDetail(result, "drift");
+  const gas = numericDetail(result, "base gas");
+
+  if (templateId === "ape-agent" || templateId === "pool-sniper") flags.push("new token/pool risk");
+  if (typeof liquidity === "number" && liquidity < 50_000) flags.push("thin public liquidity");
+  if (walletAction.includes("review only")) flags.push("manual review only");
+  if (walletAction.includes("insufficient")) flags.push("insufficient wallet balance");
+  if (walletAction.includes("below protected reserve")) flags.push("protected reserve active");
+  if (typeof gain === "number" && Math.abs(gain) >= 50) flags.push("large price move");
+  if (typeof drift === "number" && Math.abs(drift) >= 20) flags.push("large allocation drift");
+  if (typeof gas === "number" && gas > 5) flags.push("elevated gas versus Base normal");
+  if (templateId.includes("solana")) flags.push("Solana/Jupiter route must still match wallet preview");
+
+  return [...new Set(flags)].slice(0, 4);
+}
+
+function inferRiskFlags(result: EvaluationResult, agent: Agent): string {
+  const flags = inferRiskFlagList(result, agent);
+  return flags.length > 0 ? flags.join("; ") : "no extra risk flags beyond normal market, protocol, and wallet-preview risk";
+}
+
+function inferMarketContext(result: EvaluationResult, agent: Agent): string {
+  const asset = detailValue(result, "asset") ?? detailValue(result, "token") ?? "tracked market";
+  const currentPrice = detailValue(result, "current price");
+  const trigger = detailValue(result, "trigger") ?? detailValue(result, "reason");
+  const liquidity = detailValue(result, "liquidity");
+  const source = detailValue(result, "source");
+  const pieces = [
+    currentPrice ? `${asset} observed at ${currentPrice}` : `${asset} matched the configured condition`,
+    trigger ? `trigger: ${trigger}` : null,
+    liquidity ? `liquidity: ${liquidity}` : null,
+    source ? `source: ${source}` : null,
+  ].filter((piece): piece is string => Boolean(piece));
+  return pieces.join("; ");
+}
+
+function inferSkipCondition(result: EvaluationResult, agent: Agent): string {
+  const walletAction = (detailValue(result, "wallet action") ?? "").toLowerCase();
+  if (walletAction.includes("insufficient")) return "skip if wallet balance is still insufficient or the route preview no longer matches";
+  if (walletAction.includes("review only")) return "skip if the data source looks stale, liquidity changed materially, or you cannot verify the market manually";
+  if (agent.templateId.includes("solana")) return "skip if Solflare/Jupiter preview differs in asset, amount, route, fee, or recipient";
+  return "skip if wallet preview differs in chain, asset, amount, recipient, value, calldata, fee, or route";
+}
 async function evaluateAgent(agent: Agent): Promise<EvaluationResult | null> {
   const validated = validateRuntimeParameters(agent);
   if (!validated.ok) {

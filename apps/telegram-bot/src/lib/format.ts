@@ -6,7 +6,7 @@ export function escapeHtml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-const EXPLAINABILITY_LABELS = new Set(["why", "observed", "approval check", "limitation"]);
+const EXPLAINABILITY_LABELS = new Set(["why", "confidence", "risk flags", "market context", "observed", "approval check", "skip condition", "limitation"]);
 const DIVIDER = "<code>------------------------------</code>";
 
 const STATUS_LABELS: Record<AgentStatus, string> = {
@@ -72,7 +72,7 @@ export function formatProposalMessage(proposal: Proposal, agentName: string): st
     "<b>review path</b>",
     field("1 observed", escapeHtml(observed)),
     field("2 proposal", `<b>${escapeHtml(proposal.proposedAction)}</b>`),
-    field("3 approval", execution.executable ? "dashboard wallet preview, then user signature" : "manual dashboard review only"),
+    field("3 approval", execution.executable ? "your wallet signature is required after dashboard preview" : "manual dashboard review only"),
     "",
     "<b>execution window</b>",
     field("network", `<b>${escapeHtml(execution.networkLabel)}</b>`),
