@@ -48,6 +48,9 @@ export const metadata: Metadata = {
   icons: {
     icon: "/assets/nemesis-favicon.png",
   },
+  other: {
+    "virtual-protocol-site-verification": "09566812749f1d6dc06e47dc16be2171",
+  },
   openGraph: {
     title: "NEMESIS - approval-first agents on Base and Solana",
     description: "Chaos in. Order out. Approval-first agents on Base and Solana.",
